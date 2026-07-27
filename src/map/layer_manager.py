@@ -1,0 +1,118 @@
+from __future__ import annotations
+
+from src.map.layer import Layer
+
+
+class LayerManager:
+
+    def __init__(self) -> None:
+
+        self._visible = {
+            layer: True
+            for layer in Layer
+        }
+
+        self._locked = {
+            layer: False
+            for layer in Layer
+        }
+
+        self._opacity = {
+            layer: 1.0
+            for layer in Layer
+        }
+
+        self._order = list(Layer)
+
+    # ---------------------------------------------------------
+    # Sichtbarkeit
+    # ---------------------------------------------------------
+
+    def is_visible(self, layer: Layer) -> bool:
+        value = self._visible[layer]
+        print(f"GET  id={id(self)}  layer={layer.name}  visible={value}")
+        return value
+
+    def set_visible(
+        self,
+        layer: Layer,
+        visible: bool,
+    ) -> None:
+
+        print(f"SET  id={id(self)}  layer={layer.name}  visible={visible}")
+        self._visible[layer] = visible
+
+    # ---------------------------------------------------------
+    # Sperren
+    # ---------------------------------------------------------
+
+    def is_locked(self, layer: Layer) -> bool:
+        return self._locked[layer]
+
+    def set_locked(
+        self,
+        layer: Layer,
+        locked: bool,
+    ) -> None:
+
+        self._locked[layer] = locked
+
+    # ---------------------------------------------------------
+    # Deckkraft
+    # ---------------------------------------------------------
+
+    def opacity(self, layer: Layer) -> float:
+        return self._opacity[layer]
+
+    def set_opacity(
+        self,
+        layer: Layer,
+        opacity: float,
+    ) -> None:
+
+        self._opacity[layer] = max(
+            0.0,
+            min(1.0, opacity),
+        )
+
+    # ---------------------------------------------------------
+    # Reihenfolge
+    # ---------------------------------------------------------
+
+    def move_up(
+        self,
+        layer: Layer,
+    ) -> None:
+
+        index = self._order.index(layer)
+
+        if index == 0:
+            return
+
+        self._order[index], self._order[index - 1] = (
+            self._order[index - 1],
+            self._order[index],
+        )
+
+    def move_down(
+        self,
+        layer: Layer,
+    ) -> None:
+
+        index = self._order.index(layer)
+
+        if index == len(self._order) - 1:
+            return
+
+        self._order[index], self._order[index + 1] = (
+            self._order[index + 1],
+            self._order[index],
+        )
+
+    # ---------------------------------------------------------
+    # Layer
+    # ---------------------------------------------------------
+
+    @property
+    def layers(self) -> tuple[Layer, ...]:
+        return tuple(self._order)

@@ -1,0 +1,154 @@
+{
+     "railways": [
+        {
+            "id": "track_001",
+            "geometry": [
+                [48.1380,11.5760],
+                [48.1410,11.5820]
+            ],
+
+            "properties": {
+                "type": "rail",
+                "tracks": 2
+            }
+        }
+    ],
+
+    "roads": [
+        {
+            "id": "road_001",
+            "geometry": [
+                [48.1372,11.5756],
+                [48.1400,11.5800]
+            ],
+
+            "properties": {
+                "name": "Teststraße",
+                "lanes": 2,
+                "speed": 50,
+                "surface": "asphalt"
+            }
+        }
+    ],
+
+    "buildings": [
+        {
+            "id": "house_001",
+            "geometry": [
+                [
+                    [48.1375,11.5760],
+                    [48.1375,11.5770],
+                    [48.1382,11.5770],
+                    [48.1382,11.5760]
+                ]
+            ],
+
+            "properties": {
+                "type": "residential",
+                "height": 12,
+                "levels": 3
+            }
+        }
+    ],
+
+    "water": [
+        {
+            "id": "lake_001",
+            "geometry": [
+                [
+                    [
+                        [48.1400,11.5800],
+                        [48.1410,11.5800],
+                        [48.1410,11.5810],
+                        [48.1400,11.5810]
+                    ]
+                ]
+            ],
+
+
+            "properties": {
+                "type": "lake",
+                "name": "Testsee"
+            }
+        }
+    ],
+
+    "waterways": [
+        {
+            "id": "river_001",
+            "geometry": [
+                [48.15, 11.55],
+                [48.16, 11.56],
+                [48.17, 11.57]
+            ],
+            "properties": {
+                "name": "Testfluss",
+                "type": "river",
+                "width": 25
+            }
+            
+        }
+    ],
+
+    "vegetation": [
+        {
+            "id": "forest_001",
+            "geometry": [
+                [
+                    [48.1400,11.5750],
+                    [48.1410,11.5750],
+                    [48.1410,11.5760],
+                    [48.1400,11.5760]
+                ]
+            ],
+
+            "properties": {
+                "type": "forest",
+                "name": "Testwald",
+                "density": "high"
+            }
+        }
+    ],
+
+    "parks": [
+        {
+            "id": "park_001",
+            "geometry": [
+                [
+                    [48.1380,11.5740],
+                    [48.1390,11.5740],
+                    [48.1390,11.5750],
+                    [48.1380,11.5750]
+                ]
+            ],
+
+            "properties": {
+                "type": "park",
+                "name": "Stadtpark",
+                "access": "public"
+            }
+        }
+    ],
+
+    
+
+    "landuse": [
+        {
+            "id": "field_001",
+            "geometry": [
+                [
+                    [48.1450,11.5740],
+                    [48.1460,11.5740],
+                    [48.1460,11.5750],
+                    [48.1450,11.5750]
+                ]
+            ],
+
+            "properties": {
+                "type": "farmland",
+                "name": "Ackerfläche",
+                "usage": "agriculture"
+            }
+        }
+    ]
+}

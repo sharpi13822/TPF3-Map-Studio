@@ -1,0 +1,187 @@
+html,
+body,
+#map {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+/* --------------------------------------------------
+   Layer Control
+-------------------------------------------------- */
+
+#layer-control {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 1000;
+
+    background: rgba(255,255,255,0.95);
+
+    padding: 12px;
+
+    border-radius: 8px;
+
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+
+    min-width: 170px;
+
+    font-family: Arial, sans-serif;
+}
+
+.layer-title {
+    font-size: 18px;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+.layer-buttons {
+    display: flex;
+    gap: 5px;
+    margin-bottom: 10px;
+}
+
+.layer-buttons button {
+    cursor: pointer;
+}
+
+#layer-control h4 {
+    margin: 10px 0 5px;
+    font-size: 14px;
+}
+
+#layer-control label {
+    display: block;
+    margin-bottom: 5px;
+}
+
+/* --------------------------------------------------
+   Info Panel
+-------------------------------------------------- */
+
+#info-panel {
+
+    position: absolute;
+
+    left: 150px;
+    bottom: 50px;
+
+    width: 300px;
+
+    background: rgba(255,255,255,0.97);
+
+    padding: 20px;
+
+    border-radius: 10px;
+
+    box-shadow: 0 3px 12px rgba(0,0,0,0.35);
+
+    z-index: 2000;
+
+    font-family: Arial, sans-serif;
+
+    font-size: 14px;
+}
+
+.info-title {
+    font-size: 18px;
+    font-weight: bold;
+    margin-bottom: 12px;
+}
+
+.properties-title {
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+.property-row {
+    margin-bottom: 6px;
+}
+
+.property-row b {
+    display: inline-block;
+    width: 120px;
+    color: #333;
+}
+
+/* --------------------------------------------------
+   Geometry Editor Handles
+-------------------------------------------------- */
+
+.geometry-handle {
+
+    width: 18px !important;
+    height: 18px !important;
+
+    background: #ff0000 !important;
+
+    border: 3px solid #ffff00 !important;
+
+    border-radius: 50% !important;
+
+    box-sizing: border-box;
+
+    cursor: move;
+
+    box-shadow: 0 0 8px rgba(0,0,0,0.7);
+
+}
+
+.geometry-handle.active {
+
+     transform: scale(1.4);
+
+     z-index: 10000;
+
+}    
+
+
+/* Leaflet DivIcon */
+
+.geometry-handle div {
+
+    width: 18px;
+    height: 18px;
+
+}
+
+/* --------------------------------------------------
+   Optional: Segment Handles (für V2.1)
+-------------------------------------------------- */
+
+.segment-handle {
+
+    width: 12px !important;
+    height: 12px !important;
+
+    background: #00ff00 !important;
+
+    border: 2px solid white !important;
+
+    border-radius: 50% !important;
+
+    box-sizing: border-box;
+
+    cursor: pointer;
+
+    box-shadow: 0 0 5px rgba(0,0,0,0.6);
+
+}.segment-handle{
+
+    width:14px;
+    height:14px;
+
+    background:#43A047;
+
+    border:2px solid white;
+
+    border-radius:50%;
+
+    box-sizing:border-box;
+
+    cursor:crosshair;
+
+    box-shadow:0 0 4px rgba(0,0,0,.5);
+
+}

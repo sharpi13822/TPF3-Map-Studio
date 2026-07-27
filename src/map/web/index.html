@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <title>TPF2 Map Studio</title>
+
+    <link rel="stylesheet" href="leaflet/leaflet.css">
+    <link rel="stylesheet" href="css/style.css?v=2">
+</head>
+
+<body>
+
+    
+    <div id="map"></div>
+
+    <div id="layer-control">
+
+    <div class="layer-title">
+        Layer
+    </div>
+
+
+    <div class="layer-buttons">
+
+        <button id="layers-on">
+            Alle
+        </button>
+
+        <button id="layers-off">
+            Keine
+        </button>
+
+        <button id="export-json">
+           JSON Export
+        </button>
+
+        <div id="draw-tools">
+
+        <b>Zeichnen</b>
+
+        <br>
+
+        <button id="draw-road">
+             Straße
+        </button>
+
+        <button id="draw-river">
+             Fluss
+        </button>
+
+        <button id="draw-building">
+             Gebäude
+        </button>
+
+        <button id="draw-finish">
+             Fertig
+        </button>
+
+        </div>
+        
+        <button id="import-json">
+           JSON Import
+        </button>
+
+        <input
+            type="file"
+            id="json-file"
+            accept=".json"
+            style="display:none"
+        >
+
+    </div>
+
+
+    <h4>Grundkarte</h4>
+
+    <label>
+        <input type="checkbox" data-layer="landuse" checked>
+        Landnutzung
+    </label>
+
+    <label>
+        <input type="checkbox" data-layer="vegetation" checked>
+        Vegetation
+    </label>
+
+    <label>
+        <input type="checkbox" data-layer="parks" checked>
+        Parks
+    </label>
+
+
+
+    <h4>Verkehr</h4>
+
+    <label>
+        <input type="checkbox" data-layer="roads" checked>
+        Straßen
+    </label>
+
+    <label>
+        <input type="checkbox" data-layer="railways" checked>
+        Schienen
+    </label>
+
+
+
+    <h4>Gewässer</h4>
+
+    <label>
+        <input type="checkbox" data-layer="water" checked>
+        Wasser
+    </label>
+
+    <label>
+        <input type="checkbox" data-layer="waterways" checked>
+        Wasserwege
+    </label>
+
+
+
+    <h4>Objekte</h4>
+
+    <label>
+        <input type="checkbox" data-layer="buildings" checked>
+        Gebäude
+    </label>
+
+
+</div>
+
+<!-- Qt WebChannel nur in Qt aktivieren -->
+<!--   <script src="qrc:///qtwebchannel/qwebchannel.js"></script> -->
+    
+<!-- Leaflet -->
+    <script src="leaflet/leaflet.js"></script>
+
+    <script src="js/layer_styles.js"></script>
+
+    <script src="js/geometry_normalizer.js"></script>
+
+    <script src="js/tpf2_reader.js"></script>
+
+    <script src="js/tpf2_styles.js"></script>
+    
+    <script src="js/tpf2_adapter.js"></script>
+    
+    <script src="js/map_loader.js?v=3"></script>
+    
+    <script src="js/map_parser.js"></script>
+
+    <script src="js/layer_manager.js"></script>
+
+    <script src="js/layer_control.js"></script>
+
+    <script src="js/info_panel.js"></script>
+
+    <script src="js/export_manager.js"></script>
+
+    <script src="js/import_manager.js"></script>
+
+    <script src="js/draw_manager.js"></script>
+
+    <script src="js/geometry_editor.js"></script>
+    
+    <script src="js/map.js?v=7"></script>
+
+</body>
+
+</html>

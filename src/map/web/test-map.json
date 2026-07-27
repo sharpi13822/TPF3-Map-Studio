@@ -1,0 +1,36 @@
+{
+    "objects": [
+        {
+            "id": "road_test_1",
+            "layer": "roads",
+            "type": "polyline",
+            "geometry": [
+                [48.1372,11.5756],
+                [48.1400,11.5800]
+            ],
+            "style": {
+                "color":"red",
+                "weight":5
+            }
+        },
+
+        {
+            "id":"building_test_1",
+            "layer":"buildings",
+            "type":"polygon",
+            "geometry":[
+                [
+                    [48.1375,11.5760],
+                    [48.1375,11.5770],
+                    [48.1382,11.5770],
+                    [48.1382,11.5760]
+                ]
+            ],
+            "style":{
+                "color":"#555",
+                "fillColor":"#999",
+                "fillOpacity":0.7
+            }
+        }
+    ]
+}
