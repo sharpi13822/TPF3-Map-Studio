@@ -1278,8 +1278,18 @@ class CommandDispatcher {
         window.geometryManager = geometry;
 
 
+        const topologyManager =
+            new TopologyManager(
+                geometry
+            );
+
+        window.topologyManager =
+            topologyManager;
+
         const geometryEditor =
-            new GeometryEditor();
+            new GeometryEditor(
+                topologyManager 
+            ); 
 
 
         window.geometryEditor =
@@ -1415,6 +1425,10 @@ document
         "Loaded objects:",
         objects
     );
+    
+    console.log(topologyManager);
+    topologyManager.buildVertexIndex();
+    topologyManager.showSharedVertices();
 
 });
 

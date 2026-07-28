@@ -18,14 +18,13 @@ Status : Rewrite
 ===========================================================
 */
 
-console.log("GeometryEditor V2.3 geladen");
+console.log("GeometryEditor V9 TEST");
 
 class GeometryEditor {
 
-    constructor() {
+    constructor(topologyManager) {
 
-        // aktuell bearbeitetes Objekt
-        this.object = null;
+        this.topology = topologyManager;
 
         // Layer für Editiermarker
         this.handleLayer = null;
@@ -60,8 +59,6 @@ class GeometryEditor {
         // Aktiver Vertex
         this.object = null;
 
-        this.keyDownHandler = this.onKeyDown.bind(this);
-
         this.undoStack = [];
         this.redoStack = [];
 
@@ -75,6 +72,8 @@ class GeometryEditor {
 
         this.enableSnapping = true;
 
+        this.activeSharedVertices = [];
+
     }
 
     //====================================================
@@ -83,7 +82,30 @@ class GeometryEditor {
 
     start(object) {
 
-        if (!object) return;
+        console.log(
+            "GLEICHE INSTANZ:",
+            this.topology === window.topologyManager
+        );
+
+        console.log(
+            "typeof this.topology.getNeighbors:",
+            typeof this.topology.getNeighbors
+        );
+        
+        console.log(
+            "typeof window.topologyManager.getNeighbors:",
+            typeof window.topologyManager.getNeighbors
+        );
+
+        console.log(
+            "Methods:",
+            Object.getOwnPropertyNames(
+                Object.getPrototypeOf(this.topology)
+            )
+        );
+
+        if (!object)
+            return;
 
         this.stop();
 
@@ -113,14 +135,16 @@ class GeometryEditor {
             this.onMapClick,
             this
         );
-
+        
         document.addEventListener(
             "keydown",
             this.keyDownHandler
-
         );
 
-        console.log("GeometryEditor START", object);
+        console.log(
+            "GeometryEditor START",
+            object
+        );
 
     }
 
@@ -245,31 +269,94 @@ class GeometryEditor {
         return points[index];
 
     }
+    //====================================================
+    // FIND EDGE INDEX
+    //====================================================
+
+    findEdgeIndex(object, a, b) {
+
+        const points =
+            object.tpf2.type === "polygon"
+                ? object.tpf2.geometry[0]
+                : object.tpf2.geometry;
+
+        const keyA =
+            this.topology.vertexKey(a);
+
+        const keyB =
+            this.topology.vertexKey(b);
+               
+        const count =
+            object.tpf2.type === "polygon"
+                ? points.length
+                : points.length - 1;
+
+        for (let i = 0; i < count; i++) {
+
+            const p1 = points[i];
+            const p2 = points[(i + 1) % points.length];
+
+            const k1 =
+                this.topology.vertexKey(
+                    L.latLng(p1[0], p1[1])
+                );
+
+            const k2 =
+                this.topology.vertexKey(
+                    L.latLng(p2[0], p2[1])
+                );
+
+            if (
+
+                (k1 === keyA && k2 === keyB) ||
+
+                (k1 === keyB && k2 === keyA)
+
+            ) {
+
+                return i;
+
+            }
+
+        }
+
+        return -1;
+
+    }
 
     //====================================================
     // REDRAW OBJECT
     //====================================================
 
-    redrawObject() {
+    redrawObject(object = this.object) {
 
-        if (!this.object) return;
+        if (!object) return;
 
-        const latlngs = this.getGeometryPoints().map(point => [
-           point[0],
-           point[1]
-        ]);
+        const points = 
+            object.tpf2.type === "polygon"
+                ? object.tpf2.geometry[0]
+                : object.tpf2.geometry;
+        
 
-        if (this.object.tpf2.type === "polygon") {
+        const latlngs = points.map(p => [
+            p[0],
+            p[1]
+        
+        ]);    
 
-            this.object.setLatLngs([latlngs]);
+        if (object.tpf2.type === "polygon") {
+
+            object.setLatLngs([latlngs]);
 
         } else {
-            
-            this.object.setLatLngs(latlngs);
+
+            object.setLatLngs(latlngs);
+
         }
 
-        this.object.redraw();
-    }
+        object.redraw();
+
+    } 
 
     //====================================================
     // SAVE STYLE
@@ -375,9 +462,27 @@ class GeometryEditor {
         // DRAG START
         //------------------------------------------------
 
-        marker.on("dragstart", () => {
+        marker.on("dragstart", e => {
 
             this.saveHistory();
+
+            console.log("DRAGSTART");
+
+            this.activeSharedVertices =
+                this.topology.getSharedVertices(
+                    e.target.getLatLng()
+
+                );
+                
+            console.table(
+                this.activeSharedVertices.map(v => ({
+                    id: v.object.tpf2?.id,
+                    lat: v.latlng.lat,
+                    lng: v.latlng.lng
+                }))
+
+            );
+        });
 
             this.selectVertex(marker.vertexIndex);
 
@@ -389,7 +494,7 @@ class GeometryEditor {
 
             }
 
-        });
+        
 
         //------------------------------------------------
         // DRAG
@@ -405,7 +510,27 @@ class GeometryEditor {
 
             );
 
+            const changedObjects =
+                this.topology.moveSharedVertices(
+
+                    this.activeSharedVertices,
+
+                    latlng
+
+                );
+
+            for (const object of changedObjects) {
+
+                if (object === this.object)
+                    continue;
+
+                this.redrawObject(object);
+
+            }
+
             this.updateGeometry(
+
+                this.object,
 
                 e.target.vertexIndex,
 
@@ -414,10 +539,6 @@ class GeometryEditor {
             );
 
         });
-
-        //------------------------------------------------
-        // DRAG END
-        //------------------------------------------------
 
         marker.on("dragend", () => {
 
@@ -431,7 +552,10 @@ class GeometryEditor {
 
             this.refresh();
 
+            this.topology.rebuild();
+
         });
+
 
         //------------------------------------------------
         // DELETE VERTEX
@@ -449,6 +573,8 @@ class GeometryEditor {
 
         marker.on("click", () => {
 
+            console.log("CLICK");
+
             this.selectVertex(marker.vertexIndex);
 
             console.log("Aktiver Vertex:", this.activeVertex);
@@ -465,18 +591,24 @@ class GeometryEditor {
     // UPDATE GEOMETRY
     //====================================================
 
-    updateGeometry(index, latlng) {
+    updateGeometry(object = this.object, index, latlng) {
 
-        if (!this.object) return;
+        if (!object) return;
 
-        const points = this.getGeometryPoints();
+        const points = 
+            object.tpf2.type === "polygon"
+                ? object.tpf2.geometry[0]
+                : object.tpf2.geometry;
+
+        if (index < 0 || index >= points.length)
+            return;
 
         // Nur den Punkt aktualisieren
         points[index][0] = latlng.lat;
         points[index][1] = latlng.lng;
 
         // Objekt neu zeichnen
-        this.redrawObject();
+        this.redrawObject(object);
 
 
     }
@@ -607,24 +739,36 @@ class GeometryEditor {
     // INSERT NEW VERTEX
     //====================================================
 
-    insertVertex(index, latlng) {
+    insertVertex(object = this.object, index, latlng) {
 
-        if (!this.object) return;
+        if (!object) return;
 
-        this.saveHistory();
+        if (object === this.object) {
 
-        const points = this.getGeometryPoints();
+            this.saveHistory();
 
-        points.splice(index, 0, [
+        }
+
+
+        const points =
+            object.tpf2.type === "polygon"
+               ? object.tpf2.geometry[0]
+               : object.tpf2.geometry;
+
+         points.splice(index, 0, [
 
             latlng.lat,
             latlng.lng
 
         ]);
 
-        this.redrawObject();
+        this.redrawObject(object);
 
-        this.refresh();
+        if (object === this.object) {
+
+             this.refresh();
+
+        }
 
     }
 
@@ -752,30 +896,129 @@ class GeometryEditor {
         let inserted = false;
         let vertexIndex = -1;
 
+        let activeSharedEdges = [];
+        let activeSegmentVertices = [];
+
+        //------------------------------------------------
+        // DRAG START
+        //------------------------------------------------
+
+        marker.on("dragstart", () => {
+
+            this.saveHistory();
+
+            activeSegmentVertices = [];
+
+            activeSharedEdges = 
+                this.topology.getSharedEdges(
+
+                    L.latLng(a[0], a[1]),
+                    L.latLng(b[0], b[1])
+
+                );
+
+            for (const edge of activeSharedEdges) {
+
+                const edgeIndex = 
+                    this.findEdgeIndex(
+
+                        edge.object,
+                        edge.a,
+                        edge.b
+
+                    );
+
+                if (edgeIndex < 0)
+                    continue;
+
+                const vertexIndex = edgeIndex + 1;
+
+                this.insertVertex(
+
+                    edge.object,
+                    vertexIndex,
+                    marker.getLatLng()
+
+                );
+
+                activeSegmentVertices.push({
+
+                    object: edge.object,
+
+                    index: vertexIndex
+
+                });
+
+            }
+
+        });
+
+                
+        //------------------------------------------------
+        // DRAG 
+        //------------------------------------------------
+
         marker.on("drag", (e) => {
 
-           if (!inserted) {
-            
-            this.insertVertex(insertIndex, e.target.getLatLng());
+            const latlng = this.snap(
+
+                e.target.getLatLng()
+
+            );
+
+            // Falls keine gemeinsame Kante existiert,
+            // normales Verhalten
+
+            if (activeSegmentVertices.length === 0) {
+
+                if (!inserted) {
+
+                    this.insertVertex(
+
+                        this.object,
+                        insertIndex,
+                        latlng
+
+                    );
+
+                    inserted = true;
+                    vertexIndex = insertIndex;
+
+                }
+
+                this.updateGeometry(
+
+                    this.object,
+
+                    vertexIndex,
+
+                    latlng
+
+                );
+
+                return;
+
+            } 
+
+            //------------------------------------------------
+            // Beim ersten Ziehen wird ein neuer Vertex erzeugt
+            //------------------------------------------------
 
             inserted = true;
-            vertexIndex = insertIndex;
 
-        }
+            for (const item of activeSegmentVertices) {
 
-        this.updateGeometry(vertexIndex, e.target.getLatLng());
+                this.updateGeometry(
 
-     });   
+                    item.object,
 
-        //------------------------------------------------
-        // Beim ersten Ziehen wird ein neuer Vertex erzeugt
-        //------------------------------------------------
+                    item.index,
 
-        marker.on("dragend", () => {
+                    latlng
 
-            this.refresh();
+                );
 
-            
+            }
 
         });
 
