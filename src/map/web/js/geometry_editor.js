@@ -1,11 +1,11 @@
 /*
 ===========================================================
 TPF2 MAP STUDIO
-GeometryEditor V2.3
+GeometryEditor V2.4
 -----------------------------------------------------------
 Author : ChatGPT + <dein Projekt>
-Version: 2.3
-Status : Rewrite
+Version: 2.4
+Status : Stable
 
 Änderungen gegenüber V2.1
 
@@ -392,6 +392,27 @@ class GeometryEditor {
         this.object.setStyle(this.originalStyle);
 
     }
+
+    //====================================================
+    // CREATE VERTEX MARKER
+    //====================================================
+
+    createVertexMarker(point) {
+
+        return L.marker(
+            [point[0], point[1]],
+            {
+                draggable: true,
+                zIndexOffset: this.vertexHandleZIndex,
+                icon: L.divIcon({
+                    className: "geometry-handle",
+                    iconSize: [18, 18]
+                })
+            }
+        );
+
+    }
+        
     //====================================================
     // CREATE ALL VERTEX HANDLES
     //====================================================
@@ -416,27 +437,7 @@ class GeometryEditor {
 
     createHandle(point, index) {
 
-        const marker = L.marker(
-
-            [point[0], point[1]],
-
-            {
-
-                draggable: true,
-
-                zIndexOffset: this.vertexHandleZIndex,
-
-                icon: L.divIcon({
-
-                    className: "geometry-handle",
-
-                    iconSize: [18, 18]
-
-                })
-
-            }
-
-        );
+        const marker = this.createVertexMarker(point);
 
         marker.vertexIndex = index;
 
