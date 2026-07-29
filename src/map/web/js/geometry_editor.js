@@ -29,9 +29,6 @@ class GeometryEditor {
         // Layer für Editiermarker
         this.handleLayer = null;
 
-        // Vertex Handles
-        this.VertexHandles = [];
-
         // Segment Handles
         this.segmentHandles = [];
 
@@ -70,9 +67,15 @@ class GeometryEditor {
 
         this.snapDistance = 10;   // Pixel
 
+        this.vertexHandleZIndex = 10000;
+
+        this.segmentHandleZIndex = 9000;
+
         this.enableSnapping = true;
 
         this.activeSharedVertices = [];
+
+        this.debug = false;
 
     }
 
@@ -82,27 +85,6 @@ class GeometryEditor {
 
     start(object) {
 
-        console.log(
-            "GLEICHE INSTANZ:",
-            this.topology === window.topologyManager
-        );
-
-        console.log(
-            "typeof this.topology.getNeighbors:",
-            typeof this.topology.getNeighbors
-        );
-        
-        console.log(
-            "typeof window.topologyManager.getNeighbors:",
-            typeof window.topologyManager.getNeighbors
-        );
-
-        console.log(
-            "Methods:",
-            Object.getOwnPropertyNames(
-                Object.getPrototypeOf(this.topology)
-            )
-        );
 
         if (!object)
             return;
@@ -141,7 +123,7 @@ class GeometryEditor {
             this.keyDownHandler
         );
 
-        console.log(
+        this.log(
             "GeometryEditor START",
             object
         );
@@ -179,7 +161,7 @@ class GeometryEditor {
             this.keyDownHandler
         );
 
-        console.log("GeometryEditor STOP");
+        this.log("GeometryEditor STOP");
 
     }
 
@@ -429,7 +411,7 @@ class GeometryEditor {
     }
 
     //====================================================
-    // CREATE SINGLE VERTEX HANDLE
+    // CREATE VERTEX HANDLE
     //====================================================
 
     createHandle(point, index) {
@@ -442,7 +424,7 @@ class GeometryEditor {
 
                 draggable: true,
 
-                zIndexOffset: 10000,
+                zIndexOffset: this.vertexHandleZIndex,
 
                 icon: L.divIcon({
 
@@ -466,7 +448,7 @@ class GeometryEditor {
 
             this.saveHistory();
 
-            console.log("DRAGSTART");
+            this.log("DRAGSTART");
 
             this.activeSharedVertices =
                 this.topology.getSharedVertices(
@@ -474,7 +456,7 @@ class GeometryEditor {
 
                 );
                 
-            console.table(
+            this.table(
                 this.activeSharedVertices.map(v => ({
                     id: v.object.tpf2?.id,
                     lat: v.latlng.lat,
@@ -573,11 +555,11 @@ class GeometryEditor {
 
         marker.on("click", () => {
 
-            console.log("CLICK");
+            this.log("CLICK");
 
             this.selectVertex(marker.vertexIndex);
 
-            console.log("Aktiver Vertex:", this.activeVertex);
+            this.log("Aktiver Vertex:", this.activeVertex);
 
         });
 
@@ -610,6 +592,37 @@ class GeometryEditor {
         // Objekt neu zeichnen
         this.redrawObject(object);
 
+
+    }
+
+    onVertexDragStart(marker, e) {
+
+        this.saveHistory();
+
+        this.log("DRAGSTART");
+
+        this.activeSharedVertices =
+            this.topology.getSharedVertices(
+                e.target.getLatLng()
+            );
+
+        this.table(
+            this.activeSharedVertices.map(v => ({
+                id: v.object.tpf2?.id,
+                lat: v.latlng.lat,
+                lng: v.latlng.lng
+            }))
+        );
+
+        this.selectVertex(marker.vertexIndex);
+
+        const element = marker.getElement();
+
+        if (element) {
+
+            element.classList.add("active");
+
+        }
 
     }
 
@@ -861,7 +874,7 @@ class GeometryEditor {
     }
 
     //====================================================
-    // CREATE SINGLE SEGMENT HANDLE
+    // CREATE SEGMENT HANDLE
     //====================================================
 
     createSegmentHandle(a, b, insertIndex) {
@@ -879,7 +892,7 @@ class GeometryEditor {
 
                 draggable: true,
 
-                zIndexOffset: 9000,
+                zIndexOffset: this.segmentHandleZIndex,
 
                 icon: L.divIcon({
 
@@ -1303,6 +1316,24 @@ class GeometryEditor {
     isEditing() {
 
         return this.object !== null;
+
+    }
+
+    log(...args) {
+
+        if (!this.debug)
+            return;
+
+        console.log(...args);
+
+    }
+
+    table(data) {
+
+        if (!this.debug)
+            return;
+
+        console.table(data);
 
     }
 
