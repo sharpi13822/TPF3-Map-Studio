@@ -428,6 +428,113 @@ class GeometryManager {
 
     }
 
+    createMetadata(id, layer, type, geometry, style, properties) {
+
+        return {
+
+           id,
+           layer,
+           type,
+           geometry,
+           style,
+           properties
+
+        };
+
+    }
+
+    saveOriginalStyle(object) {
+
+        object.originalStyle = {
+
+            color: object.options.color,
+            weight: object.options.weight,
+            opacity: object.options.opacity,
+            fillColor: object.options.fillColor,
+            fillOpacity: object.options.fillOpacity
+
+        };
+
+    }
+
+    attachMetadata(object, metadata) {
+
+        object.tpf2 = metadata;
+
+    }
+
+    getLayer(name) {
+
+        const layer = this.#layers.get(name); 
+
+        if (!layer) {
+           throw new Error(`Unknown layer '${name}'`);
+        }
+        
+        return layer;
+
+    }
+
+    createObject(type, geometry, style) {
+
+        const renderer = this.#renderers.get(type);
+
+        return renderer.create(
+            geometry,
+            style
+        );
+
+    }
+
+    addObject(layer, id, object) {
+
+        layer.add(
+            id,
+            object
+        );
+
+        return object;
+
+    }
+
+    bindObjectEvents(object) {
+
+        object.on?.(
+            "click",
+            (event) => {
+
+                console.log("TEST MAP.JS"); 
+
+                L.DomEvent.stopPropagation(event);
+
+                this.highlight(object);
+
+                console.log("GeometryEditor:", window.geometryEditor);
+
+                console.log(
+                    "Info Daten",
+                    object.tpf2
+                );
+                
+                window.infoPanel.show(
+                    object.tpf2
+                );
+
+                if (window.geometryEditor) {
+
+                    console.log("START WIRD AUFGERUFEN");
+
+                    window.geometryEditor.start(
+                        object
+                    );
+                }
+
+               
+            }
+        );
+        
+}
+
     draw({
     layer,
     id,
@@ -438,82 +545,52 @@ class GeometryManager {
 
 }) {
 
-    const target = this.#layers.get(layer);
+    const target = this.getLayer(layer);
 
-    if (!target) {
-        throw new Error(`Unknown layer '${layer}'`);
-    }
-
-
-    const renderer = this.#renderers.get(type);
-
-
-    const object = renderer.create(
+    const object = this.createObject(
+        type,
         geometry,
         style
     );
 
-
-    // echten Leaflet-Style merken
-    object.originalStyle = {
-
-        color: object.options.color,
-
-        weight: object.options.weight,
-
-        opacity: object.options.opacity,
-
-        fillColor: object.options.fillColor,
-
-        fillOpacity: object.options.fillOpacity
-
-    };
-
-
-    object.tpf2 = {
-
+    const metadata = this.createMetadata(
         id,
         layer,
         type,
         geometry,
         style,
         properties
-
-    };
-
-
-    object.on?.(
-        "click",
-        (event) => {
-
-            L.DomEvent.stopPropagation(event);
-
-            this.highlight(object);
-
-            console.log(
-                "Info Daten",
-                object.tpf2
-            );
-
-            window.infoPanel.show(
-                object.tpf2
-            );
-
-            if (window.geometryEditor) {
-                window.geometryEditor.start(
-                    object
-                );
-            }
-
-        }
     );
 
-    target.add(id, object);
+    this.saveOriginalStyle(object);
 
+    this.attachMetadata(
+        object,
+        metadata
+    );
 
-    return object;
+    this.bindObjectEvents(object);
+   
+    return this.addObject(
+        target,
+        id,
+        object
+
+    );
 
 }
+
+restoreOriginalStyle(object) {
+
+    if (!object) {
+        return;
+    }
+
+    object.setStyle(
+        object.originalStyle
+    );
+
+}    
 
 highlight(object) {
 
@@ -527,8 +604,8 @@ highlight(object) {
         this.#selectedObject !== object
     ) {
 
-        this.#selectedObject.setStyle(
-            this.#selectedObject.originalStyle
+        this.restoreOriginalStyle(
+            this.#selectedObject
         );
 
     }
@@ -552,27 +629,16 @@ highlight(object) {
 
 clearHighlight() {
 
-
     if (!this.#selectedObject) {
-
         return;
-
     }
 
 
-    this.#selectedObject.setStyle({
-
-        color: this.#selectedObject.originalStyle.color,
-
-        weight: this.#selectedObject.originalStyle.weight,
-
-        opacity: this.#selectedObject.originalStyle.opacity
-        
-    });
-
+    this.restoreOriginalStyle(
+        this.#selectedObject
+);
 
     this.#selectedObject = null;
-
 
 }
    
@@ -626,62 +692,55 @@ clearHighlight() {
 
     }
 
-    getObjects() {
-
-
-    const objects = [];
-
-
-    for (const layer of this.#layers.values()) {
-
-
-        layer.leaflet.eachLayer(
-            
-            object => {
-
-
-                if (object.tpf2) {
-
-
-                    objects.push(
-                        object.tpf2
-                    );
-
-
-                }
-
-
-            }
-
-        );
-
-
-    }
-
-
-    return objects;
-
-
-}
-    getLeafletObjects() {
-        
-        const objects = [];
+    forEachObject(callback) {
 
         for (const layer of this.#layers.values()) {
 
             layer.leaflet.eachLayer(object => {
 
-                 if (object.tpf2) {
-                     objects.push(object);
+                if (object.tpf2) {
+                    callback(object);
                 }
 
             });
 
         }
 
-        return objects;
     }
+
+    getObjects() {
+
+
+        const objects = [];
+
+
+        this.forEachObject(object => {
+
+            objects.push(object.tpf2);
+
+        });
+
+    return objects;
+
+
 }
+
+    getLeafletObjects() {
+        
+        const objects = [];
+
+        this.forEachObject(object => {
+
+            objects.push(object);
+
+        });
+
+        return objects;
+
+    } 
+
+} 
+
 
 class BatchRenderer {
 
@@ -1289,16 +1348,14 @@ class CommandDispatcher {
         const geometryEditor =
             new GeometryEditor(
                 topologyManager 
-            ); 
-
-
+            );
+            
         window.geometryEditor =
             geometryEditor;
 
         const drawManager =new DrawManager(
             geometry
         );
-
 
         window.drawManager = drawManager;
 

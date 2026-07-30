@@ -13,7 +13,6 @@ class MapLoader {
     #data;
 
 
-
     constructor(reader, parser, geometry) {
 
 
@@ -27,9 +26,6 @@ class MapLoader {
     }
 
 
-
-
-
     load(url) {
 
 
@@ -37,8 +33,6 @@ class MapLoader {
             "LOAD:",
             url
         );
-
-
 
         return fetch(url)
 
@@ -62,86 +56,7 @@ class MapLoader {
 
             })
 
-
-
-            .then(data => {
-
-
-                this.#data = data;
-
-
-
-                console.log(
-                    "MAPLOADER DATA:",
-                    data
-                );
-
-
-
-                const raw =
-
-                    this.#reader.read(
-                        data
-                    );
-
-
-
-                console.log(
-                    "MAPLOADER RAW:",
-                    raw
-                );
-
-
-
-                const objects =
-
-                    this.#parser.parse(
-                        raw
-                    );
-
-
-
-                console.log(
-                    "MAPLOADER OBJECTS:",
-                    objects
-                );
-
-
-
-                for (const object of objects) {
-
-
-
-                    console.log(
-                        "DRAW:",
-                        object
-                    );
-
-
-
-                    this.#geometry.draw(
-                        object
-                    );
-
-
-                }
-
-
-
-                console.log(
-                    "MAPLOADER RETURN:",
-                    objects
-                );
-
-
-
-                return objects;
-
-
-
-            })
-
-
+            .then(data => this.processData(data))
 
             .catch(error => {
 
@@ -152,28 +67,90 @@ class MapLoader {
                     error
                 );
 
-
-
                 throw error;
-
-
 
             });
 
 
     }
 
+    //====================================================
+    // PROCESS DATA
+    //====================================================
 
+    processData(data) {
 
+        this.#data = data;
 
+        console.log(
+            "MAPLOADER DATA:",
+            data
+        );
 
-    getData() {
+        const raw =
 
+            this.#reader.read(
+                data
+            );
 
-        return this.#data;
+        console.log(
+            "MAPLOADER RAW:",
+            raw
+        );
 
+        const objects =
+
+            this.#parser.parse(
+                raw
+            );
+
+        console.log(
+            "MAPLOADER OBJECTS:",
+            objects
+        );
+
+        this.drawObjects(
+            objects
+        );
+
+        console.log(
+            "MAPLOADER RETURN:",
+            objects
+        );
+
+        return objects;
 
     }
 
+
+    //====================================================
+    // DRAW OBJECTS
+    //====================================================
+
+    drawObjects(objects) {
+
+        for (const object of objects) {
+            
+            console.log(
+                "DRAW:",
+                object
+            );
+
+            this.#geometry.draw(
+                object
+            );
+
+        }
+
+    }
+
+    //====================================================
+    // GET DATA
+    //====================================================
+    getData() {
+
+        return this.#data;
+
+    }
 
 }

@@ -15,8 +15,6 @@ class DrawManager {
     }
 
 
-
-
     start(type) {
 
 
@@ -32,9 +30,6 @@ class DrawManager {
 
 
     }
-
-
-
 
 
     addPoint(lat, lon) {
@@ -68,9 +63,6 @@ class DrawManager {
     }
 
 
-
-
-
     finish() {
 
 
@@ -79,7 +71,6 @@ class DrawManager {
             return;
 
         }
-
 
 
         if (this.points.length < 2) {
@@ -95,49 +86,9 @@ class DrawManager {
         }
 
 
+        const object = 
 
-
-        const object = {
-
-
-            id:
-
-                this.mode +
-
-                "_" +
-
-                Date.now(),
-
-
-
-            layer:
-
-                this.getLayer(),
-
-
-
-            type:
-
-                this.getGeometryType(),
-
-
-
-            geometry:
-
-                this.createGeometry(),
-
-
-
-            properties:
-
-                this.createProperties()
-
-
-
-        };
-
-
-
+            this.createObject();
 
         const created =
 
@@ -146,9 +97,6 @@ class DrawManager {
                 object
 
             );
-
-
-
 
         if (window.infoPanel) {
 
@@ -162,10 +110,6 @@ class DrawManager {
 
         }
 
-
-
-
-
         console.log(
 
             "CREATED:",
@@ -174,7 +118,11 @@ class DrawManager {
 
         );
 
+        this.reset();
 
+    }
+
+    reset() {
 
         this.mode = null;
 
@@ -184,10 +132,41 @@ class DrawManager {
 
     }
 
+    //====================================================
+    // CREATE OBJECT
+    //====================================================
 
+    createObject() {
 
+        return {
 
+            id:
 
+                this.mode +
+
+                "_" +
+
+                Date.now(),
+
+            layer:
+
+                this.getLayer(),
+
+            type:
+                
+                this.getGeometryType(),
+
+            geometry:
+
+                this.createGeometry(),
+
+            properties:
+
+                this.createProperties()
+
+        };
+
+    }
 
     createGeometry() {
 

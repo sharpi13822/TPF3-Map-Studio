@@ -21,32 +21,35 @@ class ImportManager {
 
         reader.onload = (event) => {
 
-
-            const data = JSON.parse(
+            this.processImportData(
                 event.target.result
             );
 
-
-            console.log(
-                "IMPORT DATA:",
-                data
-            );
-
-
-
-            this.loadObjects(
-                data
-            );
-
-
         };
 
+    }  
 
+    //====================================================
+    // PROCESS IMPORT DATA
+    //====================================================
 
-        reader.readAsText(file);
+    processImportData(text) {
 
+        const data = JSON.parse(
+            text
+        );
+
+        console.log(
+           "IMPORT DATA:",
+            data
+        );
+
+        this.loadObjects(
+            data
+        );
 
     }
+
 
 
     loadObjects(objects) {

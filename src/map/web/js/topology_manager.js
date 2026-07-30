@@ -13,32 +13,103 @@ class TopologyManager {
 
     }
 
+    formatCoordinate(value) {
+
+        return value.toFixed(6);
+
+    }
+
     //====================================================
     // VERTEX KEY
     //====================================================
 
     vertexKey(latlng) {
 
-        return `${latlng.lat.toFixed(6)}|${latlng.lng.toFixed(6)}`;
+        return `${this.formatCoordinate(latlng.lat)}|${this.formatCoordinate(latlng.lng)}`;
 
     }
 
-    //----------------------------------------------------
-    // EDGE KEY
-    //----------------------------------------------------
+    //====================================================
+    // EdgeKey
+    //====================================================
 
+    createEdgeKey(key1, key2) {
+
+        return key1 < key2
+            ? `${key1} -> ${key2}`
+            : `${key2} -> ${key1}`;
+
+    }
+
+
+    //====================================================
+    // EDGE KEY
+    //====================================================
+    
     edgeKey(a, b) {
 
         const key1 = this.vertexKey(a);
         const key2 = this.vertexKey(b);
 
-        return key1 < key2
+        return this.createEdgeKey(
 
-            ? `${key1} -> ${key2}`
-            : `${key2} -> ${key1}`;
+            key1,
+            key2
+        );
 
     }
-    
+
+    //====================================================
+    // INDEX VERTEX
+    //====================================================
+
+    indexVertex(object, data) {
+
+        if (!data)
+            return;
+
+        if (
+            data.lat !== undefined &&
+            data.lng !== undefined
+        ) {
+
+            const key =
+                this.vertexKey(data);
+
+            if (!this.#vertexIndex.has(key)) {
+
+                this.#vertexIndex.set(
+                    key,
+                    []
+                );
+
+            }
+
+            this.#vertexIndex
+                .get(key)
+                .push({
+
+                    object,
+                    latlng: data
+
+                });
+
+            return;
+
+        }
+
+        if (Array.isArray(data)) {
+
+           for (const item of data)
+               this.indexVertex(
+                   object,
+                   item
+                );
+
+        }
+
+    }
+
     //====================================================
     // BUILD VERTEX INDEX
     //====================================================
@@ -52,56 +123,13 @@ class TopologyManager {
 
     for (const object of objects) {
 
-        const addPoints = data => {
-
-            if (!data)
-                return;
-
-            if (
-                data.lat !== undefined &&
-                data.lng !== undefined
-            ) {
-
-                const key =
-                    this.vertexKey(data);
-
-                if (!this.#vertexIndex.has(key)) {
-
-                    this.#vertexIndex.set(
-                        key,
-                        []
-                    );
-
-                }
-
-                this.#vertexIndex
-                    .get(key)
-                    .push({
-
-                        object,
-                        latlng: data
-
-                    });
-
-                return;
-
-            }
-
-            if (Array.isArray(data)) {
-
-                for (const item of data)
-                    addPoints(item);
-
-            }
-
-        };
-
-        addPoints(
+        this.indexVertex(
+            object,
             object.getLatLngs?.()
         );
 
-    }    
-
+    }
+  
     console.log(
         "VertexIndex:",
         this.#vertexIndex.size
@@ -109,7 +137,77 @@ class TopologyManager {
 
     
 
-}    
+}
+
+    //====================================================
+    // PROCESS EDGE RING
+    //====================================================
+
+    processEdgeRing(object, ring) {
+
+        if (ring.length < 2)
+            return;
+
+        for (let i = 0; i < ring.length; i++) {
+
+            const a = ring[i];
+            const b = ring[(i + 1) % ring.length];
+
+            const key =  this.edgeKey(a, b);
+
+            if (!this.#edgeIndex.has(key)) {
+
+                this.#edgeIndex.set(
+                    key,
+                    []
+                );
+
+            }
+
+            this.#edgeIndex
+                .get(key)
+                .push({
+
+                    object,
+                    a,
+                    b
+
+                });
+
+        }
+
+    }
+
+    //====================================================
+    // ADD EDGES
+    //====================================================
+
+    addEdges(object) {
+
+        const latlngs = object.getLatLngs();
+
+        const process = (coords) => {
+
+            if (!coords)
+                return;
+
+            if (coords[0] instanceof L.LatLng) {
+
+               this.processEdgeRing(
+                   object,
+                   coords
+                );
+
+            } else {
+
+                coords.forEach(process);
+
+            }
+        };
+
+        process(latlngs);
+    }
+
     //====================================================
     // BUILD EDGE INDEX
     //====================================================
@@ -118,77 +216,22 @@ class TopologyManager {
 
         this.#edgeIndex.clear();
 
-        const addEdges = (object) => {
+        const objects = this.#geometry.getLeafletObjects();
 
-            const latlngs = object.getLatLngs();
-
-            const processRing = (ring) => {
-
-                if (ring.length < 2)
-                    return;
-
-                for (let i = 0; i < ring.length; i++) {
-
-                    const a = ring[i];
-                    const b = ring[(i + 1) % ring.length];
-
-                    const key = this.edgeKey(a, b);
-
-                    if (!this.#edgeIndex.has(key)) {
-
-                        this.#edgeIndex.set(key, []);
-
-                    }
-
-                    this.#edgeIndex.get(key).push({
-
-                        object,
-                        a,
-                        b
-
-                    });
-
-                }
-
-            };
-
-            const process = (coords) => {
-
-                if (!coords)
-                    return;
-
-            if (coords[0] instanceof L.LatLng) {
-                
-                processRing(coords);
-
-            } else {
-
-                coords.forEach(process);
-
-            }
-
-        };
-
-        process(latlngs);
-
-    };
-
-    const objects = this.#geometry.getLeafletObjects();
-
-    for (const object of objects) {    
+        for (const object of objects) { 
+            
+            this.addEdges(object);
           
                 
-            addEdges(object);
-
-    } 
+        } 
 
 
-    console.log(
-        "EdgeIndex:",
-        this.#edgeIndex.size
-    );
+        console.log(
+            "EdgeIndex:",
+            this.#edgeIndex.size
+        );
 
-}
+    }
 
     //====================================================
     // REBUILD
@@ -271,7 +314,30 @@ class TopologyManager {
 
     }
 
+    //====================================================
+    // COLLECT NEIGHBORS
+    //====================================================
 
+    collectNeighbors(
+        neighbors,
+        object,
+        a,
+        b
+    ) {
+
+        const edges = this.getSharedEdges(a, b);
+
+        for (const edge of edges) {
+
+            if (edge.object !== object) {
+
+                neighbors.add(edge.object);
+                
+            }
+
+        }
+
+    }
 
     //====================================================
     // GET NEIGHBORS
@@ -296,18 +362,12 @@ class TopologyManager {
                 const a = ring[i];
                 const b = ring[(i + 1) % ring.length];
 
-                const edges =
-                    this.getSharedEdges(a, b);
-
-                for (const edge of edges) {
-
-                   if (edge.object !== object) {
-                    
-                       neighbors.add(edge.object);
-
-                    }
-
-                }
+                this.collectNeighbors(
+                    neighbors,
+                    object,
+                    a,
+                    b
+                );
 
             }
 
@@ -424,7 +484,28 @@ class TopologyManager {
 
     }
 
+    //====================================================
+    // INSPECT VERTEX
+    //====================================================
 
+    inspectVertex(data) {
+
+        const key = this.vertexKey(data);
+
+        const shared = this.#vertexIndex.get(key) || [];
+
+        console.log({
+
+            key,
+            lat: data.lat,
+            lng: data.lng,
+            isShared: shared.length > 1,
+            objects: shared.map(v =>
+                v.object.tpf2?.id
+            )
+
+        });
+    }
 
     //====================================================
     // INSPECT OBJECT
@@ -454,25 +535,8 @@ class TopologyManager {
                data.lng !== undefined
             ) {
 
-                const key =
-                    this.vertexKey(data);
-
-                const shared =
-                    this.#vertexIndex.get(key) || [];
-
-                console.log({
-
-                    key,
-                    lat: data.lat,
-                    lng: data.lng,
-                    isShared: shared.length > 1,
-                    objects: shared.map(v =>
-                        v.object.tpf2?.id
-                    )
-
-                });
-
-                return;
+                this.inspectVertex(data);
+                return;    
 
             }
 

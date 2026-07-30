@@ -47,12 +47,6 @@ class GeometryEditor {
 
         };
 
-        // aktiver Drag eines Segmenthandles
-        this.activeSegmentMarker = null;
-
-        // Index des neu erzeugten Vertex
-        this.activeVertexIndex = -1;
-
         // Aktiver Vertex
         this.object = null;
 
@@ -92,37 +86,19 @@ class GeometryEditor {
         this.stop();
 
         this.object = object;
+
         this.map = object._map;
 
-        if (!this.handleLayer) {
+        this.log("START", object);
 
-            this.handleLayer = L.layerGroup();
-
-        }
-
-        this.handleLayer.addTo(this.map);
-
-        this.saveStyle();
-
-        this.setEditStyle();
+        this.prepareHandleLayer();
+        
+        this.enableEditMode();
 
         this.refresh();
 
-        this.map.doubleClickZoom.disable();
-
-        this.map.getContainer().style.cursor = "crosshair";
-
-        this.map.on(
-            "click",
-            this.onMapClick,
-            this
-        );
-        
-        document.addEventListener(
-            "keydown",
-            this.keyDownHandler
-        );
-
+        this.bindEvents();
+ 
         this.log(
             "GeometryEditor START",
             object
@@ -140,28 +116,115 @@ class GeometryEditor {
 
         this.clear();
 
-        if (this.map) {
+        this.disableEditMode();
+ 
+        this.unbindEvents();
 
+        this.object = null;
 
-            this.map.doubleClickZoom.enable();
+        this.log(
+            "GeometryEditor STOP"
 
-            this.map.getContainer().style.cursor = "";
-            
-            this.map.off(
+        );
+
+    }
+
+    //====================================================
+    // HANDLE LAYER
+    //====================================================
+
+    prepareHandleLayer() {
+
+        if (!this.handleLayer) {
+
+            this.handleLayer =
+                L.layerGroup();
+
+        }
+
+        this.handleLayer.addTo(
+            this.map
+        );
+
+    }
+
+    //====================================================
+    // ENABLE EDIT MODE
+    //====================================================
+
+    enableEditMode() {
+
+        this.saveStyle();
+
+        this.setEditStyle();
+
+        this.map.doubleClickZoom.disable();
+
+        this.map
+            .getContainer()
+            .style.cursor = "crosshair";
+
+    }
+
+    //====================================================
+    // DISABLE EDIT MODE
+    //====================================================
+
+    disableEditMode() {
+
+        if (!this.map) {
+
+            return;
+
+        }
+
+        this.map.doubleClickZoom.enable();
+
+        this.map
+            .getContainer()
+            .style.cursor = "";
+
+    }
+
+    //====================================================
+    // BIND EVENTS
+    //====================================================
+
+    bindEvents() {
+
+        this.map.on(
             "click",
             this.onMapClick,
             this
         );
 
+        document.addEventListener(
+            "keydown",
+            this.keyDownHandler
+        );
+
     }
-        this.object = null;
+
+    //====================================================
+    // UNBIND EVENTS
+    //====================================================
+
+    unbindEvents() {
+
+        if (this.map) {
+
+            this.map.off(
+                "click",
+                this.onMapClick,
+                this
+            );
+
+        }
 
         document.removeEventListener(
             "keydown",
             this.keyDownHandler
         );
-
-        this.log("GeometryEditor STOP");
 
     }
 
@@ -187,11 +250,15 @@ class GeometryEditor {
 
     refresh() {
 
+        this.log("REFRESH");
+
         this.clear();
 
         if (!this.object) return;
 
         this.createHandles();
+
+        this.log("CREATE HANDLES");
 
         this.createSegmentHandles();
 
@@ -223,6 +290,23 @@ class GeometryEditor {
         return this.object.tpf2.geometry;
 
     }
+
+    //====================================================
+    // RETURN GEOMETRY OF OBJECT
+    //====================================================
+
+    getGeometryArray(object = this.object) {
+
+        if (!object)
+            return [];
+
+        return object.tpf2.type === "polygon"
+
+            ? object.tpf2.geometry[0]
+
+            : object.tpf2.geometry;
+
+    }    
 
     //====================================================
     // MAP CLICK
@@ -257,11 +341,8 @@ class GeometryEditor {
 
     findEdgeIndex(object, a, b) {
 
-        const points =
-            object.tpf2.type === "polygon"
-                ? object.tpf2.geometry[0]
-                : object.tpf2.geometry;
-
+        const points = this.getGeometryArray(object);
+            
         const keyA =
             this.topology.vertexKey(a);
 
@@ -314,12 +395,8 @@ class GeometryEditor {
 
         if (!object) return;
 
-        const points = 
-            object.tpf2.type === "polygon"
-                ? object.tpf2.geometry[0]
-                : object.tpf2.geometry;
-        
-
+        const points = this.getGeometryArray(object);
+            
         const latlngs = points.map(p => [
             p[0],
             p[1]
@@ -419,6 +496,8 @@ class GeometryEditor {
 
     createHandles() {
 
+        console.log("CREATE HANDLES");
+
         if (!this.object) return;
 
         const points = this.getGeometryPoints();
@@ -441,6 +520,24 @@ class GeometryEditor {
 
         marker.vertexIndex = index;
 
+        this.bindVertexDragEvents(marker);
+
+        this.bindVertexSelectionEvents(marker);
+
+        this.bindVertexDeleteEvent(marker);
+
+        marker.addTo(this.handleLayer);
+
+        this.vertexHandles.push(marker);
+
+    }
+
+    //------------------------------------------------
+    // BIND VERTEX DRAG EVENTS
+    //------------------------------------------------
+
+    bindVertexDragEvents(marker) {
+
         //------------------------------------------------
         // DRAG START
         //------------------------------------------------
@@ -453,7 +550,7 @@ class GeometryEditor {
 
             this.activeSharedVertices =
                 this.topology.getSharedVertices(
-                    e.target.getLatLng()
+                        e.target.getLatLng()
 
                 );
                 
@@ -465,7 +562,7 @@ class GeometryEditor {
                 }))
 
             );
-        });
+       
 
             this.selectVertex(marker.vertexIndex);
 
@@ -477,7 +574,7 @@ class GeometryEditor {
 
             }
 
-        
+        });
 
         //------------------------------------------------
         // DRAG
@@ -486,20 +583,14 @@ class GeometryEditor {
         marker.on("drag", (e) => {
 
             const latlng = this.snap(
-
                 e.target.getLatLng(),
-
                 e.target.vertexIndex
-
             );
 
             const changedObjects =
                 this.topology.moveSharedVertices(
-
                     this.activeSharedVertices,
-
                     latlng
-
                 );
 
             for (const object of changedObjects) {
@@ -512,16 +603,16 @@ class GeometryEditor {
             }
 
             this.updateGeometry(
-
                 this.object,
-
                 e.target.vertexIndex,
-
                 latlng
-
             );
 
         });
+        
+        //------------------------------------------------
+        // DRAG END
+        //------------------------------------------------
 
         marker.on("dragend", () => {
 
@@ -539,36 +630,46 @@ class GeometryEditor {
 
         });
 
-
-        //------------------------------------------------
-        // DELETE VERTEX
-        //------------------------------------------------
-
-        marker.on("contextmenu", () => {
-
-            this.removeVertex(
-
-                marker.vertexIndex
-
-            );
-
-        });
-
-        marker.on("click", () => {
-
-            this.log("CLICK");
-
-            this.selectVertex(marker.vertexIndex);
-
-            this.log("Aktiver Vertex:", this.activeVertex);
-
-        });
-
-        marker.addTo(this.handleLayer);
-
-        this.vertexHandles.push(marker);
-
     }
+
+        //====================================================
+        // BIND VERTEX SELECTION
+        //====================================================
+
+        bindVertexSelectionEvents(marker) {
+
+            marker.on("click", () => {
+
+                this.log("CLICK");
+               
+                this.selectVertex(
+                   marker.vertexIndex
+                );
+
+                this.log(
+                    "Aktiver Vertex:",
+                    this.activeVertex
+                );
+
+            });
+
+        }
+
+        //====================================================
+        // BIND VERTEX DELETE
+        //====================================================
+        
+        bindVertexDeleteEvent(marker) {
+
+            marker.on("contextmenu", () => {
+
+                this.removeVertex(
+                    marker.vertexIndex
+                );
+
+            });
+
+        }
 
     //====================================================
     // UPDATE GEOMETRY
@@ -579,63 +680,19 @@ class GeometryEditor {
         if (!object) return;
 
         const points = 
-            object.tpf2.type === "polygon"
-                ? object.tpf2.geometry[0]
-                : object.tpf2.geometry;
+           this.getGeometryArray(object);
 
         if (index < 0 || index >= points.length)
             return;
 
-        // Nur den Punkt aktualisieren
         points[index][0] = latlng.lat;
         points[index][1] = latlng.lng;
 
-        // Objekt neu zeichnen
         this.redrawObject(object);
 
 
     }
 
-    onVertexDragStart(marker, e) {
-
-        this.saveHistory();
-
-        this.log("DRAGSTART");
-
-        this.activeSharedVertices =
-            this.topology.getSharedVertices(
-                e.target.getLatLng()
-            );
-
-        this.table(
-            this.activeSharedVertices.map(v => ({
-                id: v.object.tpf2?.id,
-                lat: v.latlng.lat,
-                lng: v.latlng.lng
-            }))
-        );
-
-        this.selectVertex(marker.vertexIndex);
-
-        const element = marker.getElement();
-
-        if (element) {
-
-            element.classList.add("active");
-
-        }
-
-    }
-
-    //====================================================
-    // REFRESH HANDLES
-    //====================================================
-
-    refreshHandles() {
-
-        this.refresh();
-
-    }
     //====================================================
     // SELECT VERTEX
     //====================================================
@@ -765,9 +822,7 @@ class GeometryEditor {
 
 
         const points =
-            object.tpf2.type === "polygon"
-               ? object.tpf2.geometry[0]
-               : object.tpf2.geometry;
+           this.getGeometryArray(object);
 
          points.splice(index, 0, [
 
@@ -787,6 +842,38 @@ class GeometryEditor {
     }
 
     //====================================================
+    // CAN REMOVE VERTEX
+    //====================================================
+
+    canRemoveVertex() {
+
+        const points =
+        this.getGeometryPoints();
+
+        if (
+            this.isPolygon() &&
+            points.length <= 3
+        ) {
+
+            return false;
+
+        }
+
+        if (
+
+            this.isPolyline() &&
+            points.length <= 2
+        ) {
+
+            return false;
+
+        }
+
+        return true;
+
+    }
+
+    //====================================================
     // REMOVE VERTEX
     //====================================================
 
@@ -794,34 +881,13 @@ class GeometryEditor {
 
         if (!this.object) return;
 
+        if (!this.canRemoveVertex()) return;
+
         this.saveHistory();
 
-        const points = this.getGeometryPoints();
-
-        // Polygon benötigt mindestens 3 Punkte
-        if (
-
-            this.object.tpf2.type === "polygon" &&
-            points.length <= 3
-
-        ) {
-
-            return;
-
-        }
-
-        // Linie mindestens 2 Punkte
-        if (
-
-            this.object.tpf2.type !== "polygon" &&
-            points.length <= 2
-
-        ) {
-
-            return;
-
-        }
-
+        const points = 
+            this.getGeometryPoints();
+        
         points.splice(index, 1);
 
         this.redrawObject();
@@ -875,16 +941,17 @@ class GeometryEditor {
     }
 
     //====================================================
-    // CREATE SEGMENT HANDLE
+    // CREATE SEGMENT MARKER
     //====================================================
 
-    createSegmentHandle(a, b, insertIndex) {
+    createSegmentMarker(a, b) {
 
-        const marker = L.marker(
+        return L.marker(
 
             [
 
                 (a[0] + b[0]) / 2,
+
                 (a[1] + b[1]) / 2
 
             ],
@@ -907,11 +974,47 @@ class GeometryEditor {
 
         );
 
-        let inserted = false;
-        let vertexIndex = -1;
+    }
 
-        let activeSharedEdges = [];
-        let activeSegmentVertices = [];
+    //====================================================
+    // CREATE SEGMENT HANDLE
+    //====================================================
+
+    createSegmentHandle(a, b, insertIndex) {
+
+        const marker = this.createSegmentMarker(a, b);
+
+            this.bindSegmentDragEvents(
+
+                marker,
+
+                a,
+
+                b,
+
+                insertIndex
+
+        );
+
+        marker.addTo(this.handleLayer);
+
+        this.segmentHandles.push(marker);
+
+    }
+
+        //====================================================
+        // BIND SEGMENT DRAG EVENTS
+        //====================================================
+
+        bindSegmentDragEvents(marker, a, b, insertIndex) {
+
+            let inserted = false;
+
+            let vertexIndex = -1;
+
+            let activeSharedEdges = [];
+
+            let activeSegmentVertices = [];
 
         //------------------------------------------------
         // DRAG START
@@ -980,9 +1083,6 @@ class GeometryEditor {
 
             );
 
-            // Falls keine gemeinsame Kante existiert,
-            // normales Verhalten
-
             if (activeSegmentVertices.length === 0) {
 
                 if (!inserted) {
@@ -1013,10 +1113,6 @@ class GeometryEditor {
                 return;
 
             } 
-
-            //------------------------------------------------
-            // Beim ersten Ziehen wird ein neuer Vertex erzeugt
-            //------------------------------------------------
 
             inserted = true;
 
@@ -1049,7 +1145,7 @@ class GeometryEditor {
     // RETURN SNAP VERTICES
     //====================================================
 
-    findVertices() {
+    getSnapVertices() {
 
         const vertices = [];
 
@@ -1104,7 +1200,7 @@ class GeometryEditor {
     // RETURN SNAP SEGMENTS
     //====================================================
     
-    findSegments() {
+    getSnapSegments() {
 
         const segments = [];
 
@@ -1157,6 +1253,18 @@ class GeometryEditor {
     }
 
     //====================================================
+    // RETURN CONTAINER POINT
+    //====================================================
+
+    getContainerPoint(latlng) {
+
+        return this.map.latLngToContainerPoint(
+            latlng
+        );
+
+    }
+
+    //====================================================
     // FIND SNAP VERTEX
     //====================================================
 
@@ -1164,16 +1272,15 @@ class GeometryEditor {
 
         if (!this.enableSnapping) return null;
 
-        const mouse = this.map.latLngToContainerPoint(latlng);
+        const mouse = this.getContainerPoint(latlng);
 
-        const vertices = this.findVertices();
+        const vertices = this.getSnapVertices();
 
         for (let i = 0; i < vertices.length; i++) {
 
            if (i === ignoreIndex) continue;
            
-           const p = this.map.latLngToContainerPoint(
-
+           const p = this.getContainerPoint(
                vertices[i].getLatLng()
 
             );
@@ -1197,18 +1304,18 @@ class GeometryEditor {
     findSnapSegment(latlng) {
 
         const mouse =
-        this.map.latLngToContainerPoint(latlng);
+       this.getContainerPoint(latlng);
 
         const segments =
-        this.findSegments();
+        this.getSnapSegments();
 
         for (const segment of segments) {
 
             const a =
-            this.map.latLngToContainerPoint(segment.a);
+             this.getContainerPoint(segment.a);
 
             const b =
-            this.map.latLngToContainerPoint(segment.b);
+            this.getContainerPoint(segment.b);
 
             const dx = b.x - a.x;
             const dy = b.y - a.y;
