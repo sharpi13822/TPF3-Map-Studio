@@ -309,6 +309,33 @@ class MapController(QObject):
 
             return
 
+    def rename_marker(
+            self,
+            marker_id: str,
+            text: str
+        ):
+
+        """
+        Ändert den Text eines Markers.
+        """
+
+        for marker in self.project.markers:
+
+            if marker.id != marker_id:
+                continue
+
+            marker.text = text
+
+            self.project.mark_dirty()
+
+            self.redraw_markers()
+
+            self.marker_updated.emit(
+                marker.id
+            )
+
+            return
+
     def clear_markers(self):
         """
         Entfernt alle Marker.

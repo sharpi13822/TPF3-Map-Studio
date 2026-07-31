@@ -30,6 +30,9 @@ def create_properties_dock(parent):
     parent.prop_id = QLabel()
 
     parent.prop_name = QLineEdit()
+    parent.prop_name.editingFinished.connect(
+        parent._marker_name_changed
+    )
 
     parent.prop_lat = QLabel()
 

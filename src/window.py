@@ -567,6 +567,37 @@ class MainWindow(QMainWindow):
             f"{marker.lon:.6f}"
         )
 
+    def _marker_name_changed(self):
+
+        controller = self.map_widget.controller
+
+        marker = next(
+            (
+               m
+               for m in controller.project.markers
+               if m.id == self.prop_id.text()
+            ),
+            None
+        )
+
+        if marker is None:
+            return
+
+        controller.rename_marker(
+            marker.id,
+            self.prop_name.text()
+        )
+
+        print(
+            "Marker umbenannt",
+            marker.text
+        )
+
+        print(
+            "Neuer Name:",
+            self.prop_name.text()
+        )
+
     # ---------------------------------------------------------
     # Fenster schließen
     # ---------------------------------------------------------
