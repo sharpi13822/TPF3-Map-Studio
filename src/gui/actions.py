@@ -9,14 +9,17 @@ class AppActions:
 
         # Datei
         self.new_project = QAction("Neu", parent)
+        self.new_project.setToolTip("Neues Projekt")
         self.new_project.setIcon(
             icon("new")
         )
         self.open_project = QAction("Öffnen", parent)
+        self.open_project.setToolTip("Projekt öffnen")
         self.open_project.setIcon(
            icon("open")
         )
         self.save_project = QAction("Speichern", parent)
+        self.save_project.setToolTip("Projekt speichern")
         self.save_project.setIcon(
             icon("save")
                 

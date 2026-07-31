@@ -1,11 +1,14 @@
 from PySide6.QtWidgets import QToolBar
 from PySide6.QtCore import Qt
+from PySide6.QtCore import QSize
 
 
 class MainToolbar(QToolBar):
 
     def __init__(self, actions):
         super().__init__("Werkzeuge")
+        self.setIconSize(QSize(28, 28))
+        self.setMovable(False)
 
         self.setToolButtonStyle(
             Qt.ToolButtonTextBesideIcon
