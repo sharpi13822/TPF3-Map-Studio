@@ -1,4 +1,6 @@
 from PySide6.QtCore import Qt
+from PySide6.QtGui import QActionGroup
+
 from PySide6.QtWidgets import (
     QMainWindow,
     QStatusBar,
@@ -124,6 +126,8 @@ class MainWindow(QMainWindow):
         controller = self.map_widget.controller
 
         controller.show_start_position()
+
+        controller.set_tool( Tool.MARKER)
 
         self._update_window_title()
 
@@ -365,25 +369,35 @@ class MainWindow(QMainWindow):
 
         tools_menu = menu.addMenu("Werkzeuge")
 
-        marker_action = tools_menu.addAction(
-            "Marker"
+        tool_group = QActionGroup(self)
+
+        tool_group.setExclusive(True)
+
+        tool_group.addAction( self.actions.marker_tool)
+
+        tool_group.addAction(self.actions.selection_tool)
+
+        self.actions.marker_tool.setChecked(True)
+
+        tools_menu.addAction(
+            self.actions.marker_tool
         )
 
-        selection_action = tools_menu.addAction(
-            "Auswahl"
+        tools_menu.addAction(
+            self.actions.selection_tool
         )
 
         osm_action = tools_menu.addAction(
             "OSM laden"
         )
 
-        marker_action.triggered.connect(
+        self.actions.marker_tool.triggered.connect(
             lambda: self.map_widget.controller.set_tool(
                 Tool.MARKER
             )
         )
 
-        selection_action.triggered.connect(
+        self.actions.selection_tool.triggered.connect(
             lambda: self.map_widget.controller.set_tool(
                 Tool.SELECTION
             )

@@ -16,6 +16,13 @@ class AppActions:
         self.undo = QAction("Rückgängig", parent)
         self.redo = QAction("Wiederholen", parent)
 
+        # Werkzeuge
+        self.marker_tool = QAction("Marker", parent)
+        self.marker_tool.setCheckable(True)
+
+        self.selection_tool = QAction("Auswahl", parent)
+        self.selection_tool.setCheckable(True)
+
         self.exit = QAction("Beenden", parent)
         self.exit.triggered.connect(parent.close)
 

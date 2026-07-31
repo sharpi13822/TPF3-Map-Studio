@@ -9,3 +9,8 @@ class MainToolbar(QToolBar):
         self.addAction(actions.new_project)
         self.addAction(actions.open_project)
         self.addAction(actions.save_project)
+
+        self.addSeparator()
+        
+        self.addAction(actions.marker_tool)
+        self.addAction(actions.selection_tool)
