@@ -339,13 +339,13 @@ class MainWindow(QMainWindow):
             self.redo_action
         )
 
-        self.actions.undo.triggered.connect(
-            self._undo
-        )
+      # self.actions.undo.triggered.connect(
+      #     self._undo
+      #  )
 
-        self.actions.redo.triggered.connect(
-            self._redo
-        )
+      # self.actions.redo.triggered.connect(
+      #     self._redo
+      #  )
 
         self.actions.undo.setEnabled(False)
         self.actions.redo.setEnabled(False)
