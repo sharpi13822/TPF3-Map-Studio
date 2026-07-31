@@ -16,8 +16,6 @@ class UndoStack(QObject):
 
     def push(self, command):
 
-        print("UndoStack.push()")
-
         command.execute()
 
         self.undo_stack.append(command)

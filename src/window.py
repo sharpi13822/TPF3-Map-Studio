@@ -500,13 +500,6 @@ class MainWindow(QMainWindow):
 
         controller = self.map_widget.controller
 
-        print(
-            "Undo:",
-            controller.can_undo,
-            "Rebo:",
-            controller.can_redo
-        )
-
         self.actions.undo.setEnabled(
             controller.can_undo
         )
