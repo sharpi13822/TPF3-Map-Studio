@@ -9,7 +9,7 @@ class MainToolbar(QToolBar):
     def __init__(self, actions):
         super().__init__("Werkzeuge")
         self.setToolButtonStyle(Qt.ToolButtonIconOnly)
-        self.setIconSize(QSize(28, 28))
+        self.setIconSize(QSize(24, 24))
         self.setMovable(False)
 
        # self.setToolButtonStyle(

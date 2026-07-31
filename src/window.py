@@ -2,6 +2,7 @@ from PySide6.QtCore import Qt
 from PySide6.QtGui import QAction, QKeySequence, QShortcut
 from PySide6.QtWidgets import (
     QFileDialog,
+    QLabel,
     QMainWindow,
     QMessageBox,
     QStatusBar,
@@ -72,8 +73,14 @@ class MainWindow(QMainWindow):
 
         status = QStatusBar()
 
+        self.tool_status = QLabel("Werkzeug: Marker")
+
         status.showMessage(
             "Bereit"
+        )
+
+        status.addPermanentWidget(
+            self.tool_status
         )
 
         self.setStatusBar(status)
@@ -114,7 +121,7 @@ class MainWindow(QMainWindow):
 
         self._update_window_title()
 
-            # ---------------------------------------------------------
+    # ---------------------------------------------------------
     # Karte geladen
     # ---------------------------------------------------------
 
@@ -388,16 +395,26 @@ class MainWindow(QMainWindow):
 
         marker_action.triggered.connect(
 
-            lambda: self.map_widget.controller.set_tool(
-                Tool.MARKER
+            lambda: (
+                self.map_widget.controller.set_tool(
+                    Tool.MARKER
+                ),
+                self.tool_status.setText(
+                    "Werkzeug: Marker"
+                )
             )
 
         )
 
         selection_action.triggered.connect(
 
-            lambda: self.map_widget.controller.set_tool(
-                Tool.SELECTION
+            lambda: (
+                self.map_widget.controller.set_tool(
+                    Tool.SELECTION
+                ),
+                self.tool_status.setText(
+                    "Werkzeug: Auswahl"
+                )
             )
 
         )
