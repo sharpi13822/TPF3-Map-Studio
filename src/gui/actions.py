@@ -30,8 +30,10 @@ class AppActions:
         # Bearbeiten
         self.undo = QAction("Rückgängig", parent)
         self.undo.setIcon(icon("undo"))
+        self.undo.setEnabled(False)
         self.redo = QAction("Wiederholen", parent)
         self.redo.setIcon(icon("redo"))
+        self.redo.setEnabled(False)
 
         # Werkzeuge
         self.marker_tool = QAction("Marker", parent)

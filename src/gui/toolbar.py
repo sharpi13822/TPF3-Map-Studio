@@ -22,5 +22,10 @@ class MainToolbar(QToolBar):
 
         self.addSeparator()
 
+        self.addAction(actions.undo)
+        self.addAction(actions.redo)
+
+        self.addSeparator()
+
         self.addAction(actions.marker_tool)
         self.addAction(actions.selection_tool)
