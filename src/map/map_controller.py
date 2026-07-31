@@ -338,12 +338,12 @@ class MapController(QObject):
             f"Marker ausgewählt: {marker_id}"
         )
 
-        self.api.select_marker(
-            marker_id
-        )
+       # self.api.select_marker(
+       #     marker_id
+       # )
 
         self.marker_selected.emit(
-            marker_id
+           marker_id
         )
 
     def redraw_markers(self):

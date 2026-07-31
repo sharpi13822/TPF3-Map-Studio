@@ -517,7 +517,7 @@ class MainWindow(QMainWindow):
         self.map_widget.controller.redo()   
 
 
-         # ---------------------------------------------------------
+    # ---------------------------------------------------------
     # Marker ausgewählt
     # ---------------------------------------------------------
 
@@ -525,6 +525,8 @@ class MainWindow(QMainWindow):
         self,
         marker_id: str
     ):
+
+        print(f"Marker ausgewählt: {marker_id}")    
         """
         Aktualisiert die Statusleiste nach Auswahl eines Markers.
         """
@@ -547,7 +549,23 @@ class MainWindow(QMainWindow):
             f"Marker: {marker.id} | "
             f"{marker.lat:.6f}, "
             f"{marker.lon:.6f}"
-        )   
+        )
+
+        self.prop_id.setText(
+            marker.id
+        )
+
+        self.prop_name.setText(
+            marker.text
+        )
+
+        self.prop_lat.setText(
+            f"{marker.lat:.6f}"
+        )
+
+        self.prop_lon.setText(
+            f"{marker.lon:.6f}"
+        )
 
     # ---------------------------------------------------------
     # Fenster schließen

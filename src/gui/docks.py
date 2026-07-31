@@ -1,8 +1,11 @@
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
     QDockWidget,
+    QWidget,
+    QFormLayout,
+    QLabel,
+    QLineEdit,
     QListWidget,
-    QTextEdit,
 )
 
 
@@ -19,6 +22,39 @@ def create_properties_dock(parent):
 
     dock = QDockWidget("Eigenschaften", parent)
     dock.setAllowedAreas(Qt.RightDockWidgetArea)
-    dock.setWidget(QTextEdit())
+
+    form = QWidget()
+
+    layout = QFormLayout(form)
+
+    parent.prop_id = QLabel()
+
+    parent.prop_name = QLineEdit()
+
+    parent.prop_lat = QLabel()
+
+    parent.prop_lon = QLabel()
+
+    layout.addRow(
+        "ID:",
+        parent.prop_id
+    )
+
+    layout.addRow(
+        "Name:",
+        parent.prop_name
+    )
+
+    layout.addRow(
+        "Breite:",
+        parent.prop_lat
+    )
+
+    layout.addRow(
+        "Länge:",
+        parent.prop_lon
+    )
+
+    dock.setWidget(form)
 
     return dock
