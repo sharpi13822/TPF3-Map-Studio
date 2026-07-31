@@ -156,10 +156,6 @@ class MainWindow(QMainWindow):
 
         self._update_undo_actions()
 
-        controller.marker_selected.connect(
-        self._marker_selected
-        )
-
         self._update_window_title()
 
     # ---------------------------------------------------------
@@ -346,13 +342,13 @@ class MainWindow(QMainWindow):
             self.redo_action
         )
 
-      # self.actions.undo.triggered.connect(
-      #     self._undo
-      #  )
+        self.actions.undo.triggered.connect(
+            self._undo
+        )
 
-      # self.actions.redo.triggered.connect(
-      #     self._redo
-      #  )
+        self.actions.redo.triggered.connect(
+            self._redo
+        )
 
         self.actions.undo.setEnabled(False)
         self.actions.redo.setEnabled(False)
@@ -504,13 +500,28 @@ class MainWindow(QMainWindow):
 
         controller = self.map_widget.controller
 
-        self.undo_action.setEnabled(
+        print(
+            "Undo:",
+            controller.can_undo,
+            "Rebo:",
+            controller.can_redo
+        )
+
+        self.actions.undo.setEnabled(
             controller.can_undo
         )
 
-        self.redo_action.setEnabled(
+        self.actions.redo.setEnabled(
             controller.can_redo
         )
+
+    def _undo(self):
+
+        self.map_widget.controller.undo() 
+
+    def _redo(self):
+
+        self.map_widget.controller.redo()   
 
 
          # ---------------------------------------------------------
