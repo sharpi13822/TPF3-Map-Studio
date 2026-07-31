@@ -9,6 +9,12 @@ class AppActions:
         self.new_project = QAction("Neu", parent)
         self.open_project = QAction("Öffnen", parent)
         self.save_project = QAction("Speichern", parent)
+        self.save_project_as = QAction("Speichern unter...",parent)
+        self.close_project = QAction("Projekt schließen", parent)
+
+        # Bearbeiten
+        self.undo = QAction("Rückgängig", parent)
+        self.redo = QAction("Wiederholen", parent)
 
         self.exit = QAction("Beenden", parent)
         self.exit.triggered.connect(parent.close)

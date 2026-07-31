@@ -1596,6 +1596,8 @@ engine.on("marker.click", event => {
 
 window.MapApi = {
 
+     ready: true,
+
     /* ------------------------------------------------------------------------
      * Map
      * ----------------------------------------------------------------------*/
@@ -1666,12 +1668,11 @@ window.MapApi = {
 
             type: "rectangle",
 
-            geometry: {
-                bounds: [
+            geometry: [
+                 
                     [minLat, minLon],
                     [maxLat, maxLon]
-                ]
-            },
+                ],
 
             style: {
                 color: "#3388ff",

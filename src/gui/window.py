@@ -41,8 +41,20 @@ class MainWindow(QMainWindow):
             self._save_project
         )
 
+        self.actions.save_project_as.triggered.connect(
+            self._save_project_as
+        )
+
         self.actions.open_project.triggered.connect(
             self._open_project
+        )
+
+        self.actions.close_project.triggered.connect(
+            self._close_project
+        )
+
+        self.actions.new_project.triggered.connect(
+            self._new_project
         )
 
         # ---------------------------------------------------------
@@ -70,9 +82,9 @@ class MainWindow(QMainWindow):
         # Oberfläche
         # ---------------------------------------------------------
 
+        self._build_docks()
         self._build_menu()
         self._build_toolbar()
-        self._build_docks()
 
         # ---------------------------------------------------------
         # Statusleiste
@@ -127,17 +139,13 @@ class MainWindow(QMainWindow):
 
         controller = self.map_widget.controller
 
-        if hasattr(self, "undo_action"):
+        self.actions.undo.setEnabled(
+            controller.can_undo
+        )
 
-            self.undo_action.setEnabled(
-                controller.can_undo
-            )
-
-        if hasattr(self, "redo_action"):
-
-            self.redo_action.setEnabled(
-                controller.can_redo
-            )
+        self.actions.redo.setEnabled(
+            controller.can_redo
+        )
 
     # ---------------------------------------------------------
     # OSM herunterladen
@@ -213,6 +221,15 @@ class MainWindow(QMainWindow):
         self.statusBar().showMessage(
             "Projekt gespeichert."
         )
+
+    # ---------------------------------------------------------
+    # Projekt speichern unter
+    # ---------------------------------------------------------
+
+    def _save_project_as(self):
+
+        self._save_project()
+
     # ---------------------------------------------------------
     # Projekt laden
     # ---------------------------------------------------------
@@ -296,6 +313,14 @@ class MainWindow(QMainWindow):
             self.actions.save_project
         )
 
+        file_menu.addAction(
+            self.actions.save_project_as
+        )
+
+        file_menu.addAction(
+            self.actions.close_project
+        )
+
         file_menu.addSeparator()
 
         file_menu.addAction(
@@ -308,21 +333,31 @@ class MainWindow(QMainWindow):
 
         edit_menu = menu.addMenu("Bearbeiten")
 
-        if hasattr(self, "undo_action"):
-            edit_menu.addAction(
-                self.undo_action
-            )
+        edit_menu.addAction(
+            self.actions.undo
+        )
 
-        if hasattr(self, "redo_action"):
-            edit_menu.addAction(
-                self.redo_action
-            )
+        edit_menu.addAction(
+            self.actions.redo
+        )
 
         # ---------------------------------------------------------
         # Ansicht
         # ---------------------------------------------------------
 
-        menu.addMenu("Ansicht")
+        view_menu = menu.addMenu("Ansicht")
+
+        view_menu.addAction(
+            self.project_dock.toggleViewAction()
+        )
+
+        view_menu.addAction(
+            self.layer_dock.toggleViewAction()
+        )
+
+        view_menu.addAction(
+            self.properties_dock.toggleViewAction()
+        )
 
         # ---------------------------------------------------------
         # Werkzeuge
@@ -376,7 +411,7 @@ class MainWindow(QMainWindow):
             )
         )
 
-            # ---------------------------------------------------------
+    # ---------------------------------------------------------
     # Docks
     # ---------------------------------------------------------
 
@@ -386,22 +421,87 @@ class MainWindow(QMainWindow):
         """
 
         # Projekt
+
+        self.project_dock = create_project_dock(self)
+
         self.addDockWidget(
             Qt.LeftDockWidgetArea,
-            create_project_dock(self)
+            self.project_dock
         )
 
         # Layer
+
+        self.layer_dock = create_layer_dock(self)
+
         self.addDockWidget(
             Qt.LeftDockWidgetArea,
-            create_layer_dock(self)
+            self.layer_dock
         )
 
         # Eigenschaften
+
+        self.properties_dock = create_properties_dock(self)
+
         self.addDockWidget(
             Qt.RightDockWidgetArea,
-            create_properties_dock(self)
+           self.properties_dock
         )
+
+    # ---------------------------------------------------------
+    # Rückgängig
+    # ---------------------------------------------------------
+
+    def _undo(self):
+
+        self.map_widget.controller.undo()
+
+    # ---------------------------------------------------------
+    # Wiederholen
+    # ---------------------------------------------------------
+
+    def _redo(self):
+
+        self.map_widget.controller.redo()
+
+
+    # ---------------------------------------------------------
+    # Projekt zurücksetzen
+    # ---------------------------------------------------------
+
+    def _reset_project(self):
+
+        controller = self.map_widget.controller
+
+        controller.clear_markers()
+
+        controller.api.clear_rectangle()
+
+        project = controller.project
+
+        project.name = "Neues Projekt"
+
+        self._update_window_title()
+
+    # ---------------------------------------------------------
+    # Neues Projekt
+    # ---------------------------------------------------------
+
+    def _new_project(self):
+
+        self._reset_project()
+
+        self.show_status("Neues Projekt erstellt.")
+ 
+    # ---------------------------------------------------------
+    # Projekt schließen
+    # ---------------------------------------------------------
+
+    def _close_project(self):
+
+        self._reset_project()
+
+        self.show_status( "Projekt geschlossen.")
+
 
     # ---------------------------------------------------------
     # Status
