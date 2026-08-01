@@ -20,6 +20,7 @@ from src.core.server import LocalServer
 
 from src.map.map_widget import MapWidget
 from src.map.map_controller import Tool
+from src.undo.rename_marker_command import RenameMarkerCommand
 
 
 class MainWindow(QMainWindow):
@@ -583,19 +584,13 @@ class MainWindow(QMainWindow):
         if marker is None:
             return
 
-        controller.rename_marker(
-            marker.id,
-            self.prop_name.text()
-        )
-
-        print(
-            "Marker umbenannt",
-            marker.text
-        )
-
-        print(
-            "Neuer Name:",
-            self.prop_name.text()
+        controller.undo_stack.push(
+            RenameMarkerCommand(
+                controller,
+                marker.id,
+                marker.text,
+                self.prop_name.text()
+            )
         )
 
     # ---------------------------------------------------------
