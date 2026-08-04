@@ -21,6 +21,7 @@ from src.core.server import LocalServer
 from src.map.map_widget import MapWidget
 from src.map.map_controller import Tool
 from src.undo.rename_marker_command import RenameMarkerCommand
+from src.undo.delete_marker_command import DeleteMarkerCommand
 
 
 class MainWindow(QMainWindow):
@@ -90,19 +91,19 @@ class MainWindow(QMainWindow):
         # Undo / Redo Shortcuts
         # ---------------------------------------------------------
 
-        QShortcut(
-            QKeySequence.Undo,
-            self
-        ).activated.connect(
-            self.map_widget.controller.undo
-        )
+       # QShortcut(
+       #     QKeySequence.Undo,
+       #    self
+       #).activated.connect(
+       #    self.map_widget.controller.undo
+       #)
 
-        QShortcut(
-            QKeySequence.Redo,
-            self
-        ).activated.connect(
-            self.map_widget.controller.redo
-        )
+       # QShortcut(
+       #    QKeySequence.Redo,
+       #    self
+       #).activated.connect(
+       #    self.map_widget.controller.redo
+       #)
 
         # ---------------------------------------------------------
         # Projektaktionen
@@ -592,6 +593,31 @@ class MainWindow(QMainWindow):
                 self.prop_name.text()
             )
         )
+
+    def _delete_marker(self):
+
+        controller = self.map_widget.controller
+
+        marker = next(
+            (
+
+                m
+                for m in controller.project.markers
+                if m.id == self.prop_id.text()
+            ),
+            None
+        )
+
+        if marker is None:
+            return
+
+        controller.undo_stack.push(
+            DeleteMarkerCommand(
+                controller,
+                marker
+            )
+        )
+
 
     # ---------------------------------------------------------
     # Fenster schließen

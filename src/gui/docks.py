@@ -5,6 +5,7 @@ from PySide6.QtWidgets import (
     QFormLayout,
     QLabel,
     QLineEdit,
+    QPushButton,
     QListWidget,
 )
 
@@ -38,6 +39,14 @@ def create_properties_dock(parent):
 
     parent.prop_lon = QLabel()
 
+    parent.delete_marker_button = QPushButton(
+        "Marker löschen"
+    )
+
+    parent.delete_marker_button.clicked.connect(
+        parent._delete_marker
+    )
+
     layout.addRow(
         "ID:",
         parent.prop_id
@@ -57,6 +66,10 @@ def create_properties_dock(parent):
         "Länge:",
         parent.prop_lon
     )
+
+    layout.addRow(
+       parent.delete_marker_button
+    ) 
 
     dock.setWidget(form)
 
