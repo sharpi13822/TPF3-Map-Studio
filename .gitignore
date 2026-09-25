@@ -9,3 +9,5 @@ __pycache__/
 exports/
 projects/*.tpf2ms
 *.osm
+build/
+dist/

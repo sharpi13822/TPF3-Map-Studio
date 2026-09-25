@@ -1,4 +1,4 @@
-from PySide6.QtCore import QObject, Signal
+from PySide6.QtCore import QObject, Signal, QTimer
 from PySide6.QtWebChannel import QWebChannel
 from PySide6.QtWebEngineWidgets import QWebEngineView
 
@@ -14,9 +14,21 @@ class MapWidget(QWebEngineView):
 
     map_loaded = Signal(bool)
 
+    # Der lokale HTTP-Server (LocalServer) laeuft in einem eigenen
+    # Thread und braucht nach dem Start ein paar Millisekunden, bis er
+    # tatsaechlich Verbindungen annimmt - in einer per PyInstaller
+    # gebauten exe (mehr beim Start zu laden/entpacken) reicht die Zeit
+    # bis zum ersten load()-Aufruf manchmal knapp nicht. Deshalb bei
+    # einem fehlgeschlagenen ersten Versuch automatisch mehrfach mit
+    # kurzer Pause erneut versuchen, bevor wirklich ein Fehler gemeldet
+    # wird.
+    MAX_LOAD_ATTEMPTS = 15
+    RETRY_DELAY_MS = 300
+
     def __init__(self):
         super().__init__()
 
+        self._load_attempts = 0
 
         # ---------------------------------------------------------
         # WebEngine Entwicklerkonsole
@@ -84,13 +96,19 @@ class MapWidget(QWebEngineView):
         # Karte laden
         # ---------------------------------------------------------
 
-        self.load(
-            "http://127.0.0.1:8000/index.html"
-        )
+        self._try_load()
 
     # ---------------------------------------------------------
     # Intern
     # ---------------------------------------------------------
+
+    def _try_load(self):
+
+        self._load_attempts += 1
+
+        self.load(
+            "http://127.0.0.1:8000/index.html"
+        )
 
     def _load_finished(
         self,
@@ -100,9 +118,28 @@ class MapWidget(QWebEngineView):
         if ok:
             print("Karte geladen")
 
-            self.devtools.show()
-            
-        else:
-            print("Fehler beim Laden der Karte")
+            self.map_loaded.emit(True)
+            return
 
-        self.map_loaded.emit(ok)
+        if self._load_attempts < self.MAX_LOAD_ATTEMPTS:
+
+            print(
+                f"Karte noch nicht erreichbar (Versuch "
+                f"{self._load_attempts}/{self.MAX_LOAD_ATTEMPTS}) - "
+                f"lokaler Server vermutlich noch am Starten, "
+                f"versuche erneut..."
+            )
+
+            QTimer.singleShot(
+                self.RETRY_DELAY_MS,
+                self._try_load
+            )
+
+            return
+
+        print(
+            f"Fehler beim Laden der Karte nach "
+            f"{self.MAX_LOAD_ATTEMPTS} Versuchen"
+        )
+
+        self.map_loaded.emit(False)
