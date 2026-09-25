@@ -141,7 +141,6 @@ class DemMosaic:
 
     def sample_grid(self, lat: np.ndarray, lon: np.ndarray) -> np.ndarray:
         """Bilineare Hoehenabfrage fuer ganze Arrays von lat/lon-Punkten."""
-        from scipy.ndimage import map_coordinates
 
         out = np.full(lat.shape, np.nan, dtype=np.float32)
         remaining = np.ones(lat.shape, dtype=bool)
@@ -155,10 +154,34 @@ class DemMosaic:
             in_tile = remaining & (row >= -0.5) & (row < h - 0.5) & (col >= -0.5) & (col < w - 0.5)
             if not in_tile.any():
                 continue
-            sampled = map_coordinates(
-                tile.array, [row, col], order=1, mode="nearest"
-            )
-            out[in_tile] = sampled[in_tile]
+            out[in_tile] = _bilinear(tile.array, row[in_tile], col[in_tile])
             remaining &= ~in_tile
 
         return out
+
+
+def _bilinear(array: np.ndarray, row: np.ndarray, col: np.ndarray) -> np.ndarray:
+    """
+    Bilineare Interpolation an (fraktionalen) Pixelpositionen, Punkte
+    ausserhalb werden auf den Rand geklemmt - dasselbe Ergebnis wie
+    scipy.ndimage.map_coordinates(order=1, mode="nearest"), aber ohne
+    scipy als (in der exe sehr grosse) Abhaengigkeit.
+    """
+
+    h, w = array.shape
+
+    r = np.clip(row, 0, h - 1)
+    c = np.clip(col, 0, w - 1)
+
+    r0 = np.minimum(np.floor(r).astype(np.intp), max(h - 2, 0))
+    c0 = np.minimum(np.floor(c).astype(np.intp), max(w - 2, 0))
+    r1 = np.minimum(r0 + 1, h - 1)
+    c1 = np.minimum(c0 + 1, w - 1)
+
+    fr = r - r0
+    fc = c - c0
+
+    top = array[r0, c0] * (1 - fc) + array[r0, c1] * fc
+    bottom = array[r1, c0] * (1 - fc) + array[r1, c1] * fc
+
+    return top * (1 - fr) + bottom * fr
