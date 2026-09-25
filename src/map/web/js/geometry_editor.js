@@ -32,6 +32,9 @@ class GeometryEditor {
         // Segment Handles
         this.segmentHandles = [];
 
+        // Vertex Handles
+        this.vertexHandles = [];
+
         // Originalstyle
         this.originalStyle = null;
 
@@ -97,6 +100,16 @@ class GeometryEditor {
 
         this.refresh();
 
+        console.log(
+            "VERTEX HANDLES:",
+            this.vertexHandles.length
+        );
+
+        console.log(
+           "SEGMENT HANDLES:",
+            this.segmentHandles.length
+        ); 
+
         this.bindEvents();
  
         this.log(
@@ -137,15 +150,18 @@ class GeometryEditor {
 
         if (!this.handleLayer) {
 
-            this.handleLayer =
-                L.layerGroup();
+            this.handleLayer = L.layerGroup();
+           
+            this.handleLayer.addTo(
+               this.map
+            );
+
+        } else {
+
+            this.handleLayer.clearLayers();
 
         }
-
-        this.handleLayer.addTo(
-            this.map
-        );
-
+       
     }
 
     //====================================================
@@ -279,34 +295,133 @@ class GeometryEditor {
 
     getGeometryPoints() {
 
-        if (!this.object) return [];
+        if (!this.object) {
+            return [];
+        }
 
-        if (this.object.tpf2.type === "polygon") {
+        const type =
+            this.object.tpf2?.type;
 
-             return this.object.tpf2.geometry[0];
+        const geometry = 
+            this.object.tpf2?.geometry;
+        
+
+    //====================================================
+    // Polygon
+    //====================================================
+
+    if (type === "polygon") {
+
+        if (
+            Array.isArray(geometry) &&
+            Array.isArray(geometry[0]) &&
+            geometry[0].length > 0
+        ) {
+
+            return geometry[0];
 
         }
 
-        return this.object.tpf2.geometry;
+        // Fallback: Geometrie direkt aus Leaflet holen
+        
+        const latlngs =
+            this.object.getLatLngs?.();
+
+        if (
+            Array.isArray(latlngs) &&
+            Array.isArray(latlngs[0])
+        ) {
+
+            return latlngs[0].map(
+                point => [
+                    point.lat,
+                    point.lng
+                ]
+            );
+
+        }
+
+        return [];
 
     }
 
-    //====================================================
-    // RETURN GEOMETRY OF OBJECT
-    //====================================================
+    // -------------------------------------------------
+    // Polyline
+    // -------------------------------------------------
+
+        if (
+            Array.isArray(geometry) &&
+            geometry.length > 0
+        ) {
+
+            return geometry;
+
+        }
+
+        // Fallback: Geometrie direkt aus Leaflet holen
+
+        const latlngs =
+            this.object.getLatLngs?.();
+
+        if (
+            Array.isArray(latlngs) &&
+            latlngs.length > 0
+        ) {
+
+            return latlngs.map(
+                point => [
+                    point.lat,
+                    point.lng
+                ]
+            );
+
+        }
+
+        return [];
+
+    }
 
     getGeometryArray(object = this.object) {
 
-        if (!object)
+        if (!object) {
+            return [];
+        }
+
+        const type =
+            object.tpf2?.type;
+
+        const geometry =
+            object.tpf2?.geometry;
+
+        // Polygon
+
+        if (type === "polygon") {
+
+            if (
+                Array.isArray(geometry) &&
+                Array.isArray(geometry[0])
+            ) {
+
+               return geometry[0];
+           
+            }
+
             return [];
 
-        return object.tpf2.type === "polygon"
+        }
 
-            ? object.tpf2.geometry[0]
+        // Polyline
 
-            : object.tpf2.geometry;
+        if (Array.isArray(geometry)) {
 
-    }    
+            return geometry;
+
+        }
+
+
+        return [];
+
+    }
 
     //====================================================
     // MAP CLICK
@@ -482,8 +597,20 @@ class GeometryEditor {
                 draggable: true,
                 zIndexOffset: this.vertexHandleZIndex,
                 icon: L.divIcon({
-                    className: "geometry-handle",
-                    iconSize: [18, 18]
+                    className: "",
+                    html: `
+                        <div style="
+                            width: 16px;
+                            height: 16px;
+                            background: #ff0000;
+                            border: 3px solid #ffffff;
+                            border-radius: 50%;
+                            box-sizing: border-box;
+                            box-shadow: 0 0 0 2px #990000;
+                        "></div>
+                    `,
+                    iconSize: [16, 16],
+                    iconAnchor: [8, 8]
                 })
             }
         );
@@ -623,6 +750,11 @@ class GeometryEditor {
                 element.classList.remove("active");
 
             }
+
+            bridges.adapter.polylineMoved(
+                this.object.tpf2.id,
+                this.object.tpf2.geometry
+            );
 
             this.refresh();
 
@@ -964,9 +1096,20 @@ class GeometryEditor {
 
                 icon: L.divIcon({
 
-                    className: "segment-handle",
-
-                    iconSize: [14, 14]
+                    className: "",
+                    html: `
+                        <div style="
+                            width: 12px;
+                            height: 12px;
+                            background: #ffd600;
+                            border: 2px solid #ffffff;
+                            border-radius: 50%;
+                            box-sizing: border-box;
+                            box-shadow: 0 0 0 1px #8a7200;
+                        "></div>
+                    `,
+                    iconSize: [12, 12],
+                    iconAnchor: [6, 6]
 
                 })
 

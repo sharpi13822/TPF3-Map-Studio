@@ -3,6 +3,7 @@ import requests
 from src.map.objects.selection import Selection
 from src.osm.osm_parser import OSMParser
 from src.osm.objects.osm_data import OSMData
+from src.osm.overpass_query_builder import OverpassQueryConfig, build_query
 
 
 class OverpassClient:
@@ -26,9 +27,10 @@ class OverpassClient:
     def download(
         self,
         selection: Selection,
+        config: OverpassQueryConfig | None = None,
     ) -> OSMData:
 
-        query = self._build_query(selection)
+        query = build_query(selection, config)
 
         print("Overpass-Abfrage:")
         print(query)
@@ -92,34 +94,3 @@ class OverpassClient:
         raise RuntimeError(
             "Keiner der Overpass-Server war erreichbar."
         ) from last_exception
-
-    # ---------------------------------------------------------
-
-    def _build_query(
-        self,
-        selection: Selection,
-    ) -> str:
-
-        return f"""
-[out:json][timeout:60];
-
-(
-  way(
-    {selection.min_lat},
-    {selection.min_lon},
-    {selection.max_lat},
-    {selection.max_lon}
-  );
-
-  relation(
-    {selection.min_lat},
-    {selection.min_lon},
-    {selection.max_lat},
-    {selection.max_lon}
-  );
-);
-
-(._;>;);
-
-out body;
-"""

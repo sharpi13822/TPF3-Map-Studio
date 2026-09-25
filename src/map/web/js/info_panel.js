@@ -387,16 +387,25 @@ class InfoPanel {
 
             }
 
-            this.object.properties =
-                properties;
+            if (
+                window.geometryManager &&
+                typeof window.geometryManager.updateProperties === "function"
+            ) {
 
+                window.geometryManager.updateProperties(
+                    this.object,
+                    properties
+                );
+
+            }
+                
             this.show(
                 this.object
             );
 
         };
 
-}
+    }
 
     //====================================================
     // Objekt löschen

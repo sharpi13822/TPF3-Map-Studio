@@ -641,7 +641,66 @@ clearHighlight() {
     this.#selectedObject = null;
 
 }
-   
+
+updateProperties(object, properties) {
+
+    const metadata =
+        object?.tpf2 || object;
+
+    if (
+        !metadata ||
+        !metadata.properties
+    ) {
+
+        console.warn(
+            "Objekt oder Metadaten nicht gefunden"
+        );
+
+        return false;
+
+    }
+
+    metadata.properties = {
+        ...metadata.properties,
+        ...properties
+    };
+
+    console.log(
+        "PROPERTIES UPDATED:",
+        metadata
+    );
+
+    console.log(
+        "BRIDGE DEBUG:",
+        typeof bridges,
+        bridges?.adapter,
+        typeof bridges?.adapter?.polylinePropertiesChanged
+    );
+
+    if (
+        metadata.layer === "roads" &&
+        typeof bridges !== "undefined" &&
+        bridges.adapter &&
+        typeof bridges.adapter.polylinePropertiesChanged === "function"
+    ) {
+
+        bridges.adapter.polylinePropertiesChanged(
+            metadata.id,
+            metadata.properties
+        );
+
+    } else {
+
+        console.warn(
+            "Polyline-Bridge für Eigenschaften nicht verfügbar"
+        );
+    
+    }
+
+    return true;
+
+}
+  
     update(options) {
         return this.draw(options);
     }
@@ -951,7 +1010,8 @@ class MarkerFactory {
         const marker = L.marker(
             [lat, lon],
             {
-                icon: this.#icon
+                icon: this.#icon,
+                draggable: true
             }
         );
 
@@ -1071,6 +1131,23 @@ class MarkerManager {
                 }
             );
 
+            marker.leaflet.on(
+                "dragend",
+                () => {
+
+                const pos = marker.position;
+                
+                this.#eventTarget.emit(
+                    "marker.move",
+                {
+                    id: id,
+                    lat: pos.lat,
+                    lon: pos.lng
+                }
+            );
+        }
+    );
+
             marker.leaflet.addTo(
                 this.#layer
             );
@@ -1164,14 +1241,78 @@ class MarkerManager {
 
 }
 
+class PolylineManager {
+
+    #layer;
+    #polylines;
+
+    constructor(layer) {
+
+        this.#layer = layer;
+        this.#polylines = new Map();
+    }
+
+    add(id, points, text = "") {
+
+        let polyline = this.#polylines.get(id);
+
+        if (polyline) {
+            polyline.remove();
+        }
+
+        polyline = L.polyline(points);
+
+        if (text) {
+            polyline.bindPopup(text);
+        }
+
+        polyline.addTo(this.#layer);
+
+        this.#polylines.set(
+            id,
+            polyline
+        );
+
+        return polyline;
+    }
+
+    remove(id) {
+
+        const polyline =
+            this.#polylines.get(id);
+
+        if (!polyline) {
+            return false;
+        }
+
+        polyline.remove();
+
+        this.#polylines.delete(id);
+
+        return true;
+    }
+
+    clear() {
+
+        for (const polyline of this.#polylines.values()) {
+            polyline.remove();
+        }
+
+        this.#polylines.clear();
+    }
+}
+
 class BridgeAdapter {
 
     connect() {}
     disconnect() {}
 
     mapClicked(lat, lon) {}
+    addPolyline(id, points, text) {}
     markerClicked(id) {}
     selectionChanged(ids) {}
+    markerMoved(id, lat, lon) {}
+    polylineMoved(id, points) {}
 
     send(name, ...args) {}
 
@@ -1201,13 +1342,41 @@ class QtBridge extends BridgeAdapter {
         this.#bridge?.mapClicked?.(lat, lon);
     }
 
+    addPolyline(id, points, text) {
+        this.#bridge?.addPolyline?.(
+            id,
+            points,
+            text
+        );
+    }
+
     markerClicked(id) {
         this.#bridge?.markerClicked?.(id);
     }
 
+    markerMoved(id, lat, lon) {
+        this.#bridge?.markerMoved?.(id, lat, lon);
+    }
+
+    polylineMoved(id, points) {
+        this.#bridge?.polylineMoved?.(id, points);
+    }
+
+    polylinePropertiesChanged(
+        id,
+        properties
+    ) {
+
+        this.#bridge?.polylinePropertiesChanged?.(
+            id,
+            properties
+        );
+
+    }
+
     selectionChanged(ids) {
         this.#bridge?.selectionChanged?.(ids);
-    }
+    } 
 
     send(name, ...args) {
 
@@ -1301,6 +1470,8 @@ class CommandDispatcher {
 
         const layers = window.layerManager;
 
+        layers.register("polylines");
+
         window.layerControl =
             new LayerControl(
                 window.layerManager
@@ -1319,6 +1490,7 @@ class CommandDispatcher {
         layers.register("vegetation");
 
         layers.register("selection");
+        layers.register("measure");
 
         const renderers = new RendererRegistry();
 
@@ -1353,15 +1525,19 @@ class CommandDispatcher {
         window.geometryEditor =
             geometryEditor;
 
-        const drawManager =new DrawManager(
-            geometry
+        const polylineLayer =
+            layers.get("polylines").leaflet;
+
+        const drawManager = new DrawManager(
+            geometry,
+            polylineLayer
         );
 
         window.drawManager = drawManager;
 
         document
-    .getElementById("draw-road")
-    .onclick = () => {
+        .getElementById("draw-road")
+        .onclick = () => {
 
         drawManager.start(
             "road"
@@ -1518,6 +1694,12 @@ const selection =
 
 const markerLayer =
     layers.get("markers").leaflet;
+    
+    
+const polylines =
+    new PolylineManager(
+        polylineLayer
+    );
 
 const markers =
     new MarkerManager(
@@ -1526,6 +1708,177 @@ const markers =
         selection,
         engine
     );
+
+/* ============================================================================
+ * Rechteck-Tool: gedrehtes Kartenband, verschieb- und drehbar
+ * ========================================================================== */
+
+const RECT_R_EARTH = 6371008.8;
+
+function rectLocalToLatLon(centerLat, centerLon, rotationDeg, x, y) {
+
+    const theta = rotationDeg * Math.PI / 180;
+
+    const up = [Math.sin(theta), Math.cos(theta)];
+    const right = [Math.sin(theta + Math.PI / 2), Math.cos(theta + Math.PI / 2)];
+
+    const cos0 = Math.cos(centerLat * Math.PI / 180);
+
+    const e = right[0] * x + up[0] * y;
+    const n = right[1] * x + up[1] * y;
+
+    const lat = centerLat + (n / RECT_R_EARTH) * 180 / Math.PI;
+    const lon = centerLon + (e / (RECT_R_EARTH * cos0)) * 180 / Math.PI;
+
+    return [lat, lon];
+
+}
+
+function rectLatLonToEastNorth(centerLat, centerLon, lat, lon) {
+
+    // Ost-/Nordversatz in Metern (unrotiert) - wird nur fuer den
+    // Drehwinkel-Handle gebraucht, um aus seiner Position den Winkel
+    // zum Mittelpunkt zu berechnen.
+
+    const cos0 = Math.cos(centerLat * Math.PI / 180);
+
+    const e = (lon - centerLon) * Math.PI / 180 * RECT_R_EARTH * cos0;
+    const n = (lat - centerLat) * Math.PI / 180 * RECT_R_EARTH;
+
+    return [e, n];
+
+}
+
+function computeRectCorners(centerLat, centerLon, widthM, heightM, rotationDeg) {
+
+    const hx = widthM / 2;
+    const hy = heightM / 2;
+
+    return [
+        rectLocalToLatLon(centerLat, centerLon, rotationDeg, -hx, hy),
+        rectLocalToLatLon(centerLat, centerLon, rotationDeg, hx, hy),
+        rectLocalToLatLon(centerLat, centerLon, rotationDeg, hx, -hy),
+        rectLocalToLatLon(centerLat, centerLon, rotationDeg, -hx, -hy)
+    ];
+
+}
+
+const rectState = {
+    centerLat: null,
+    centerLon: null,
+    widthM: null,
+    heightM: null,
+    rotationDeg: null,
+    polygon: null,
+    moveHandle: null,
+    rotateHandle: null
+};
+
+function rectHandleIcon(color) {
+
+    return L.divIcon({
+        className: "",
+        html: `
+            <div style="
+                width: 16px;
+                height: 16px;
+                background: ${color};
+                border: 3px solid #ffffff;
+                border-radius: 50%;
+                box-sizing: border-box;
+                box-shadow: 0 0 0 2px #333333;
+            "></div>
+        `,
+        iconSize: [16, 16],
+        iconAnchor: [8, 8]
+    });
+
+}
+
+function rectRotateHandlePosition() {
+
+    // Griff sitzt ein Stueck ueber der oberen Kante, damit er nicht mit
+    // dem Verschiebe-Griff in der Mitte kollidiert. Fester Mindestabstand,
+    // damit er auch bei kleinen Kartenbaendern noch gut greifbar ist.
+
+    const offset = Math.max(300, rectState.heightM * 0.06);
+
+    return rectLocalToLatLon(
+        rectState.centerLat,
+        rectState.centerLon,
+        rectState.rotationDeg,
+        0,
+        rectState.heightM / 2 + offset
+    );
+
+}
+
+function redrawRect() {
+
+    const corners = computeRectCorners(
+        rectState.centerLat,
+        rectState.centerLon,
+        rectState.widthM,
+        rectState.heightM,
+        rectState.rotationDeg
+    );
+
+    if (rectState.polygon) {
+        rectState.polygon.setLatLngs(corners);
+    }
+
+    if (rectState.rotateHandle) {
+        rectState.rotateHandle.setLatLng(
+            rectRotateHandlePosition()
+        );
+    }
+
+}
+
+function notifyRectChanged() {
+
+    // Nur die Python-Seite (Selection/Projekt) aktualisieren - die
+    // sichtbare Karte hat sich waehrend des Ziehens bereits live
+    // veraendert, ein Neuzeichnen von Python aus ist hier nicht noetig
+    // (gleiches Prinzip wie bei markerMoved).
+
+    if (
+        typeof bridges !== "undefined" &&
+        bridges.adapter &&
+        typeof bridges.adapter.rectangleChanged === "function"
+    ) {
+
+        bridges.adapter.rectangleChanged(
+            rectState.centerLat,
+            rectState.centerLon,
+            rectState.widthM,
+            rectState.heightM,
+            rectState.rotationDeg
+        );
+
+    } else {
+
+        console.warn("rectangleChanged nicht verfügbar");
+
+    }
+
+}
+
+function removeRectHandles() {
+
+    if (rectState.moveHandle) {
+        engine.leaflet.removeLayer(rectState.moveHandle);
+        rectState.moveHandle = null;
+    }
+
+    if (rectState.rotateHandle) {
+        engine.leaflet.removeLayer(rectState.rotateHandle);
+        rectState.rotateHandle = null;
+    }
+
+    rectState.polygon = null;
+
+}
 
 const bridges = new BridgeManager();
 
@@ -1582,11 +1935,34 @@ engine.on("click", event => {
 
 });
 
+engine.on("dblclick", event => {
+
+    if (drawManager.mode) {
+
+        drawManager.finish();
+
+        return;
+    }
+
+});
+
 engine.on("marker.click", event => {
 
     const { id } = event.detail;
 
     bridges.adapter.markerClicked(id);
+
+});
+
+engine.on("marker.move", event => {
+
+    const { id, lat, lon } = event.detail;
+
+    bridges.adapter.markerMoved(
+        id,
+        lat,
+        lon
+    );
 
 });
 
@@ -1648,6 +2024,107 @@ window.MapApi = {
 
     },
 
+    addPolyline(id, points, text = "") {
+
+        return geometry.draw({
+            layer: "polylines",
+            id: id,
+            type: "polyline",
+            geometry: points,
+            style: {},
+            properties: {
+                text: text
+            }
+        });
+    },
+
+    updatePolylineProperties(id, properties) {
+
+        const layers = [
+        "roads",
+        "waterways",
+        "railways"
+    ];
+
+    let object = null;
+
+    for (const layer of layers) {
+
+        object = geometry.get(
+            layer,
+            id
+        );
+
+        if (object) {
+            break;
+        }
+
+    }
+
+    if (!object || !object.tpf2) {
+
+        console.warn(
+            "Objekt oder Metadaten nicht gefunden:",
+            id
+        );
+
+        return false;
+
+    }
+
+    object.tpf2.properties = {
+        ...object.tpf2.properties,
+        ...properties
+    };
+
+    console.log(
+        "POLYLINE PROPERTIES UPDATED:",
+        object.tpf2
+    );
+
+    if (
+        typeof bridges !== "undefined" &&
+        bridges.adapter &&
+        typeof bridges.adapter.polylinePropertiesChanged === "function"
+    ) {
+
+        bridges.adapter.polylinePropertiesChanged(
+            id,
+            object.tpf2.properties
+        );
+
+        console.log(
+           "PROPERTIES AN PYTHON GESENDET:",
+           id
+        );
+        
+    } else {
+
+        console.warn(
+           "polylinePropertiesChanged nicht verfügbar"
+        );
+        
+    }
+
+    return true;
+
+},
+
+    removePolyline(id) {
+
+        return geometry.remove(
+            "roads",
+            id
+        );
+    },
+
+    clearPolylines() {
+
+        return geometry.clear(
+            "roads"
+        );    
+    },
+
     selectMarker(id) {
 
         return markers.select(id);
@@ -1687,28 +2164,206 @@ window.MapApi = {
     clearRectangle() {
 
         geometry.clear("selection");
+        removeRectHandles();
 
     },
 
     /* ------------------------------------------------------------------------
-     * Roads
+     * Koordinaten-Messwerkzeug
      * ----------------------------------------------------------------------*/
 
-    drawRoad(id, coordinates, style = {}) {
+    drawMeasureLine(lat1, lon1, lat2, lon2, text = "") {
 
-        geometry.draw({
+        // Alte Messung entfernen, bevor die neue gezeichnet wird - es soll
+        // immer nur eine aktive Messstrecke sichtbar sein (analog zu
+        // clearRectangle() vor enableRectangleEditing()).
+        geometry.clear("measure");
 
-            layer: "roads",
+        const line = geometry.draw({
 
-            id,
+            layer: "measure",
+
+            id: "__measure__",
 
             type: "polyline",
 
-            geometry: coordinates,
+            geometry: [
+                [lat1, lon1],
+                [lat2, lon2]
+            ],
 
-            style
+            style: {
+                color: "#ff8800",
+                weight: 3,
+                dashArray: "6 6"
+            }
 
         });
+
+        if (text && line && typeof line.bindPopup === "function") {
+            line.bindPopup(text).openPopup();
+        }
+
+    },
+
+    clearMeasureLine() {
+
+        geometry.clear("measure");
+
+    },
+
+    enableRectangleEditing(centerLat, centerLon, widthM, heightM, rotationDeg) {
+
+        // Gedrehtes Kartenband, verschieb- und drehbar per Maus.
+        // Ersetzt eine vorher vorhandene Auswahl komplett.
+
+        geometry.clear("selection");
+        removeRectHandles();
+
+        rectState.centerLat = centerLat;
+        rectState.centerLon = centerLon;
+        rectState.widthM = widthM;
+        rectState.heightM = heightM;
+        rectState.rotationDeg = rotationDeg;
+
+        const corners = computeRectCorners(
+            centerLat,
+            centerLon,
+            widthM,
+            heightM,
+            rotationDeg
+        );
+
+        rectState.polygon = geometry.draw({
+
+            layer: "selection",
+
+            id: "__selection__",
+
+            type: "polygon",
+
+            geometry: corners,
+
+            style: {
+                color: "#3388ff",
+                weight: 1,
+                fillOpacity: 0.15
+            }
+
+        });
+
+        // ---------------------------------------------------------
+        // Verschiebe-Griff (Mittelpunkt)
+        // ---------------------------------------------------------
+
+        rectState.moveHandle = L.marker(
+            [centerLat, centerLon],
+            {
+                draggable: true,
+                zIndexOffset: 1000,
+                icon: rectHandleIcon("#3388ff")
+            }
+        ).addTo(engine.leaflet);
+
+        rectState.moveHandle.on("drag", (event) => {
+
+            const latlng = event.target.getLatLng();
+
+            rectState.centerLat = latlng.lat;
+            rectState.centerLon = latlng.lng;
+
+            redrawRect();
+
+        });
+
+        rectState.moveHandle.on("dragend", () => {
+
+            notifyRectChanged();
+
+        });
+
+        // ---------------------------------------------------------
+        // Dreh-Griff (oberhalb der Bandmitte)
+        // ---------------------------------------------------------
+
+        rectState.rotateHandle = L.marker(
+            rectRotateHandlePosition(),
+            {
+                draggable: true,
+                zIndexOffset: 1000,
+                icon: rectHandleIcon("#ff8800")
+            }
+        ).addTo(engine.leaflet);
+
+        rectState.rotateHandle.on("drag", (event) => {
+
+            const latlng = event.target.getLatLng();
+
+            const [de, dn] = rectLatLonToEastNorth(
+                rectState.centerLat,
+                rectState.centerLon,
+                latlng.lat,
+                latlng.lng
+            );
+
+            rectState.rotationDeg =
+                (Math.atan2(de, dn) * 180 / Math.PI + 360) % 360;
+
+            redrawRect();
+
+        });
+
+        rectState.rotateHandle.on("dragend", () => {
+
+            notifyRectChanged();
+
+        });
+
+    },
+
+    drawRotatedRectangle(corners) {
+
+        // corners: [[lat, lon], [lat, lon], [lat, lon], [lat, lon]]
+        // Gedrehtes Kartenband - wie drawRectangle, aber als Polygon
+        // statt als achsenparalleles Leaflet-Rechteck, da ein gedrehtes
+        // Rechteck kein natives L.rectangle mehr ist.
+
+        geometry.draw({
+
+            layer: "selection",
+
+            id: "__selection__",
+
+            type: "polygon",
+
+            geometry: corners,
+
+            style: {
+                color: "#3388ff",
+                weight: 1,
+                fillOpacity: 0.15
+            }
+
+        });
+
+    },
+
+    setLayerVisible(layerName, visible) {
+
+        const layer = layers.get(layerName);
+
+        if (!layer) {
+            console.warn(
+                "setLayerVisible: unbekannter Layer",
+                layerName
+            );
+            return;
+        }
+
+        layer.setVisible(
+            engine.leaflet,
+            visible
+        );
 
     },
 
@@ -1718,53 +2373,9 @@ window.MapApi = {
 
     },
 
-    /* ------------------------------------------------------------------------
-     * Railways
-     * ----------------------------------------------------------------------*/
-
-    drawRailway(id, coordinates, style = {}) {
-
-        geometry.draw({
-
-            layer: "railways",
-
-            id,
-
-            type: "polyline",
-
-            geometry: coordinates,
-
-            style
-
-        });
-
-    },
-
     clearRailways() {
 
         geometry.clear("railways");
-
-    },
-
-    /* ------------------------------------------------------------------------
-     * Buildings
-     * ----------------------------------------------------------------------*/
-
-    drawBuilding(id, coordinates, style = {}) {
-
-        geometry.draw({
-
-            layer: "buildings",
-
-            id,
-
-            type: "polygon",
-
-            geometry: coordinates,
-
-            style
-
-        });
 
     },
 
@@ -1774,53 +2385,9 @@ window.MapApi = {
 
     },
 
-    /* ------------------------------------------------------------------------
-     * Water
-     * ----------------------------------------------------------------------*/
-
-    drawWater(id, coordinates, style = {}) {
-
-        geometry.draw({
-
-            layer: "water",
-
-            id,
-
-            type: "polygon",
-
-            geometry: coordinates,
-
-            style
-
-        });
-
-    },
-
     clearWater() {
 
         geometry.clear("water");
-
-    },
-
-    /* ------------------------------------------------------------------------
-     * Waterways
-     * ----------------------------------------------------------------------*/
-
-    drawWaterway(id, coordinates, style = {}) {
-
-        geometry.draw({
-
-            layer: "waterways",
-
-            id,
-
-            type: "polyline",
-
-            geometry: coordinates,
-
-            style
-
-        });
 
     },
 
@@ -1830,80 +2397,15 @@ window.MapApi = {
 
     },
 
-    /* ------------------------------------------------------------------------
-     * Parks
-     * ----------------------------------------------------------------------*/
-
-    drawPark(id, coordinates, style = {}) {
-
-        geometry.draw({
-
-            layer: "parks",
-
-            id,
-
-            type: "polygon",
-
-            geometry: coordinates,
-
-            style
-
-        });
-
-    },
-
     clearParks() {
 
         geometry.clear("parks");
 
     },
 
-    /* ------------------------------------------------------------------------
-     * Landuse
-     * ----------------------------------------------------------------------*/
-
-    drawLanduse(id, coordinates, style = {}) {
-
-        geometry.draw({
-
-            layer: "landuse",
-
-            id,
-
-            type: "polygon",
-
-            geometry: coordinates,
-
-            style
-
-        });
-    },
-
     clearLanduse() {
 
         geometry.clear("landuse");
-
-    },
-
-    /* ------------------------------------------------------------------------
-     * Vegetation
-     * ----------------------------------------------------------------------*/
-
-    drawVegetation(id, coordinates, style = {}) {
-
-        geometry.draw({
-
-            layer: "vegetation",
-
-            id,
-
-            type: "polygon",
-
-            geometry: coordinates,
-
-            style
-
-        });
 
     },
 
@@ -1917,14 +2419,83 @@ window.MapApi = {
      * Batch
      * ----------------------------------------------------------------------*/
 
-    drawBatch(layer, objects = []) {
+    addBatch(layer, objects = []) {
 
-        return batchRenderer.drawBatch(
-            layer,
-            objects
-        );
+        let count = 0;
+
+        for (const object of objects) {
+
+            console.log(
+                "DRAW",
+                layer,
+                object.id,
+                object.type,
+                object.geometry
+            );
+
+            geometry.draw({
+
+                layer: layer,
+
+                id: object.id,
+
+                type: object.type,
+
+                geometry: object.geometry,
+
+                style: object.style || {}
+
+            });
+
+            count++;
+
+        }
+
+        return count;
+
+    },
+
+    updateBatch(layer, objects = []) {
+
+        let count = 0;
+
+        for (const object of objects) {
+
+            geometry.draw({
+
+                layer: layer,
+
+                id: object.id,
+
+                type: object.type,
+
+                geometry: object.geometry,
+
+                style: object.style || {}
+
+            });
+
+            count++;
+
+        }
+
+        return count;
+
+    },
+
+    removeObjects(layer, ids = []) {
+
+        for (const id of ids) {
+
+            geometry.remove(
+                layer,
+                id
+            );
+
+        }
+
+        return ids.length;
 
     }
 
-};
-
+}

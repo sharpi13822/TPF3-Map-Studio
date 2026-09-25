@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QAction, QKeySequence, QShortcut
 from PySide6.QtWidgets import (
@@ -6,10 +8,24 @@ from PySide6.QtWidgets import (
     QMainWindow,
     QMessageBox,
     QStatusBar,
+    QListWidgetItem,
+    QMenu,
+    QInputDialog
+
 )
 
 from src.gui.actions import AppActions
 from src.gui.toolbar import MainToolbar
+from src.gui.rectangle_dialog import RectangleToolDialog
+from src.gui.heightmap_dialog import HeightmapDialog
+from src.gui.mod_checker_dialog import ModCheckerDialog
+from src.gui.overpass_dialog import OverpassQueryDialog
+from src.export.osm_xml_exporter import export_osm_xml
+from src.gui.converter_command_dialog import ConverterCommandDialog
+from src.gui.import_guide_dialog import ImportGuideDialog
+from src.gui.feature_overview_dialog import FeatureOverviewDialog
+from src.gui.preflight_dialog import PreflightCheckDialog
+from src.gui.dashboard_dialog import ProjectDashboardDialog
 from src.gui.docks import (
     create_project_dock,
     create_properties_dock,
@@ -65,9 +81,9 @@ class MainWindow(QMainWindow):
         # Oberfläche
         # ---------------------------------------------------------
 
+        self._build_docks()
         self._build_menu()
         self._build_toolbar()
-        self._build_docks()
 
         # ---------------------------------------------------------
         # Statusleiste
@@ -77,12 +93,18 @@ class MainWindow(QMainWindow):
 
         self.tool_status = QLabel("Werkzeug: Marker")
 
+        self.measure_status = QLabel("")
+
         status.showMessage(
             "Bereit"
         )
 
         status.addPermanentWidget(
             self.tool_status
+        )
+
+        status.addPermanentWidget(
+            self.measure_status
         )
 
         self.setStatusBar(status)
@@ -115,6 +137,18 @@ class MainWindow(QMainWindow):
 
         self.actions.open_project.triggered.connect(
             self._open_project
+        )
+
+        self.actions.rectangle_tool.triggered.connect(
+            self._open_rectangle_tool
+        )
+
+        self.actions.measure_tool.triggered.connect(
+            self._toggle_measure_tool
+        )
+
+        self.map_widget.controller.measurement_changed.connect(
+            self.measure_status.setText
         )
 
         # ---------------------------------------------------------
@@ -150,7 +184,33 @@ class MainWindow(QMainWindow):
             self._marker_selected
         )
 
+        controller.markers_changed.connect(
+            self.refresh_project_list
+        )
+
+        self.project_list.itemClicked.connect(
+            self._project_item_clicked
+        )
+
+        self.project_list.itemDoubleClicked.connect(
+            self._project_item_double_clicked
+        )
+
+        self.project_list.setContextMenuPolicy(
+            Qt.CustomContextMenu
+        )
+
+        self.project_list.customContextMenuRequested.connect(
+            self._project_context_menu
+        )
+
+        self.project_list.itemChanged.connect(
+            self._project_item_renamed
+        )
+
         controller.show_start_position()
+
+        self.refresh_project_list()
 
         controller.undo_stack.stack_changed.connect(
             self._update_undo_actions
@@ -246,6 +306,15 @@ class MainWindow(QMainWindow):
         if not filename:
             return
 
+        self._load_project_file(filename)
+
+    def _load_project_file(self, filename: str):
+        """
+        Laedt eine .tpf2ms-Datei in das aktuelle Fenster. Gemeinsam
+        genutzt von _open_project() (Datei-Dialog) und dem
+        Projekt-Dashboard (Datei bereits bekannt, kein Dialog noetig).
+        """
+
         try:
 
             self.map_widget.controller.load_project(
@@ -273,6 +342,59 @@ class MainWindow(QMainWindow):
         self._update_window_title()
 
     # ---------------------------------------------------------
+    # Projekt-Dashboard
+    # ---------------------------------------------------------
+
+    def _open_dashboard(self):
+        """
+        Oeffnet die Uebersicht aller gespeicherten .tpf2ms-Projekte in
+        einem gewaehlten Ordner.
+        """
+
+        dialog = ProjectDashboardDialog(self, self)
+        dialog.exec()
+
+    # ---------------------------------------------------------
+    # Projekteigenschaften
+    # ---------------------------------------------------------
+
+    def _edit_project_properties(self):
+        """
+        Erlaubt das Setzen/Aendern des Projektnamens (z.B. "Rheintal",
+        "Nürnberg-Korridor"). Der Name wird bereits von ProjectSerializer
+        gespeichert/geladen - bisher gab es nur keine Stelle im UI, um
+        ihn ueberhaupt einzugeben, er blieb also dauerhaft bei
+        "Neues Projekt".
+        """
+
+        project = self.map_widget.controller.project
+
+        name, ok = QInputDialog.getText(
+            self,
+            "Projekteigenschaften",
+            "Projektname:",
+            text=project.name
+        )
+
+        if not ok:
+            return
+
+        name = name.strip()
+
+        if not name or name == project.name:
+            return
+
+        project.name = name
+
+        project.mark_dirty()
+
+        self._update_window_title()
+
+        self.statusBar().showMessage(
+            f"Projektname geändert: {name}"
+        )
+
+    # ---------------------------------------------------------
     # Menü
     # ---------------------------------------------------------
 
@@ -294,8 +416,36 @@ class MainWindow(QMainWindow):
             self.actions.open_project
         )
 
+        self.dashboard_action = QAction(
+            "Projekt-Dashboard...",
+            self
+        )
+
+        self.dashboard_action.triggered.connect(
+            self._open_dashboard
+        )
+
+        file_menu.addAction(
+            self.dashboard_action
+        )
+
         file_menu.addAction(
             self.actions.save_project
+        )
+
+        file_menu.addSeparator()
+
+        self.project_properties_action = QAction(
+            "Projekteigenschaften...",
+            self
+        )
+
+        self.project_properties_action.triggered.connect(
+            self._edit_project_properties
+        )
+
+        file_menu.addAction(
+            self.project_properties_action
         )
 
         file_menu.addSeparator()
@@ -361,16 +511,23 @@ class MainWindow(QMainWindow):
 
         view_menu = menu.addMenu("Ansicht")
 
+        # toggleViewAction() ist Qt-Bordmittel: die Action bleibt
+        # automatisch mit der tatsaechlichen Sichtbarkeit synchron,
+        # auch wenn das Dock ueber sein eigenes X geschlossen wird
+        # (anders als vorher, wo diese drei Eintraege gar nicht erst
+        # verbunden waren und ein geschlossenes Dock nie wieder
+        # geoeffnet werden konnte).
+
         view_menu.addAction(
-            "Projekt"
+            self.project_dock.toggleViewAction()
         )
 
         view_menu.addAction(
-            "Layer"
+            self.layer_dock.toggleViewAction()
         )
 
         view_menu.addAction(
-            "Eigenschaften"
+            self.properties_dock.toggleViewAction()
         )
 
         # ---------------------------------------------------------
@@ -389,6 +546,30 @@ class MainWindow(QMainWindow):
 
         osm_action = tools_menu.addAction(
             "OSM laden"
+        )
+
+        overpass_config_action = tools_menu.addAction(
+            "Overpass-Abfrage..."
+        )
+
+        overpass_config_action.triggered.connect(
+            self._open_overpass_dialog
+        )
+
+        export_osm_action = tools_menu.addAction(
+            "OSM als .osm exportieren..."
+        )
+
+        export_osm_action.triggered.connect(
+            self._export_osm_xml
+        )
+
+        converter_command_action = tools_menu.addAction(
+            "Converter-Befehl anzeigen..."
+        )
+
+        converter_command_action.triggered.connect(
+            self._open_converter_command
         )
 
         marker_action.triggered.connect(
@@ -421,11 +602,63 @@ class MainWindow(QMainWindow):
             self._download_osm
         )
 
+        rectangle_action = tools_menu.addAction(
+            "Rechteck-Tool"
+        )
+
+        rectangle_action.triggered.connect(
+            self._open_rectangle_tool
+        )
+
+        tools_menu.addAction(
+            self.actions.measure_tool
+        )
+
+        heightmap_action = tools_menu.addAction(
+            "Heightmap herunterladen"
+        )
+
+        heightmap_action.triggered.connect(
+            self._open_heightmap_tool
+        )
+
+        mod_checker_action = tools_menu.addAction(
+            "Mod-Checker..."
+        )
+
+        mod_checker_action.triggered.connect(
+            self._open_mod_checker
+        )
+
+        preflight_action = tools_menu.addAction(
+            "Vorab-Prüfung..."
+        )
+
+        preflight_action.triggered.connect(
+            self._open_preflight_check
+        )
+
         # ---------------------------------------------------------
         # Hilfe
         # ---------------------------------------------------------
 
-        menu.addMenu("Hilfe")
+        help_menu = menu.addMenu("Hilfe")
+
+        import_guide_action = help_menu.addAction(
+            "Import-Anleitung..."
+        )
+
+        import_guide_action.triggered.connect(
+            self._open_import_guide
+        )
+
+        feature_overview_action = help_menu.addAction(
+            "Funktionsübersicht..."
+        )
+
+        feature_overview_action.triggered.connect(
+            self._open_feature_overview
+        )
 
     # ---------------------------------------------------------
     # Toolbar
@@ -474,24 +707,264 @@ class MainWindow(QMainWindow):
             )
 
     # ---------------------------------------------------------
+    # Overpass-Abfrage-Baukasten
+    # ---------------------------------------------------------
+
+    def _open_overpass_dialog(self):
+        """
+        Oeffnet den Overpass-Abfrage-Baukasten: legt fest, welche
+        Kategorien der naechste 'OSM laden'-Aufruf abfragt.
+        """
+
+        dialog = OverpassQueryDialog(
+            self,
+            self.map_widget.controller,
+        )
+
+        dialog.exec()
+
+    # ---------------------------------------------------------
+    # OSM-XML-Export
+    # ---------------------------------------------------------
+
+    def _export_osm_xml(self):
+        """
+        Exportiert die aktuell geladenen OSM-Daten als Standard-OSM-XML-
+        Datei (.osm), z.B. als Eingabe fuer den Converter-Teil externer
+        Import-Werkzeuge.
+        """
+
+        osm = self.map_widget.controller.project.osm
+
+        if osm.node_count == 0 and osm.way_count == 0:
+
+            QMessageBox.warning(
+                self,
+                "Keine OSM-Daten",
+                "Es sind keine OSM-Daten geladen. Zuerst 'OSM laden' "
+                "ausführen (Werkzeuge-Menü)."
+            )
+
+            return
+
+        filename, _ = QFileDialog.getSaveFileName(
+            self,
+            "OSM-Datei exportieren",
+            "map.osm",
+            "OSM-Dateien (*.osm)"
+        )
+
+        if not filename:
+            return
+
+        selection = self.map_widget.controller.project.selection
+
+        bounds = None
+
+        if selection is not None:
+
+            bounds = (
+                selection.min_lat,
+                selection.min_lon,
+                selection.max_lat,
+                selection.max_lon,
+            )
+
+        try:
+            export_osm_xml(
+                osm,
+                Path(filename),
+                bounds=bounds,
+            )
+        except Exception as exc:
+
+            QMessageBox.critical(
+                self,
+                "Export fehlgeschlagen",
+                str(exc)
+            )
+
+            return
+
+        self.statusBar().showMessage(
+            f"OSM-Datei exportiert: {filename}"
+        )
+
+    # ---------------------------------------------------------
+    # Converter-Befehl
+    # ---------------------------------------------------------
+
+    def _open_converter_command(self):
+        """
+        Oeffnet den Dialog, der den fertigen Aufrufbefehl fuer den
+        externen OSM-TPF-Converter (main.exe) aus der aktuellen
+        Auswahl zusammensetzt.
+        """
+
+        dialog = ConverterCommandDialog(
+            self,
+            self.map_widget.controller,
+        )
+
+        dialog.exec()
+
+    # ---------------------------------------------------------
+    # Import-Anleitung
+    # ---------------------------------------------------------
+
+    def _open_import_guide(self):
+        """
+        Oeffnet die Referenz-Anleitung fuer den kompletten Import-Ablauf
+        des OSM-TPF2-Importers (Schritte 0-4, inkl. Optionen-Tabelle).
+        """
+
+        dialog = ImportGuideDialog(self)
+
+        dialog.exec()
+
+    # ---------------------------------------------------------
+    # Funktionsübersicht
+    # ---------------------------------------------------------
+
+    def _open_feature_overview(self):
+        """
+        Oeffnet die Uebersicht aller in dieser Zusammenarbeit
+        hinzugefuegten Studio-Funktionen.
+        """
+
+        dialog = FeatureOverviewDialog(self)
+
+        dialog.exec()
+
+    # ---------------------------------------------------------
+    # Rechteck-Tool
+    # ---------------------------------------------------------
+
+    def _open_rectangle_tool(self):
+        """
+        Oeffnet den Dialog fuer das Rechteck-Tool und legt bei OK das
+        eingegebene (ggf. gedrehte) Kartenband als aktuelle Auswahl an.
+        """
+
+        dialog = RectangleToolDialog(
+            self,
+            initial_selection=self.map_widget.controller.project.selection,
+        )
+
+        if dialog.exec() != RectangleToolDialog.Accepted:
+            return
+
+        values = dialog.values()
+
+        self.map_widget.controller.set_rotated_selection(
+            **values
+        )
+
+        self.statusBar().showMessage(
+            f"Kartenband gesetzt: "
+            f"{values['width_m']/1000:.3f} x {values['height_m']/1000:.3f} km, "
+            f"Drehung {values['rotation_deg']:.2f}°"
+        )
+
+    # ---------------------------------------------------------
+    # Koordinaten-Messwerkzeug
+    # ---------------------------------------------------------
+
+    def _toggle_measure_tool(self):
+        """
+        Aktiviert das Koordinaten-Messwerkzeug: erster Klick auf der
+        Karte zeigt lat/lon, zweiter Klick zeigt zusaetzlich die
+        Distanz zum ersten Punkt (siehe MapController.map_clicked()).
+        """
+
+        self.map_widget.controller.set_tool(
+            Tool.MEASURE
+        )
+
+        self.tool_status.setText(
+            "Werkzeug: Koordinaten-Messwerkzeug"
+        )
+
+        self.measure_status.setText(
+            "Messung: ersten Punkt anklicken"
+        )
+
+    # ---------------------------------------------------------
+    # Heightmap
+    # ---------------------------------------------------------
+
+    def _open_heightmap_tool(self):
+        """
+        Oeffnet den Heightmap-Dialog fuer die aktuelle Selection (also
+        das zuletzt mit dem Rechteck-Tool gesetzte Kartenband).
+        """
+
+        selection = self.map_widget.controller.project.selection
+
+        if selection is None:
+            QMessageBox.warning(
+                self,
+                "Keine Auswahl",
+                "Bitte zuerst mit dem Rechteck-Tool einen "
+                "Kartenausschnitt festlegen."
+            )
+            return
+
+        dialog = HeightmapDialog(self, selection, self.map_widget.controller.project)
+        dialog.exec()
+
+    # ---------------------------------------------------------
+    # Mod-Checker
+    # ---------------------------------------------------------
+
+    def _open_mod_checker(self):
+        """
+        Oeffnet den Mod-Checker: gleicht installierte Mods gegen die
+        offizielle Anforderungsliste des OSM-TPF2-Importers ab.
+        """
+
+        dialog = ModCheckerDialog(self)
+        dialog.exec()
+
+    # ---------------------------------------------------------
+    # Vorab-Prüfung
+    # ---------------------------------------------------------
+
+    def _open_preflight_check(self):
+        """
+        Oeffnet die Vorab-Pruefung fuer das aktuell geladene OSM-Projekt.
+        """
+
+        dialog = PreflightCheckDialog(
+            self,
+            self.map_widget.controller,
+        )
+
+        dialog.exec()
+
+    # ---------------------------------------------------------
     # Docks
     # ---------------------------------------------------------
 
     def _build_docks(self):
 
+        self.project_dock = create_project_dock(self)
+        self.layer_dock = create_layer_dock(self)
+        self.properties_dock = create_properties_dock(self)
+
         self.addDockWidget(
             Qt.LeftDockWidgetArea,
-            create_project_dock(self)
+            self.project_dock
         )
 
         self.addDockWidget(
             Qt.LeftDockWidgetArea,
-            create_layer_dock(self)
+            self.layer_dock
         )
 
         self.addDockWidget(
             Qt.RightDockWidgetArea,
-            create_properties_dock(self)
+            self.properties_dock
         )
 
     # ---------------------------------------------------------
@@ -567,6 +1040,174 @@ class MainWindow(QMainWindow):
 
         self.prop_lon.setText(
             f"{marker.lon:.6f}"
+        )
+
+        for i in range(self.project_list.count()):
+
+            item = self.project_list.item(i)
+
+            if item.data(Qt.UserRole) == marker.id:
+
+                self.project_list.setCurrentItem(item)
+
+                break
+ 
+
+    def refresh_project_list(self):
+
+        self.project_list.clear()
+
+        controller = self.map_widget.controller
+
+        for marker in controller.project.markers:
+
+            item = QListWidgetItem(
+                marker.text or marker.id
+            )
+
+            item.setFlags(
+                item.flags() | Qt.ItemIsEditable
+            )
+
+            item.setData(
+                Qt.UserRole,
+                marker.id
+            )
+
+            self.project_list.addItem(
+                item
+            )
+
+    def _project_item_clicked(
+            self,
+            item
+    ):
+
+        marker_id = item.data(
+            Qt.UserRole
+        )
+
+        self.map_widget.controller.marker_clicked(
+            marker_id
+        )
+
+    def _project_item_double_clicked(
+            self,
+            item
+    ):
+
+        marker_id = item.data(
+            Qt.UserRole
+        )
+
+        controller = self.map_widget.controller
+
+        marker = next(
+            (
+                m
+                for m in controller.project.markers
+                if m.id == marker_id
+            ),
+            None
+        )
+
+        if marker is None:
+            return
+
+        controller.api.center(
+            marker.lat,
+            marker.lon
+        )
+
+        controller.marker_clicked(
+            marker.id
+        )
+
+    def _project_context_menu(
+            self,
+            pos
+    ):
+
+        item = self.project_list.itemAt(pos)
+
+        if item is None:
+            return
+
+        menu = QMenu(self)
+
+        center_action = menu.addAction(
+            "📍 Auf Marker zentrieren"
+        )
+
+        rename_action = menu.addAction(
+            "✏️ Umbenennen"
+        )
+
+        delete_action = menu.addAction(
+            "🗑️ Löschen"
+        )
+
+        action = menu.exec(
+            self.project_list.mapToGlobal(pos)
+        )
+
+        if action == center_action:
+
+            self._project_item_double_clicked(
+                item
+            )
+
+        elif action == rename_action:
+
+            self.project_list.editItem(
+                item
+            )
+
+        elif action == delete_action:
+
+            marker_id = item.data(
+                Qt.UserRole
+            )
+
+            self.prop_id.setText(
+                marker_id
+            )
+
+            self._delete_marker()
+
+    def _project_item_renamed(
+            self,
+            item
+    ):
+
+        marker_id = item.data(
+            Qt.UserRole
+        )
+
+        controller = self.map_widget.controller
+
+        marker = next(
+            (
+                m
+                for m in controller.project.markers
+                if m.id == marker_id
+            ),
+            None
+        )
+
+        if marker is None:
+            return
+
+        if marker.text == item.text():
+            return
+
+        controller.undo_stack.push(
+            RenameMarkerCommand(
+                controller,
+                marker.id,
+                marker.text,
+                item.text()
+            )
         )
 
     def _marker_name_changed(self):

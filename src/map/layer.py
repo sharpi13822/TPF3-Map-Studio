@@ -7,62 +7,25 @@ class GeometryType(Enum):
 
     POLYGON = "polygon"
 
+
 class Layer(Enum):
 
-    ROADS = (
-        "Straßen",
-        "drawRoad",
-        "clearRoads",
-    )
+    ROADS = "Straßen"
 
-    RAILWAYS = (
-        "Bahn",
-        "drawRailway",
-        "clearRailways",
-    )
+    RAILWAYS = "Bahn"
 
-    BUILDINGS = (
-        "Gebäude",
-        "drawBuilding",
-        "clearBuildings",
-    )
+    BUILDINGS = "Gebäude"
 
-    WATER = (
-        "Wasser",
-        "drawWater",
-        "clearWater",
-    )
+    WATER = "Wasser"
 
-    WATERWAYS = (
-        "Flüsse",
-        "drawWaterway",
-        "clearWaterways",
-    )
+    WATERWAYS = "Flüsse"
 
-    PARKS = (
-        "Parks",
-        "drawPark",
-        "clearParks",
-    )
+    PARKS = "Parks"
 
-    LANDUSE = (
-        "Landnutzung",
-        "drawLanduse",
-        "clearLanduse",
-    )
+    LANDUSE = "Landnutzung"
 
-    VEGETATION = (
-        "Vegetation",
-        "drawVegetation",
-        "clearVegetation",
-    )
+    VEGETATION = "Vegetation"
 
-    def __init__(
-        self,
-        label,
-        draw_method,
-        clear_method,
-    ):
-        self.label = label
-        self.draw_method = draw_method
-        self.clear_method = clear_method
+    @property
+    def label(self):
+        return self.value

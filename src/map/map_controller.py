@@ -1,4 +1,5 @@
 from enum import Enum
+from pathlib import Path
 
 from PySide6.QtCore import QObject, Signal
 
@@ -6,6 +7,7 @@ from src.core.project.project import Project
 from src.core.project_serializer import ProjectSerializer
 
 from src.osm.overpass_client import OverpassClient
+from src.osm.overpass_query_builder import OverpassQueryConfig
 
 from src.map.layer_manager import LayerManager
 
@@ -17,11 +19,56 @@ from src.osm.geometry.geometry_builder import GeometryBuilder
 
 from src.undo.undo_stack import UndoStack
 from src.undo.marker_commands import AddMarkerCommand
+from src.undo.move_marker_command import MoveMarkerCommand
+from src.geometry.polyline import Polyline
+from src.export.osm_exporter import OSMExporter
+from src.tpf2.tpf2_exporter import TPF2Exporter
+from src.tpf2.tpf2_lua_writer import TPF2LuaWriter
 
 
 class Tool(Enum):
     MARKER = "marker"
+    POLYLINE = "polyline"
     SELECTION = "selection"
+    MEASURE = "measure"
+
+
+def _haversine_m(
+    lat1: float,
+    lon1: float,
+    lat2: float,
+    lon2: float,
+) -> float:
+    """
+    Distanz zwischen zwei lat/lon-Punkten in Metern (Haversine-Formel).
+    Fuer die hier relevanten Entfernungen (Kartenband-Groessenordnung,
+    bis zu einigen zehn/hundert km) ist das genau genug - siehe auch
+    den Kommentar zu _R_EARTH in Selection.corners_latlon().
+    """
+
+    import math
+
+    r = 6371008.8
+
+    phi1 = math.radians(lat1)
+    phi2 = math.radians(lat2)
+    d_phi = math.radians(lat2 - lat1)
+    d_lambda = math.radians(lon2 - lon1)
+
+    a = (
+        math.sin(d_phi / 2) ** 2
+        + math.cos(phi1) * math.cos(phi2) * math.sin(d_lambda / 2) ** 2
+    )
+
+    return 2 * r * math.asin(math.sqrt(a))
+
+
+def _format_distance(distance_m: float) -> str:
+
+    if distance_m >= 1000:
+        return f"{distance_m / 1000:.3f} km ({distance_m:.0f} m)"
+
+    return f"{distance_m:.1f} m"
 
 
 class MapController(QObject):
@@ -31,6 +78,8 @@ class MapController(QObject):
 
     marker_selected = Signal(str)
     marker_updated = Signal(str)
+    markers_changed = Signal()
+    measurement_changed = Signal(str)
 
     def __init__(self, api):
         super().__init__()
@@ -48,6 +97,10 @@ class MapController(QObject):
         # ---------------------------------------------------------
 
         self.overpass = OverpassClient()
+
+        # Overpass-Abfrage-Baukasten: welche Kategorien beim naechsten
+        # OSM-Download abgefragt werden (siehe Werkzeuge > Overpass-Abfrage).
+        self.overpass_config = OverpassQueryConfig()
 
         # ---------------------------------------------------------
         # Layer
@@ -103,6 +156,13 @@ class MapController(QObject):
 
         self._selection_start = None
 
+        # Start-Punkt des Koordinaten-Messwerkzeugs (erster Klick),
+        # nach Analogie zu _selection_start beim Rechteck-Werkzeug.
+        self._measure_start = None
+
+        # Temporäre Punkte für das Polyline-Werkzeug
+        self._polyline_points = []
+
     # ---------------------------------------------------------
     # Werkzeug
     # ---------------------------------------------------------
@@ -118,6 +178,7 @@ class MapController(QObject):
         self._tool = tool
 
         self._selection_start = None
+        self._measure_start = None
 
         print(
             f"Werkzeug gewechselt zu: {tool.value}"
@@ -126,17 +187,23 @@ class MapController(QObject):
     @property
     def tool(self):
         return self._tool
+
+    # ---------------------------------------------------------
+    # Overpass-Abfrage-Konfiguration
+    # ---------------------------------------------------------
+
+    def set_overpass_config(self, config: OverpassQueryConfig):
+        """
+        Legt fest, welche Kategorien der naechste OSM-Download abfragt
+        (siehe Werkzeuge > Overpass-Abfrage).
+        """
+
+        self.overpass_config = config
     
 
     # ---------------------------------------------------------
     # Layer
     # ---------------------------------------------------------
-
-    def set_layer_visible(self, layer, visible):
-     self.layer_manager.set_visible(layer, visible)
-
-     self.redraw_layers()
-
 
     def set_layer_locked(self, layer, locked):
      self.layer_manager.set_locked(layer, locked)
@@ -170,6 +237,18 @@ class MapController(QObject):
         self._next_marker_id += 1
 
         return marker_id
+
+    def _new_polyline_id(self) -> str:
+
+        index = 1
+
+        while any(
+           p.id == f"l{index}"
+           for p in self.project.polylines
+        ):
+            index += 1
+
+        return f"l{index}"
 
     # ---------------------------------------------------------
     # Startposition
@@ -220,6 +299,19 @@ class MapController(QObject):
 
             return
 
+        if self._tool == Tool.POLYLINE:
+
+            self._polyline_points.append(
+                [lat, lon]
+            )
+
+            print(
+                f"Polyline-Punkt: "
+                f"{lat:.6f}, {lon:.6f}"
+            )
+
+            return 
+
         if self._tool == Tool.SELECTION:
 
             if self._selection_start is None:
@@ -245,6 +337,48 @@ class MapController(QObject):
                 lon1,
                 lat,
                 lon
+            )
+
+            return
+
+        if self._tool == Tool.MEASURE:
+
+            if self._measure_start is None:
+
+                self._measure_start = (lat, lon)
+
+                self.api.clear_measure_line()
+
+                self.measurement_changed.emit(
+                    f"Messung: Startpunkt {lat:.6f}, {lon:.6f} "
+                    f"(zweiten Punkt anklicken)"
+                )
+
+                return
+
+            lat1, lon1 = self._measure_start
+
+            self._measure_start = None
+
+            distance_m = _haversine_m(lat1, lon1, lat, lon)
+
+            distance_text = _format_distance(distance_m)
+
+            self.api.draw_measure_line(
+                lat1,
+                lon1,
+                lat,
+                lon,
+                distance_text,
+            )
+
+            self.measurement_changed.emit(
+                f"Messung: {distance_text}"
+            )
+
+            print(
+                f"Distanz gemessen: {distance_text} "
+                f"({lat1:.6f}, {lon1:.6f} -> {lat:.6f}, {lon:.6f})"
             )
 
     # ---------------------------------------------------------
@@ -282,7 +416,135 @@ class MapController(QObject):
             marker.text
         )
 
+        self.markers_changed.emit()
+
         return marker.id
+
+
+    def add_polyline(
+        self,
+        points: list,
+        text: str = "",
+        polyline_id: str | None = None
+    ) -> str:
+        """
+        Fügt eine Polyline hinzu.
+        """
+
+        polyline = Polyline(
+            id=polyline_id or self._new_polyline_id(),
+            text=text,
+            points=points
+        )
+
+        self.project.add_polyline(
+            polyline
+        )
+
+        print(
+            ">>> POLYLINE HINZUGEFÜGT:",
+            id(self.project),
+            len(self.project.polylines)
+        )
+
+        self.api.add_polyline(
+            polyline.id,
+            polyline.points,
+            polyline.text
+        )
+
+        self.project.mark_dirty()
+
+        return polyline.id
+
+    def update_polyline(
+        self,
+        polyline_id: str,
+        points: list
+    ):
+
+        for polyline in self.project.polylines:
+
+            if polyline.id != polyline_id:
+                continue
+
+            polyline.points = points
+
+            self.project.mark_dirty()
+
+            print(
+                f"Polyline aktualisiert: {polyline_id}"
+            )
+
+            return
+
+        print(
+            f"Polyline nicht gefunden: {polyline_id}"
+        )
+
+    def update_polyline_properties(
+        self,
+        polyline_id: str,
+        properties: dict
+    ):
+        """
+        Aktualisiert Eigenschaften einer vorhandenen Polyline.
+        """
+
+        print(
+            f"Polyline Eigenschaften aktualisieren: {polyline_id}"
+        )
+
+        for polyline in self.project.polylines:
+
+            if polyline.id != polyline_id:
+                continue
+
+            if "name" in properties:
+                polyline.text = properties["name"]
+
+            self.project.mark_dirty()
+
+            print(
+                f"Polyline Eigenschaften gespeichert: "
+                f"{polyline_id}"
+            )
+
+            return
+
+        print(
+            f"Polyline nicht gefunden: "
+            f"{polyline_id}"
+        )
+
+    def update_polyline_geometry(
+        self,
+        polyline_id: str,
+        points: list
+    ):
+        """
+        Aktualisiert die Geometrie einer vorhandenen Polyline.
+        """
+
+        for polyline in self.project.polylines:
+
+            if polyline.id != polyline_id:
+                continue
+
+            polyline.points = points
+
+            self.project.mark_dirty()
+
+            print(
+                f"Polyline aktualisiert: {polyline_id}"
+            )
+
+            return
+
+        print(
+            f"Polyline nicht gefunden: "
+            f"{polyline_id}"
+        )
 
     def remove_marker(
         self,
@@ -307,6 +569,8 @@ class MapController(QObject):
 
             self.project.mark_dirty()
 
+            self.markers_changed.emit()
+
             return
 
     def rename_marker(
@@ -329,6 +593,41 @@ class MapController(QObject):
             self.project.mark_dirty()
 
             self.redraw_markers()
+
+            self.marker_updated.emit(
+                marker.id
+            )
+
+            self.markers_changed.emit()
+
+            return
+
+    def move_marker(
+        self,
+        marker_id: str,
+        lat: float,
+        lon: float
+    ):
+        """
+        Verschiebt einen Marker.
+        """
+
+        for marker in self.project.markers:
+
+            if marker.id != marker_id:
+                continue
+
+            marker.lat = lat
+            marker.lon = lon
+
+            self.project.mark_dirty()
+
+            self.api.update_marker(
+                marker.id,
+                marker.lat,
+                marker.lon,
+                marker.text
+            )
 
             self.marker_updated.emit(
                 marker.id
@@ -373,6 +672,36 @@ class MapController(QObject):
            marker_id
         )
 
+    def marker_moved(
+            self,
+            marker_id: str,
+            lat: float,
+            lon: float
+    ):
+        marker = next(
+            (
+                m
+                for m in self.project.markers
+                if m.id == marker_id
+            ),
+            None
+            
+        )
+
+        if marker is None:
+            return
+
+        self.undo_stack.push(
+            MoveMarkerCommand(
+                self,
+                marker.id,
+                marker.lat,
+                marker.lon,
+                lat,
+                lon
+            )
+        )
+
     def redraw_markers(self):
         """
         Zeichnet alle Marker neu.
@@ -413,47 +742,89 @@ class MapController(QObject):
         try:
 
             osm = self.overpass.download(
-                self.project.selection
+                self.project.selection,
+                self.overpass_config,
             )
 
             GeometryBuilder(osm).build()
 
             self.project.set_osm_data(osm)
 
-            print("\n===== LANDUSE =====")
-
-            for way in osm.ways.values():
-
-                if "landuse" not in way.tags:
-                    continue
-
-                node = osm.nodes.get(way.nodes[0])
-
-                print(
-                    way.id,
-                    way.tags,
-                    node.lat,
-                    node.lon
-                )
-
             # ---------------------------------------------------------
-            # Debug: Erste Wald-Relation anzeigen
+            # Export-Test
             # ---------------------------------------------------------
 
-            print("===== RELATIONEN =====")
+            exporter = OSMExporter()
 
-            for relation in osm.relations.values():
-                print(
-                    relation.id,
-                    relation.tags
-                )
+            export_data = exporter.export(osm)
 
-            print("======================")
+            # --------------------------------------------------
+            # TPF2 Export
+            # --------------------------------------------------
+
+            tpf2_exporter = TPF2Exporter.from_export_data(
+                export_data
+
+            )
+
+            tpf2_data = tpf2_exporter.export(
+                export_data
+            )
+
+            # --------------------------------------------------
+            # TPF2 Lua / Construction Export
+            # --------------------------------------------------
+
+            output_path = (
+                Path("exports")
+                / "osm_map_1"
+            )
+
+            tpf2_writer = TPF2LuaWriter(
+                name="OSM Map",
+                description=(
+                    "OpenStreetMap export "
+                    "for Transport Fever 2"
+                ),
+            )
+
+            tpf2_writer.write(
+                tpf2_data,
+                output_path,
+            )
+
+            print(
+                f"TPF2-Mod: {output_path}"
+            )
+
+            print("Export:")
+            print(f"  Roads      : {len(export_data.roads)}")
+            print(f"  Railways   : {len(export_data.railways)}")
+            print(f"  Buildings  : {len(export_data.buildings)}")
+            print(f"  Water      : {len(export_data.water)}")
+            print(f"  Waterways  : {len(export_data.waterways)}")
+            print(f"  Parks      : {len(export_data.parks)}")
+            print(f"  Landuse    : {len(export_data.landuse)}")
+            print(f"  Vegetation : {len(export_data.vegetation)}")
 
             self.redraw_layers()
 
             print(
                 "Download beendet."
+            )
+
+            print(
+                f"TPF2 Roads     : "
+                f"{len(tpf2_data.get('roads', []))}"
+            )
+
+            print(
+                f"TPF2 Railways  : "
+                f"{len(tpf2_data.get('railways', []))}"
+            )
+
+            print(
+                f"TPF2 Export    : {output_path}"
             )
 
             print(
@@ -530,7 +901,107 @@ class MapController(QObject):
             selection.max_lon
         )
 
-    
+    def set_rotated_selection(
+        self,
+        center_lat: float,
+        center_lon: float,
+        width_m: float,
+        height_m: float,
+        rotation_deg: float,
+        margin_m: float = 500.0,
+    ):
+        """
+        Erstellt ein gedrehtes Kartenband (Rechteck-Tool) als aktuelle
+        Auswahl - Gegenstueck zu selection_changed() fuer den Fall, dass
+        Mittelpunkt/Groesse/Drehwinkel direkt eingegeben werden, statt
+        zwei Punkte auf der Karte anzuklicken.
+
+        margin_m: Sicherheitsrand fuer die gespeicherte Bounding Box
+        (wichtig fuer nachgelagerte OSM-/Hoehendaten-Downloads, siehe
+        Selection.from_center()).
+        """
+
+        selection = Selection.from_center(
+            center_lat=center_lat,
+            center_lon=center_lon,
+            width_m=width_m,
+            height_m=height_m,
+            rotation_deg=rotation_deg,
+            margin_m=margin_m,
+        )
+
+        self.project.set_selection(
+            selection
+        )
+
+        self.project.mark_dirty()
+
+        print("Gedrehtes Kartenband:")
+
+        print(
+            f"  Mittelpunkt: {center_lat:.6f}, {center_lon:.6f}"
+        )
+
+        print(
+            f"  Groesse: {width_m:.0f} x {height_m:.0f} m, "
+            f"Drehung: {rotation_deg:.2f} Grad"
+        )
+
+        self.api.clear_rectangle()
+
+        self.api.enable_rectangle_editing(
+            center_lat,
+            center_lon,
+            width_m,
+            height_m,
+            rotation_deg,
+        )
+
+        return selection
+
+    def rectangle_changed(
+        self,
+        center_lat: float,
+        center_lon: float,
+        width_m: float,
+        height_m: float,
+        rotation_deg: float,
+    ):
+        """
+        Aktualisiert die Selection, nachdem das Rechteck-Tool per Maus
+        verschoben oder gedreht wurde. Zeichnet NICHT neu - die Karte
+        zeigt das Ergebnis bereits live (gleiches Prinzip wie bei
+        marker_moved()), hier wird nur der Projektzustand nachgezogen.
+        """
+
+        # Fester Sicherheitsrand statt Rueckrechnung aus der alten Bbox:
+        # deren Groesse haengt nichtlinear von Breite, Hoehe UND Drehwinkel
+        # zusammen ab, ein einfacher Rueckschluss daraus waere bei
+        # schraegen Winkeln ungenau. 500 m ist derselbe Standardwert wie
+        # im Rechteck-Tool-Dialog.
+        margin_m = 500.0
+
+        selection = Selection.from_center(
+            center_lat=center_lat,
+            center_lon=center_lon,
+            width_m=width_m,
+            height_m=height_m,
+            rotation_deg=rotation_deg,
+            margin_m=margin_m,
+        )
+
+        self.project.set_selection(
+            selection
+        )
+
+        self.project.mark_dirty()
+
+        print(
+            f"Kartenband verschoben/gedreht: "
+            f"Mittelpunkt {center_lat:.6f}, {center_lon:.6f}, "
+            f"Drehung {rotation_deg:.2f}°"
+        )
+
     # ---------------------------------------------------------
     # Projekt speichern / laden
     # ---------------------------------------------------------
@@ -542,6 +1013,12 @@ class MapController(QObject):
         """
         Speichert das aktuelle Projekt.
         """
+
+        print(
+            ">>> SPEICHERN:",
+            id(self.project),
+            len(self.project.polylines)
+        )
 
         ProjectSerializer.save(
             self.project,
@@ -565,11 +1042,50 @@ class MapController(QObject):
             self.layer_manager
         )
 
+        # ---------------------------------------------------------
+        # OSM-Geometrien nach dem Laden neu aufbauen
+        # ---------------------------------------------------------
+
+        if self.project.osm.way_count > 0:
+
+            GeometryBuilder(
+                self.project.osm
+            ).build()
+
+        print(
+            ">>> GELADENE POLYLINES:",
+            len(self.project.polylines)
+        )
+
         # -------------------------------------------------
         # Layer neu zeichnen
         # -------------------------------------------------
 
         self.redraw_layers()
+
+        # -------------------------------------------------
+        # Gespeicherte Polylines neu zeichnen
+        # -------------------------------------------------
+
+        for polyline in self.project.polylines:
+            self.api.add_polyline(
+                polyline.id,
+                polyline.points,
+                polyline.text
+            )
+
+        # -----------------------------------------------------
+        # Gespeicherte Polygone wieder zeichnen
+        # -----------------------------------------------------
+
+        for polygon in self.project.polygons:
+
+            self.api.add_polygon(
+                polygon.get("id", ""),
+                polygon.get("points", []),
+                polygon.get("text", ""),
+                polygon.get("properties", {})
+            )
 
         # -------------------------------------------------
         # Marker neu zeichnen
@@ -585,12 +1101,26 @@ class MapController(QObject):
 
             selection = self.project.selection
 
-            self.api.draw_rectangle(
-                selection.min_lat,
-                selection.min_lon,
-                selection.max_lat,
-                selection.max_lon
-            )
+            if selection.is_rotated:
+
+                center_lat, center_lon = selection.center
+
+                self.api.enable_rectangle_editing(
+                    center_lat,
+                    center_lon,
+                    selection.width_m,
+                    selection.height_m,
+                    selection.rotation_deg,
+                )
+
+            else:
+
+                self.api.draw_rectangle(
+                    selection.min_lat,
+                    selection.min_lon,
+                    selection.max_lat,
+                    selection.max_lon
+                )
 
         else:
 
@@ -608,7 +1138,7 @@ class MapController(QObject):
 
         self.project.mark_clean()
 
-            # ---------------------------------------------------------
+    # ---------------------------------------------------------
     # Undo / Redo
     # ---------------------------------------------------------
 
@@ -728,4 +1258,4 @@ class MapController(QObject):
 
         self.layer_manager.set_visible(layer, visible)
 
-        self.api.set_layer_visible(layer, visible) 
+        self.api.set_layer_visible(layer, visible)

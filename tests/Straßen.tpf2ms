@@ -1,0 +1,88 @@
+{
+    "version": 2,
+    "project": {
+        "name": "Neues Projekt",
+        "author": "",
+        "description": "",
+        "created": "",
+        "modified": ""
+    },
+    "layers": {
+        "visible": {
+            "ROADS": true,
+            "RAILWAYS": true,
+            "BUILDINGS": true,
+            "WATER": true,
+            "WATERWAYS": true,
+            "PARKS": true,
+            "LANDUSE": true,
+            "VEGETATION": true
+        },
+        "locked": {
+            "ROADS": false,
+            "RAILWAYS": false,
+            "BUILDINGS": false,
+            "WATER": false,
+            "WATERWAYS": false,
+            "PARKS": false,
+            "LANDUSE": false,
+            "VEGETATION": false
+        },
+        "opacity": {
+            "ROADS": 1.0,
+            "RAILWAYS": 1.0,
+            "BUILDINGS": 1.0,
+            "WATER": 1.0,
+            "WATERWAYS": 1.0,
+            "PARKS": 1.0,
+            "LANDUSE": 1.0,
+            "VEGETATION": 1.0
+        },
+        "order": [
+            "ROADS",
+            "RAILWAYS",
+            "BUILDINGS",
+            "WATER",
+            "WATERWAYS",
+            "PARKS",
+            "LANDUSE",
+            "VEGETATION"
+        ]
+    },
+    "osm": {
+        "nodes": [],
+        "ways": [],
+        "relations": []
+    },
+    "markers": [
+        {
+            "id": "m1",
+            "lat": 48.1372,
+            "lon": 11.5756,
+            "text": "München"
+        }
+    ],
+    "polylines": [
+        {
+            "id": "road_1787006047366",
+            "text": "Neues Objekt",
+            "points": [
+                [
+                    48.15303148672479,
+                    11.44432067871094
+                ],
+                [
+                    48.166314405720144,
+                    11.485176086425783
+                ],
+                [
+                    48.13424631889282,
+                    11.48448944091797
+                ]
+            ],
+            "properties": {}
+        }
+    ],
+    "polygons": [],
+    "selection": null
+}

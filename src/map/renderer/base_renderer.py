@@ -4,7 +4,7 @@ from src.map.renderer.batch_builder import BatchBuilder
 from src.map.renderer.diff_builder import DiffBuilder
 from src.map.renderer.pipeline import RenderPipeline
 from src.map.renderer.render_cache import RenderCache
-
+from src.map.layer import GeometryType, Layer
 
 class BaseRenderer(ABC):
 
@@ -24,10 +24,27 @@ class BaseRenderer(ABC):
     def objects(self, osm):
         ...
 
-    def create_pipeline(self, style_resolver) -> RenderPipeline:
+    def create_pipeline(
+            self,
+            style_resolver,
+    ) -> RenderPipeline:
+
+        geometry_type = (
+            GeometryType.POLYGON
+            if self.layer in {
+                Layer.BUILDINGS,
+                Layer.WATER,
+                Layer.PARKS,
+                Layer.LANDUSE,
+                Layer.VEGETATION,
+            }
+            else GeometryType.POLYLINE
+        )
+
         return RenderPipeline(
             selector=self.objects,
             style_resolver=style_resolver,
+            geometry_type=geometry_type,
         )
 
     def clear(self):
@@ -59,7 +76,7 @@ class BaseRenderer(ABC):
         )
 
         if diff.removed:
-            self.api.remove_objects(
+            self.api.remove(
                 self.layer,
                 diff.removed,
             )

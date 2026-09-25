@@ -29,3 +29,5 @@ class MainToolbar(QToolBar):
 
         self.addAction(actions.marker_tool)
         self.addAction(actions.selection_tool)
+        self.addAction(actions.rectangle_tool)
+        self.addAction(actions.measure_tool)

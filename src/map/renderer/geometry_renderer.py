@@ -7,18 +7,18 @@ class GeometryRenderer(BaseRenderer):
         self,
         api,
         layer_manager,
-        style_resolver,
         layer,
+        style_resolver,
         selector,
     ):
+        self._layer = layer
+        self.selector = selector
+
         super().__init__(
             api,
             layer_manager,
             style_resolver,
         )
-
-        self._layer = layer
-        self.selector = selector
 
     @property
     def layer(self) -> str:

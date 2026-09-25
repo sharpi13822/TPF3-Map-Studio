@@ -3,3 +3,9 @@ __pycache__/
 *.pyc
 .vscode/
 .idea/
+
+# Generierte Ausgaben von Testlaeufen - keine Quelldateien, sollen
+# nicht mit hochgeladen werden (koennen echte Kartendaten enthalten)
+exports/
+projects/*.tpf2ms
+*.osm

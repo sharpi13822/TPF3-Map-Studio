@@ -38,7 +38,10 @@ class LeafletAPI:
 
         script = f"window.MapApi.{function}({arguments});"
 
-        print("JS >", script)
+        if function == "addBatch":
+            print("JS >", function, "- Batch gesendet")
+        else:
+            print("JS >", script)
 
         self.web_view.page().runJavaScript(script)
 
@@ -91,6 +94,48 @@ class LeafletAPI:
     def clear_markers(self):
         self._call("clearMarkers")
 
+    def add_polyline(
+        self,
+        polyline_id,
+        points,
+        text=""
+    ):
+        self._call(
+            "addPolyline",
+            polyline_id,
+            points,
+            text,
+        )
+
+    def add_polygon(
+        self,
+        polygon_id,
+        points,
+        text="",
+        properties=None
+    ):
+        self._call(
+            "addPolygon",
+            polygon_id,
+            points,
+            text,
+            properties or {}
+        )
+
+    def remove_polyline(
+            self,
+            polyline_id
+    ):
+        self._call(
+            "removePolyline",
+            polyline_id,
+        )
+
+    def clear_polylines(self):
+        self._call(
+            "clearPolylines"
+        )
+        
     # ---------------------------------------------------------
     # Rechteck
     # ---------------------------------------------------------
@@ -110,38 +155,78 @@ class LeafletAPI:
             max_lon,
         )
 
+    def draw_rotated_rectangle(
+        self,
+        corners,
+    ):
+        """Zeichnet ein gedrehtes Kartenband als 4-Punkt-Polygon.
+
+        corners: Liste von (lat, lon)-Paaren, wie sie
+        Selection.corners_latlon() liefert.
+        """
+        self._call(
+            "drawRotatedRectangle",
+            [[lat, lon] for lat, lon in corners],
+        )
+
+    def enable_rectangle_editing(
+        self,
+        center_lat,
+        center_lon,
+        width_m,
+        height_m,
+        rotation_deg,
+    ):
+        """Zeichnet ein gedrehtes Kartenband UND macht es per Maus
+        verschieb- und drehbar (zwei Griffe: Mittelpunkt, Drehwinkel).
+        Ersetzt eine vorher vorhandene Auswahl.
+        """
+        self._call(
+            "enableRectangleEditing",
+            center_lat,
+            center_lon,
+            width_m,
+            height_m,
+            rotation_deg,
+        )
+
     def clear_rectangle(self):
         self._call("clearRectangle")
+
+    # ---------------------------------------------------------
+    # Koordinaten-Messwerkzeug
+    # ---------------------------------------------------------
+
+    def draw_measure_line(
+        self,
+        lat1,
+        lon1,
+        lat2,
+        lon2,
+        text="",
+    ):
+        self._call(
+            "drawMeasureLine",
+            lat1,
+            lon1,
+            lat2,
+            lon2,
+            text,
+        )
+
+    def clear_measure_line(self):
+        self._call("clearMeasureLine")
 
     # ---------------------------------------------------------
     # Layer
     # ---------------------------------------------------------
 
     def clear(self, layer: Layer):
-        self._call(layer.clear_method)
-
-    def draw(
-        self,
-        layer: Layer,
-        object_id,
-        geometry,
-        style=None,
-    ):
-
-        if geometry is None:
-            return
-
-        options = {}
-
-        if style is not None:
-            options = style.to_dict()
-
         self._call(
-            layer.draw_method,
-            object_id,
-            geometry,
-            options,
+            "clear",
+            layer.name.lower(),
         )
+
 
     def draw_batch(
         self,
@@ -170,6 +255,12 @@ class LeafletAPI:
         layer: Layer,
         object_ids: list[int],
     ):
+        print(
+            f"JS > removeObjects - "
+            f"layer={layer.name.lower()} "
+            f"count={len(object_ids)}"
+        )
+        
         self._call(
             "removeObjects",
             layer.name.lower(),

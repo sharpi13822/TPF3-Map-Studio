@@ -10,20 +10,20 @@ class OSMFilter:
     @staticmethod
     def highways(osm):
 
-        print("===== HIGHWAYS =====")
-        print("ways:", len(osm.ways))
+      # print("===== HIGHWAYS =====")
+      # print("ways:", len(osm.ways))
 
         found = 0
 
         for i, way in enumerate(osm.ways.values()):
 
-            if i < 10:
-                print(way.id, way.tags)
+          # if i < 10:
+          #     print(way.id, way.tags)
 
             if "highway" in way.tags:
                 found += 1
 
-        print("highways gefunden:", found)
+        # print("highways gefunden:", found)
 
         return (
              way
@@ -143,14 +143,18 @@ class OSMFilter:
             way
             for way in osm.ways.values()
             if (
-                way.tags.get("natural") == "water"
-                or way.tags.get("water") in {
-                    "lake",
-                    "pond",
-                    "reservoir",
-                    "basin",
-                }
-                or way.tags.get("landuse") == "reservoir"
+                 (
+                    way.tags.get("natural") == "water"
+                    or way.tags.get("water") in {
+                        "lake",
+                        "pond",
+                        "reservoir",
+                        "basin",
+                    }
+                    or way.tags.get("landuse") == "reservoir"
+                )
+                and len(way.nodes) >= 4
+                and way.nodes[0] == way.nodes[-1]
             )
         )
 
@@ -219,3 +223,23 @@ class OSMFilter:
 
         yield from OSMFilter.waterway_ways(osm)
         yield from OSMFilter.waterway_relations(osm)
+
+    # ---------------------------------------------------------
+    # Orte (Staedte, Doerfer)
+    # ---------------------------------------------------------
+
+    @staticmethod
+    def places(osm):
+
+        allowed = {
+            "city",
+            "town",
+            "village",
+            "hamlet",
+        }
+
+        return (
+            node
+            for node in osm.nodes.values()
+            if node.tags.get("place") in allowed
+        )

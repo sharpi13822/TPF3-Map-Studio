@@ -3,6 +3,7 @@ from dataclasses import dataclass, field
 from src.osm.objects.node import Node
 from src.osm.objects.way import Way
 from src.osm.objects.relation import Relation
+from src.osm.objects.relation_member import RelationMember
 
 from src.osm.osm_filter import OSMFilter
 
@@ -63,6 +64,204 @@ class OSMData:
         self.geometry_cache.clear()
 
     # ---------------------------------------------------------
+    # Serialisieren
+    # ---------------------------------------------------------
+
+    def to_dict(self):
+
+        return {
+
+            "nodes": [
+
+                {
+                    "id": node.id,
+                    "lat": node.lat,
+                    "lon": node.lon,
+                    "tags": node.tags
+                }
+
+                for node in self.nodes.values()
+
+            ],
+
+            "ways": [
+
+                {
+                    "id": way.id,
+                    "nodes": way.nodes,
+                    "tags": way.tags
+                }
+
+                for way in self.ways.values()
+
+            ],
+
+            "relations": [
+
+                {
+                    "id": relation.id,
+
+                    "members": [
+
+                        {
+                            "type": member.type,
+                            "ref": member.ref,
+                            "role": member.role
+                        }
+
+                        for member in relation.members
+
+                    ],
+
+                    "tags": relation.tags
+
+                }
+
+                for relation in self.relations.values()
+
+            ]
+
+        }
+
+    @classmethod
+    def from_dict(
+        cls,
+        data
+    ):
+
+        osm = cls()
+
+        # -----------------------------------------------------
+        # Nodes
+        # -----------------------------------------------------
+
+        for node_data in data.get(
+            "nodes",
+            []
+        ):
+
+            node = Node(
+
+                id=node_data.get(
+                    "id",
+                    0
+                ),
+
+                lat=node_data.get(
+                    "lat",
+                    0.0
+                ),
+
+                lon=node_data.get(
+                    "lon",
+                    0.0
+                ),
+
+                tags=node_data.get(
+                    "tags",
+                    {}
+                )
+
+            )
+
+            osm.add_node(
+                node
+            )
+
+        # -----------------------------------------------------
+        # Ways
+        # -----------------------------------------------------
+
+        for way_data in data.get(
+            "ways",
+            []
+        ):
+
+            way = Way(
+
+                id=way_data.get(
+                    "id",
+                    0
+                ),
+
+                nodes=way_data.get(
+                    "nodes",
+                    []
+                ),
+
+                tags=way_data.get(
+                    "tags",
+                    {}
+                )
+
+            )
+
+            osm.add_way(
+                way
+            )
+
+        # -----------------------------------------------------
+        # Relations
+        # -----------------------------------------------------
+
+        for relation_data in data.get(
+            "relations",
+            []
+        ):
+
+            members = []
+
+            for member_data in relation_data.get(
+                "members",
+                []
+            ):
+
+                member = RelationMember(
+
+                    type=member_data.get(
+                        "type",
+                        ""
+                    ),
+
+                    ref=member_data.get(
+                        "ref",
+                        0
+                    ),
+
+                    role=member_data.get(
+                        "role",
+                        ""
+                    )
+
+                )
+
+                members.append(
+                    member
+                )
+
+            relation = Relation(
+
+                id=relation_data.get(
+                    "id",
+                    0
+                ),
+
+                members=members,
+
+                tags=relation_data.get(
+                    "tags",
+                    {}
+                )
+
+            )
+
+            osm.add_relation(
+                relation
+            )
+
+        return osm
+
+    # ---------------------------------------------------------
     # Statistiken
     # ---------------------------------------------------------
 
@@ -108,6 +307,9 @@ class OSMData:
 
     def waterways(self):
         return OSMFilter.waterways(self)
+
+    def places(self):
+        return OSMFilter.places(self)
 
     # ---------------------------------------------------------
 

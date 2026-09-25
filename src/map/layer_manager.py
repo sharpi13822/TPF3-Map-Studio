@@ -113,6 +113,59 @@ class LayerManager:
     # Layer
     # ---------------------------------------------------------
 
+    # ---------------------------------------------------------
+    # Speichern
+    # ---------------------------------------------------------
+
+    def to_dict(self) -> dict:
+        return {
+            "visible": {
+                layer.name: value
+                for layer, value in self._visible.items()
+            },
+            "locked": {
+                layer.name: value
+                for layer, value in self._locked.items()
+            },
+            "opacity": {
+                layer.name: value
+                for layer, value in self._opacity.items()
+            },
+            "order": [
+                layer.name
+                for layer in self._order
+            ],
+        }
+
+    # ---------------------------------------------------------
+    # Laden
+    # ---------------------------------------------------------
+
+    def from_dict(self, data: dict) -> None:
+
+        visible = data.get("visible", {})
+        locked = data.get("locked", {})
+        opacity = data.get("opacity", {})
+        order = data.get("order", [])
+
+        for name, value in visible.items():
+            layer = Layer[name]
+            self._visible[layer] = bool(value)
+
+        for name, value in locked.items():
+            layer = Layer[name]
+            self._locked[layer] = bool(value)
+
+        for name, value in opacity.items():
+            layer = Layer[name]
+            self._opacity[layer] = float(value)
+
+        if order:
+            self._order = [
+                Layer[name]
+                for name in order
+            ]
+    
     @property
     def layers(self) -> tuple[Layer, ...]:
         return tuple(self._order)

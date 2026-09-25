@@ -1,6 +1,8 @@
 from collections.abc import Callable
 
+from src.map.layer import GeometryType
 from src.map.renderer.render_item import RenderItem
+
 
 class RenderPipeline:
     """Erzeugt RenderItems aus OSM-Objekten."""
@@ -9,21 +11,17 @@ class RenderPipeline:
         self,
         selector: Callable,
         style_resolver,
+        geometry_type: GeometryType,
     ):
         self.selector = selector
         self.style_resolver = style_resolver
+        self.geometry_type = geometry_type
 
     def build(
         self,
         osm,
         zoom: int | None = None,
     ) -> list[RenderItem]:
-        """Erzeugt alle RenderItems für einen Layer.
-
-        Der Parameter ``zoom`` wird aktuell noch nicht verwendet,
-        ist aber bereits für zoomabhängige Styles und Level-of-Detail
-        vorgesehen.
-        """
 
         items: list[RenderItem] = []
 
@@ -42,8 +40,12 @@ class RenderPipeline:
             items.append(
                 RenderItem(
                     id=obj.id,
+                    type=self.geometry_type.value,
                     geometry=geometry,
                     style=style.to_dict(),
+                    properties=dict(
+                        getattr(obj, "tags", {})
+                    ),
                 )
             )
 

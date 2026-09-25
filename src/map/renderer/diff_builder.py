@@ -25,6 +25,7 @@ class DiffBuilder:
             state = RenderState(
                 geometry_hash=item.geometry_hash,
                 style_hash=item.style_hash,
+                properties_hash=item.properties_hash,
             )
 
             previous = cache.get(item.id)

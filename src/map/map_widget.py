@@ -17,6 +17,26 @@ class MapWidget(QWebEngineView):
     def __init__(self):
         super().__init__()
 
+
+        # ---------------------------------------------------------
+        # WebEngine Entwicklerkonsole
+        # ---------------------------------------------------------
+
+        self.devtools = QWebEngineView()
+
+        self.devtools.setWindowTitle(
+            "TPF2 Map Studio – WebEngine Konsole"
+        )
+
+        self.devtools.resize(
+            1000,
+            700
+        )
+
+        self.page().setDevToolsPage(
+            self.devtools.page()
+        )
+
         # ---------------------------------------------------------
         # API
         # ---------------------------------------------------------
@@ -79,6 +99,9 @@ class MapWidget(QWebEngineView):
 
         if ok:
             print("Karte geladen")
+
+            self.devtools.show()
+            
         else:
             print("Fehler beim Laden der Karte")
 

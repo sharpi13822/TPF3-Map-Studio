@@ -2,6 +2,8 @@ import json
 from typing import TYPE_CHECKING
 from src.map.objects.marker import Marker
 from src.map.objects.selection import Selection
+from src.geometry.polyline import Polyline
+from src.osm.objects.osm_data import OSMData
 
 if TYPE_CHECKING:
     from src.core.project.project import Project
@@ -40,7 +42,9 @@ class ProjectSerializer:
                 "author": project.author,
                 "description": project.description,
                 "created": project.created,
-                "modified": project.modified
+                "modified": project.modified,
+                "heightmap_export_path": project.heightmap_export_path,
+                "heightmap_exported_at": project.heightmap_exported_at
 
             },
 
@@ -49,6 +53,8 @@ class ProjectSerializer:
                 if layer_manager is not None
                 else {}
             ),
+
+            "osm": project.osm.to_dict(),
 
             "markers": [
                 {
@@ -60,12 +66,38 @@ class ProjectSerializer:
                 for marker in project.markers
             ],
 
+            "polylines": [
+                {
+                    "id": polyline.id,
+                    "text": polyline.text,
+                    "points": polyline.points,
+                    "properties": polyline.properties
+                }
+                for polyline in project.polylines
+            ],
+
+            "polygons": [
+                {
+
+                    "id": polygon.get("id", ""),
+                    "text": polygon.get("text", ""),
+                    "points": polygon.get("points", []),
+                    "properties": polygon.get("properties", {})
+                }
+                for polygon in project.polygons
+            ],
+
             "selection": (
                 {
                     "min_lat": project.selection.min_lat,
                     "min_lon": project.selection.min_lon,
                     "max_lat": project.selection.max_lat,
-                    "max_lon": project.selection.max_lon
+                    "max_lon": project.selection.max_lon,
+                    "rotation_deg": project.selection.rotation_deg,
+                    "width_m": project.selection.width_m,
+                    "height_m": project.selection.height_m,
+                    "center_lat": project.selection.center_lat,
+                    "center_lon": project.selection.center_lon
                 }
                 if project.selection
                 else None
@@ -154,6 +186,16 @@ class ProjectSerializer:
             project.modified
         )
 
+        project.heightmap_export_path = project_data.get(
+            "heightmap_export_path",
+            ""
+        )
+
+        project.heightmap_exported_at = project_data.get(
+            "heightmap_exported_at",
+            ""
+        )
+
         # -----------------------------------------------------
         # Layer
         # -----------------------------------------------------
@@ -167,7 +209,27 @@ class ProjectSerializer:
                 )
             )
 
-                # -----------------------------------------------------
+        # -----------------------------------------------------
+        # OSM
+        # -----------------------------------------------------
+
+        osm_data = data.get(
+            "osm"
+        )
+
+        if osm_data:
+
+            project.set_osm_data(
+                OSMData.from_dict(
+                    osm_data
+                )
+            )
+
+        else:
+
+            project.clear_osm_data()
+
+        # -----------------------------------------------------
         # Marker
         # -----------------------------------------------------
 
@@ -204,9 +266,86 @@ class ProjectSerializer:
 
             project.add_marker(
                 marker
-            )    
-        
-                # -----------------------------------------------------
+            )
+
+        # -----------------------------------------------------
+        # Polylines
+        # -----------------------------------------------------
+
+        project.clear_polylines()
+
+        for polyline_data in data.get(
+            "polylines",
+            []
+        ):
+
+            polyline = Polyline(
+
+                id=polyline_data.get(
+                    "id",
+                    ""
+                ),
+
+                text=polyline_data.get(
+                    "text",
+                    ""
+                ),
+
+                points=polyline_data.get(
+                   "points",
+                    []
+                ),
+
+                properties=polyline_data.get(
+                    "properties",
+                    {}
+                )
+            )
+
+            project.add_polyline(
+                polyline
+            )
+
+        # -----------------------------------------------------
+        # Polygone
+        # -----------------------------------------------------
+
+        project.clear_polygons()
+
+        for polygon_data in data.get(
+            "polygons",
+            []
+        ):
+
+            polygon = {
+
+                "id": polygon_data.get(
+                    "id",
+                    ""
+                ),
+
+                "text": polygon_data.get(
+                    "text",
+                    ""
+                ),
+
+                "points": polygon_data.get(
+                    "points",
+                    []
+                ),
+
+                "properties": polygon_data.get(
+                    "properties",
+                    {}
+                )
+
+            }
+
+            project.add_polygon(
+                polygon
+            )
+
+        # -----------------------------------------------------
         # Auswahl
         # -----------------------------------------------------
 
@@ -240,6 +379,30 @@ class ProjectSerializer:
                 max_lon=selection_data.get(
                     "max_lon",
                     0.0
+                ),
+
+                # Neu (Rechteck-Tool): fehlen diese Felder in einer
+                # alten Projektdatei, ergibt .get() automatisch die
+                # abwaertskompatiblen Defaults (unrotierte Bbox).
+                rotation_deg=selection_data.get(
+                    "rotation_deg",
+                    0.0
+                ),
+
+                width_m=selection_data.get(
+                    "width_m"
+                ),
+
+                height_m=selection_data.get(
+                    "height_m"
+                ),
+
+                center_lat=selection_data.get(
+                    "center_lat"
+                ),
+
+                center_lon=selection_data.get(
+                    "center_lon"
                 )
 
             )

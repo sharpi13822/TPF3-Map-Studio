@@ -7,3 +7,4 @@ class RenderState:
 
     geometry_hash: int
     style_hash: int
+    properties_hash: int

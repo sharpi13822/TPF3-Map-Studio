@@ -1,5 +1,7 @@
 from PySide6.QtCore import QObject, Slot
 
+from src.geometry.polyline import Polyline
+
 
 class Bridge(QObject):
     """
@@ -31,6 +33,40 @@ class Bridge(QObject):
         )
 
     # ---------------------------------------------------------
+    # Polyline hinzufügen
+    # ---------------------------------------------------------
+
+    @Slot(str, list, str)
+    def addPolyline(
+        self,
+        polyline_id: str,
+        points,
+        text: str = ""
+    ):
+        print(
+            f"Polyline hinzufügen: {polyline_id}"
+        )
+
+        polyline = Polyline(
+            id=polyline_id,
+            points=points,
+            text=text
+        )
+
+        self.controller.project.add_polyline(
+            polyline
+        )
+
+        self.controller.project.mark_dirty()
+
+        print(
+            ">>> POLYLINE IM PROJEKT:",
+            len(
+                self.controller.project.polylines
+            )
+        )
+
+    # ---------------------------------------------------------
     # Marker angeklickt
     # ---------------------------------------------------------
 
@@ -39,17 +75,68 @@ class Bridge(QObject):
         self,
         marker_id: str
     ):
-        """
-        Wird aufgerufen, wenn ein Marker angeklickt wurde.
-        """
-
         print(
             f"Marker geklickt: {marker_id}"
         )
 
         self.controller.marker_clicked(
             marker_id
-        )    
+        )
+
+    # ---------------------------------------------------------
+    # Marker verschoben
+    # ---------------------------------------------------------
+
+    @Slot(str, float, float)
+    def markerMoved(
+        self,
+        marker_id: str,
+        lat: float,
+        lon: float
+    ):
+        self.controller.marker_moved(
+            marker_id,
+            lat,
+            lon
+        )
+
+    # ---------------------------------------------------------
+    # Polyline verschoben
+    # ---------------------------------------------------------
+
+    @Slot(str, list)
+    def polylineMoved(
+        self,
+        polyline_id: str,
+        points
+    ):
+        print(
+            f"Polyline verschoben: {polyline_id}"
+        )
+
+        self.controller.update_polyline(
+            polyline_id,
+            points
+        )
+
+    # ---------------------------------------------------------
+    # Polyline Eigenschaften geändert
+    # ---------------------------------------------------------
+
+    @Slot(str, dict)
+    def polylinePropertiesChanged(
+        self,
+        polyline_id: str,
+        properties: dict
+    ):
+        print(
+            f"Polyline Eigenschaften geändert: {polyline_id}"
+        )
+
+        self.controller.update_polyline_properties(
+            polyline_id,
+            properties
+        )
 
     # ---------------------------------------------------------
     # Rechteck (temporär)
@@ -63,14 +150,30 @@ class Bridge(QObject):
         lat2: float,
         lon2: float
     ):
-        """
-        Wird in Sprint 4.4.3 entfernt.
-        Aktuell noch als Übergang vorhanden.
-        """
-
         self.controller.selection_changed(
             lat1,
             lon1,
             lat2,
             lon2
+        )
+
+    # ---------------------------------------------------------
+    # Rechteck-Tool: verschoben / gedreht
+    # ---------------------------------------------------------
+
+    @Slot(float, float, float, float, float)
+    def rectangleChanged(
+        self,
+        center_lat: float,
+        center_lon: float,
+        width_m: float,
+        height_m: float,
+        rotation_deg: float
+    ):
+        self.controller.rectangle_changed(
+            center_lat,
+            center_lon,
+            width_m,
+            height_m,
+            rotation_deg
         )

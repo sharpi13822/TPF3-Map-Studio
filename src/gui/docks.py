@@ -7,6 +7,7 @@ from PySide6.QtWidgets import (
     QLineEdit,
     QPushButton,
     QListWidget,
+    QListWidgetItem
 )
 
 
@@ -14,10 +15,15 @@ def create_project_dock(parent):
 
     dock = QDockWidget("Projekt", parent)
     dock.setAllowedAreas(Qt.LeftDockWidgetArea)
-    dock.setWidget(QListWidget())
+
+    parent.project_list = QListWidget()
+
+    dock.setWidget(
+        parent.project_list
+    )
 
     return dock
-
+    
 
 def create_properties_dock(parent):
 
