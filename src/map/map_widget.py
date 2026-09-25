@@ -37,7 +37,7 @@ class MapWidget(QWebEngineView):
         self.devtools = QWebEngineView()
 
         self.devtools.setWindowTitle(
-            "TPF2 Map Studio – WebEngine Konsole"
+            "TPF3-Map-Studio – WebEngine Konsole"
         )
 
         self.devtools.resize(

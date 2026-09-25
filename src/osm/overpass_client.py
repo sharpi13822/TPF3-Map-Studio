@@ -49,7 +49,7 @@ class OverpassClient:
                     server,
                     data={"data": query},
                     headers={
-                        "User-Agent": "TPF2 Map Studio",
+                        "User-Agent": "TPF3-Map-Studio",
                         "Accept": "application/json",
                     },
                     timeout=self.timeout,

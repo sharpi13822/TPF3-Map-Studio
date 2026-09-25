@@ -21,6 +21,7 @@ from src.gui.heightmap_dialog import HeightmapDialog
 from src.gui.mod_checker_dialog import ModCheckerDialog
 from src.gui.overpass_dialog import OverpassQueryDialog
 from src.export.osm_xml_exporter import export_osm_xml
+from src.gui.short_segment_dialog import ShortSegmentDialog
 from src.gui.converter_command_dialog import ConverterCommandDialog
 from src.gui.import_guide_dialog import ImportGuideDialog
 from src.gui.feature_overview_dialog import FeatureOverviewDialog
@@ -42,7 +43,7 @@ from src.undo.delete_marker_command import DeleteMarkerCommand
 
 class MainWindow(QMainWindow):
     """
-    Hauptfenster von TPF2 Map Studio.
+    Hauptfenster von TPF3-Map-Studio.
     """
 
     def __init__(self):
@@ -231,7 +232,7 @@ class MainWindow(QMainWindow):
 
         project = self.map_widget.controller.project
 
-        title = f"TPF2 Map Studio - {project.name}"
+        title = f"TPF3-Map-Studio - {project.name}"
 
         if project.dirty:
             title += " *"
@@ -252,7 +253,7 @@ class MainWindow(QMainWindow):
 
             "",
 
-            "TPF2 Map Studio (*.tpf2ms)"
+            "TPF3-Map-Studio (*.tpf2ms)"
 
         )
 
@@ -299,7 +300,7 @@ class MainWindow(QMainWindow):
 
             "",
 
-            "TPF2 Map Studio (*.tpf2ms)"
+            "TPF3-Map-Studio (*.tpf2ms)"
 
         )
 
@@ -572,6 +573,14 @@ class MainWindow(QMainWindow):
             self._open_converter_command
         )
 
+        short_segment_action = tools_menu.addAction(
+            "Kurze Verbindungssegmente..."
+        )
+
+        short_segment_action.triggered.connect(
+            self._open_short_segment_dialog
+        )
+
         marker_action.triggered.connect(
 
             lambda: (
@@ -802,6 +811,23 @@ class MainWindow(QMainWindow):
         """
 
         dialog = ConverterCommandDialog(
+            self,
+            self.map_widget.controller,
+        )
+
+        dialog.exec()
+
+    # ---------------------------------------------------------
+    # Kurze Verbindungssegmente
+    # ---------------------------------------------------------
+
+    def _open_short_segment_dialog(self):
+        """
+        Oeffnet die Analyse/Vereinfachung fuer sehr kurze _link-Segmente
+        (siehe src/osm/short_edge_simplifier.py).
+        """
+
+        dialog = ShortSegmentDialog(
             self,
             self.map_widget.controller,
         )

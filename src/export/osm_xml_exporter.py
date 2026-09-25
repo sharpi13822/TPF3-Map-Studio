@@ -41,7 +41,7 @@ def export_osm_xml(
     root = ET.Element(
         "osm",
         version="0.6",
-        generator="TPF2 Map Studio",
+        generator="TPF3-Map-Studio",
     )
 
     # Reihenfolge wie bei einem echten Overpass-API-XML-Export
@@ -52,7 +52,7 @@ def export_osm_xml(
     note_el.text = (
         "The data included in this document is from "
         "www.openstreetmap.org. The data is made available under "
-        "ODbL. (Diese Datei wurde von TPF2 Map Studio erzeugt.)"
+        "ODbL. (Diese Datei wurde von TPF3-Map-Studio erzeugt.)"
     )
 
     ET.SubElement(root, "meta", osm_base="")
