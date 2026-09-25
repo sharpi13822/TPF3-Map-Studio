@@ -1,7 +1,9 @@
+import copy
+import logging
 from pathlib import Path
 
-from PySide6.QtCore import Qt
-from PySide6.QtGui import QAction, QKeySequence, QShortcut
+from PySide6.QtCore import Qt, QUrl
+from PySide6.QtGui import QAction, QDesktopServices, QKeySequence, QShortcut
 from PySide6.QtWidgets import (
     QFileDialog,
     QLabel,
@@ -33,7 +35,9 @@ from src.gui.docks import (
 )
 from src.gui.layer_dock import create_layer_dock
 
+from src.core.background_task import run_in_background
 from src.core.server import LocalServer
+from src.logging_config import LOG_DIR
 
 from src.map.map_widget import MapWidget
 from src.map.map_controller import Tool
@@ -62,13 +66,23 @@ class MainWindow(QMainWindow):
         # ---------------------------------------------------------
 
         self.server = LocalServer()
-        self.server.start()
+
+        try:
+            self.server.start()
+        except OSError as exc:
+            QMessageBox.critical(
+                None,
+                "TPF3-Map-Studio",
+                "Der interne Kartenserver konnte nicht gestartet werden "
+                f"(kein freier Port gefunden):\n\n{exc}",
+            )
+            raise
 
         # ---------------------------------------------------------
         # Kartenansicht
         # ---------------------------------------------------------
 
-        self.map_widget = MapWidget()
+        self.map_widget = MapWidget(self.server.url)
 
         self.setCentralWidget(
             self.map_widget
@@ -549,6 +563,9 @@ class MainWindow(QMainWindow):
             "OSM laden"
         )
 
+        # Wird waehrend eines laufenden Downloads deaktiviert.
+        self.osm_action = osm_action
+
         overpass_config_action = tools_menu.addAction(
             "Overpass-Abfrage..."
         )
@@ -669,6 +686,28 @@ class MainWindow(QMainWindow):
             self._open_feature_overview
         )
 
+        help_menu.addSeparator()
+
+        log_folder_action = help_menu.addAction(
+            "Log-Ordner öffnen"
+        )
+
+        log_folder_action.triggered.connect(
+            self._open_log_folder
+        )
+
+    def _open_log_folder(self):
+        """
+        Oeffnet den Ordner mit der Logdatei im Explorer - fuer
+        Fehlerberichte, da die exe kein Konsolenfenster hat.
+        """
+
+        LOG_DIR.mkdir(parents=True, exist_ok=True)
+
+        QDesktopServices.openUrl(
+            QUrl.fromLocalFile(str(LOG_DIR))
+        )
+
     # ---------------------------------------------------------
     # Toolbar
     # ---------------------------------------------------------
@@ -686,34 +725,87 @@ class MainWindow(QMainWindow):
     # ---------------------------------------------------------
 
     def _download_osm(self):
+        """
+        Startet den OSM-Download im Hintergrund, damit das Fenster
+        waehrenddessen bedienbar bleibt (der Download kann bei mehreren
+        nicht erreichbaren Overpass-Servern minutenlang dauern).
+        """
+
+        controller = self.map_widget.controller
+        selection = controller.project.selection
+
+        if selection is None:
+
+            self.statusBar().showMessage(
+                "Keine Auswahl vorhanden - zuerst einen Kartenausschnitt festlegen."
+            )
+
+            return
+
+        self.osm_action.setEnabled(False)
 
         self.statusBar().showMessage(
-            "OSM-Daten werden geladen..."
+            "OSM-Daten werden geladen... (läuft im Hintergrund)"
         )
 
-        ok = self.map_widget.controller.download_osm()
+        # Kopien, damit Aenderungen waehrend des Downloads (z.B. per
+        # Rechteck-Tool) den laufenden Vorgang nicht mittendrin stoeren.
+        selection_copy = copy.deepcopy(selection)
+        config = copy.deepcopy(controller.overpass_config)
 
-        if ok:
+        run_in_background(
+            lambda: controller.fetch_osm(selection_copy, config),
+            on_success=lambda osm: self._on_osm_downloaded(osm, selection),
+            on_error=self._on_osm_download_failed,
+            name="osm-download",
+        )
 
-            project = self.map_widget.controller.project
+    def _on_osm_downloaded(self, osm, selection):
+
+        self.osm_action.setEnabled(True)
+
+        controller = self.map_widget.controller
+        project = controller.project
+
+        # Wurde waehrend des Downloads ein anderes Projekt geoeffnet
+        # oder der Ausschnitt geaendert, passen die Daten nicht mehr.
+        if project.selection is not selection:
 
             self.statusBar().showMessage(
-
-                f"OSM geladen: "
-
-                f"{project.node_count} Nodes, "
-
-                f"{project.way_count} Ways, "
-
-                f"{project.relation_count} Relations"
-
+                "OSM-Download verworfen: Der Kartenausschnitt wurde "
+                "währenddessen geändert. Bitte erneut laden."
             )
 
-        else:
+            return
 
-            self.statusBar().showMessage(
-                "OSM-Download fehlgeschlagen."
+        try:
+            controller.apply_osm(osm)
+        except Exception as exc:
+            logging.getLogger(__name__).exception(
+                "OSM-Daten konnten nicht übernommen werden"
             )
+            self._on_osm_download_failed(exc)
+            return
+
+        self.statusBar().showMessage(
+
+            f"OSM geladen: "
+
+            f"{project.node_count} Nodes, "
+
+            f"{project.way_count} Ways, "
+
+            f"{project.relation_count} Relations"
+
+        )
+
+    def _on_osm_download_failed(self, exc):
+
+        self.osm_action.setEnabled(True)
+
+        self.statusBar().showMessage(
+            f"OSM-Download fehlgeschlagen: {exc}"
+        )
 
     # ---------------------------------------------------------
     # Overpass-Abfrage-Baukasten

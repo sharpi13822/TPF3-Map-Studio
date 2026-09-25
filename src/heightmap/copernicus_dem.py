@@ -13,6 +13,8 @@ Quelle: https://copernicus-dem-30m.s3.amazonaws.com/
 from __future__ import annotations
 
 import math
+import os
+import threading
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -57,18 +59,24 @@ def download_tile(tile_id: str, cache_dir: Path) -> Path:
         return dest
 
     url = f"{BASE_URL}/{tile_id}/{tile_id}.tif"
-    tmp = dest.with_suffix(".tif.part")
-    with requests.get(url, stream=True, timeout=60) as resp:
-        if resp.status_code == 404:
-            raise FileNotFoundError(
-                f"Kachel {tile_id} existiert nicht bei Copernicus DEM "
-                f"(vermutlich reines Wassergebiet ohne Landkachel: {url})"
-            )
-        resp.raise_for_status()
-        with open(tmp, "wb") as f:
-            for chunk in resp.iter_content(chunk_size=1024 * 1024):
-                f.write(chunk)
-    tmp.rename(dest)
+    # Eindeutiger Name pro Thread: Downloads laufen im Hintergrund und
+    # koennten sich sonst (z.B. nach erneutem Oeffnen des Dialogs) bei
+    # derselben Kachel gegenseitig die .part-Datei ueberschreiben.
+    tmp = dest.with_suffix(f".tif.{os.getpid()}-{threading.get_ident()}.part")
+    try:
+        with requests.get(url, stream=True, timeout=60) as resp:
+            if resp.status_code == 404:
+                raise FileNotFoundError(
+                    f"Kachel {tile_id} existiert nicht bei Copernicus DEM "
+                    f"(vermutlich reines Wassergebiet ohne Landkachel: {url})"
+                )
+            resp.raise_for_status()
+            with open(tmp, "wb") as f:
+                for chunk in resp.iter_content(chunk_size=1024 * 1024):
+                    f.write(chunk)
+        os.replace(tmp, dest)
+    finally:
+        tmp.unlink(missing_ok=True)
     return dest
 
 

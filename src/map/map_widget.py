@@ -25,8 +25,12 @@ class MapWidget(QWebEngineView):
     MAX_LOAD_ATTEMPTS = 15
     RETRY_DELAY_MS = 300
 
-    def __init__(self):
+    def __init__(self, base_url: str):
         super().__init__()
+
+        # Basis-URL des lokalen Servers (LocalServer.url) - der Port
+        # steht erst nach dessen Start fest, siehe LocalServer.
+        self._base_url = base_url
 
         self._load_attempts = 0
 
@@ -107,7 +111,7 @@ class MapWidget(QWebEngineView):
         self._load_attempts += 1
 
         self.load(
-            "http://127.0.0.1:8000/index.html"
+            f"{self._base_url}/index.html"
         )
 
     def _load_finished(

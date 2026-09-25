@@ -8,6 +8,7 @@ from src.core.project_serializer import ProjectSerializer
 
 from src.osm.overpass_client import OverpassClient
 from src.osm.overpass_query_builder import OverpassQueryConfig
+from src.osm.objects.osm_data import OSMData
 
 from src.map.layer_manager import LayerManager
 
@@ -722,135 +723,132 @@ class MapController(QObject):
     # OpenStreetMap
     # ---------------------------------------------------------
 
-    def download_osm(self) -> bool:
+    def fetch_osm(
+        self,
+        selection: Selection,
+        overpass_config: OverpassQueryConfig,
+    ) -> OSMData:
         """
-        Lädt OSM-Daten für die aktuelle Auswahl.
+        Laedt und verarbeitet OSM-Daten fuer die uebergebene Auswahl.
+
+        Laeuft im Hintergrund-Thread (siehe MainWindow._download_osm):
+        darf daher weder das Projekt veraendern noch die Karte bzw.
+        andere Qt-Objekte anfassen - das passiert erst in apply_osm()
+        im GUI-Thread. Fehler werden als Exception weitergereicht.
         """
-
-        if self.project.selection is None:
-
-            print(
-                "Keine Auswahl vorhanden."
-            )
-
-            return False
 
         print(
             "Starte OSM-Download..."
         )
 
-        try:
+        osm = self.overpass.download(
+            selection,
+            overpass_config,
+        )
 
-            osm = self.overpass.download(
-                self.project.selection,
-                self.overpass_config,
-            )
+        GeometryBuilder(osm).build()
 
-            GeometryBuilder(osm).build()
+        # ---------------------------------------------------------
+        # Export-Test
+        # ---------------------------------------------------------
 
-            self.project.set_osm_data(osm)
+        exporter = OSMExporter()
 
-            # ---------------------------------------------------------
-            # Export-Test
-            # ---------------------------------------------------------
+        export_data = exporter.export(osm)
 
-            exporter = OSMExporter()
+        # --------------------------------------------------
+        # TPF2 Export
+        # --------------------------------------------------
 
-            export_data = exporter.export(osm)
+        tpf2_exporter = TPF2Exporter.from_export_data(
+            export_data
 
-            # --------------------------------------------------
-            # TPF2 Export
-            # --------------------------------------------------
+        )
 
-            tpf2_exporter = TPF2Exporter.from_export_data(
-                export_data
+        tpf2_data = tpf2_exporter.export(
+            export_data
+        )
 
-            )
+        # --------------------------------------------------
+        # TPF2 Lua / Construction Export
+        # --------------------------------------------------
 
-            tpf2_data = tpf2_exporter.export(
-                export_data
-            )
+        output_path = (
+            Path("exports")
+            / "osm_map_1"
+        )
 
-            # --------------------------------------------------
-            # TPF2 Lua / Construction Export
-            # --------------------------------------------------
+        tpf2_writer = TPF2LuaWriter(
+            name="OSM Map",
+            description=(
+                "OpenStreetMap export "
+                "for Transport Fever 2"
+            ),
+        )
 
-            output_path = (
-                Path("exports")
-                / "osm_map_1"
-            )
+        tpf2_writer.write(
+            tpf2_data,
+            output_path,
+        )
 
-            tpf2_writer = TPF2LuaWriter(
-                name="OSM Map",
-                description=(
-                    "OpenStreetMap export "
-                    "for Transport Fever 2"
-                ),
-            )
+        print(
+            f"TPF2-Mod: {output_path}"
+        )
 
-            tpf2_writer.write(
-                tpf2_data,
-                output_path,
-            )
+        print("Export:")
+        print(f"  Roads      : {len(export_data.roads)}")
+        print(f"  Railways   : {len(export_data.railways)}")
+        print(f"  Buildings  : {len(export_data.buildings)}")
+        print(f"  Water      : {len(export_data.water)}")
+        print(f"  Waterways  : {len(export_data.waterways)}")
+        print(f"  Parks      : {len(export_data.parks)}")
+        print(f"  Landuse    : {len(export_data.landuse)}")
+        print(f"  Vegetation : {len(export_data.vegetation)}")
 
-            print(
-                f"TPF2-Mod: {output_path}"
-            )
+        print(
+            f"TPF2 Roads     : "
+            f"{len(tpf2_data.get('roads', []))}"
+        )
 
-            print("Export:")
-            print(f"  Roads      : {len(export_data.roads)}")
-            print(f"  Railways   : {len(export_data.railways)}")
-            print(f"  Buildings  : {len(export_data.buildings)}")
-            print(f"  Water      : {len(export_data.water)}")
-            print(f"  Waterways  : {len(export_data.waterways)}")
-            print(f"  Parks      : {len(export_data.parks)}")
-            print(f"  Landuse    : {len(export_data.landuse)}")
-            print(f"  Vegetation : {len(export_data.vegetation)}")
+        print(
+            f"TPF2 Railways  : "
+            f"{len(tpf2_data.get('railways', []))}"
+        )
 
-            self.redraw_layers()
+        print(
+            f"TPF2 Export    : {output_path}"
+        )
 
-            print(
-                "Download beendet."
-            )
+        return osm
 
-            print(
-                f"TPF2 Roads     : "
-                f"{len(tpf2_data.get('roads', []))}"
-            )
+    def apply_osm(
+        self,
+        osm: OSMData,
+    ):
+        """
+        Uebernimmt die von fetch_osm() geladenen Daten ins Projekt und
+        zeichnet die Karte neu. Nur im GUI-Thread aufrufen.
+        """
 
-            print(
-                f"TPF2 Railways  : "
-                f"{len(tpf2_data.get('railways', []))}"
-            )
+        self.project.set_osm_data(osm)
 
-            print(
-                f"TPF2 Export    : {output_path}"
-            )
+        self.redraw_layers()
 
-            print(
-                f"Nodes     : {osm.node_count}"
-            )
+        print(
+            "Download beendet."
+        )
 
-            print(
-                f"Ways      : {osm.way_count}"
-            )
+        print(
+            f"Nodes     : {osm.node_count}"
+        )
 
-            print(
-                f"Relations : {osm.relation_count}"
-            )
+        print(
+            f"Ways      : {osm.way_count}"
+        )
 
-            return True
-
-        except Exception as exc:
-            import traceback
-            traceback.print_exc()
-            
-            "OSM-Download fehlgeschlagen:"
-        
-
-            print(exc)
-
-            return False    
+        print(
+            f"Relations : {osm.relation_count}"
+        )
         
             # ---------------------------------------------------------
     # Rechteckauswahl

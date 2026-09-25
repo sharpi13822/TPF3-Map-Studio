@@ -22,6 +22,7 @@ from src.heightmap.heightmap_exporter import (
     export_heightmap_png,
 )
 from src.heightmap.water_level import suggest_water_level, render_preview
+from src.core.background_task import run_in_background
 
 DEFAULT_CACHE_DIR = Path.home() / ".tpf2_map_studio" / "dem_cache"
 
@@ -143,26 +144,36 @@ class HeightmapDialog(QDialog):
         self.status_label.setText(
             "Lade Höhendaten... (kann je nach Kartengröße etwas dauern)"
         )
-        self.download_button.setEnabled(False)
-        # Sorgt dafuer, dass der Text vor dem (blockierenden) Download
-        # tatsaechlich schon sichtbar ist.
-        self.repaint()
+        self._set_busy(True)
 
-        try:
-            self.heightmap_array = build_heightmap_array(
-                self.selection,
+        selection = self.selection
+
+        def work():
+            # Laeuft im Hintergrund-Thread: nur Netzwerk und numpy,
+            # keine Widgets anfassen.
+            array = build_heightmap_array(
+                selection,
                 DEFAULT_CACHE_DIR,
             )
-        except Exception as exc:
-            self.status_label.setText(
-                f"Fehlgeschlagen: {exc}"
-            )
-            self.download_button.setEnabled(True)
-            return
+            return array, suggest_water_level(array)
 
-        self.suggestion = suggest_water_level(
-            self.heightmap_array
+        run_in_background(
+            work,
+            on_success=self._on_download_finished,
+            on_error=self._on_download_failed,
+            name="heightmap-download",
         )
+
+    def _on_download_failed(self, exc):
+
+        self.status_label.setText(
+            f"Fehlgeschlagen: {exc}"
+        )
+        self._set_busy(False)
+
+    def _on_download_finished(self, result):
+
+        self.heightmap_array, self.suggestion = result
 
         if self.suggestion.outlier_count > 0:
 
@@ -198,10 +209,20 @@ class HeightmapDialog(QDialog):
             f"{self.heightmap_array.shape[0]} Pixel"
         )
 
+        self._set_busy(False)
         self.export_button.setEnabled(True)
-        self.download_button.setEnabled(True)
 
         self._update_preview()
+
+    def _set_busy(self, busy: bool):
+        """
+        Sperrt die Download-Knoepfe, solange ein Hintergrund-Download
+        laeuft (sonst koennten zwei gleichzeitig dieselben Kacheln in
+        den Cache schreiben).
+        """
+
+        self.download_button.setEnabled(not busy)
+        self.quick_preview_button.setEnabled(not busy)
 
     # ---------------------------------------------------------
     # Schnellvorschau (vor dem eigentlichen Download)
@@ -224,51 +245,65 @@ class HeightmapDialog(QDialog):
         self.status_label.setText(
             "Lade Schnellvorschau..."
         )
-        self.quick_preview_button.setEnabled(False)
-        self.download_button.setEnabled(False)
-        self.repaint()
+        self._set_busy(True)
 
-        try:
+        selection = self.selection
+
+        def work():
+            # Laeuft im Hintergrund-Thread: liefert fertige PNG-Bytes,
+            # das QPixmap wird erst im GUI-Thread daraus erzeugt.
             preview_array = build_heightmap_array_preview(
-                self.selection,
+                selection,
                 DEFAULT_CACHE_DIR,
             )
-        except Exception as exc:
-            self.status_label.setText(
-                f"Schnellvorschau fehlgeschlagen: {exc}"
+
+            quick_suggestion = suggest_water_level(preview_array)
+
+            image = render_preview(
+                preview_array,
+                water_level_m=quick_suggestion.suggested_m,
+                range_min_m=quick_suggestion.range_min_m,
+                range_max_m=quick_suggestion.range_max_m,
             )
-            self.quick_preview_button.setEnabled(True)
-            self.download_button.setEnabled(True)
-            return
 
-        quick_suggestion = suggest_water_level(preview_array)
+            buffer = io.BytesIO()
+            image.save(buffer, format="PNG")
 
-        image = render_preview(
-            preview_array,
-            water_level_m=quick_suggestion.suggested_m,
-            range_min_m=quick_suggestion.range_min_m,
-            range_max_m=quick_suggestion.range_max_m,
+            return preview_array.shape, buffer.getvalue()
+
+        run_in_background(
+            work,
+            on_success=self._on_quick_preview_finished,
+            on_error=self._on_quick_preview_failed,
+            name="heightmap-preview",
         )
 
-        buffer = io.BytesIO()
-        image.save(buffer, format="PNG")
+    def _on_quick_preview_failed(self, exc):
+
+        self.status_label.setText(
+            f"Schnellvorschau fehlgeschlagen: {exc}"
+        )
+        self._set_busy(False)
+
+    def _on_quick_preview_finished(self, result):
+
+        shape, png_bytes = result
 
         pixmap = QPixmap()
-        pixmap.loadFromData(buffer.getvalue())
+        pixmap.loadFromData(png_bytes)
 
         self.preview_label.setPixmap(
             pixmap.scaledToHeight(400, Qt.SmoothTransformation)
         )
 
         self.status_label.setText(
-            f"Schnellvorschau ({preview_array.shape[1]} x "
-            f"{preview_array.shape[0]} Pixel, niedrige Auflösung - "
+            f"Schnellvorschau ({shape[1]} x "
+            f"{shape[0]} Pixel, niedrige Auflösung - "
             f"noch nicht exportierbar). Sieht das plausibel aus? Dann "
             f"jetzt 'Höhendaten herunterladen' für die volle Auflösung."
         )
 
-        self.quick_preview_button.setEnabled(True)
-        self.download_button.setEnabled(True)
+        self._set_busy(False)
 
     # ---------------------------------------------------------
     # Höhenbereich (mit/ohne Ausreißer)

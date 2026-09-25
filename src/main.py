@@ -1,5 +1,4 @@
 import sys
-import io
 
 # ---------------------------------------------------------------------
 # WICHTIG: In einer per PyInstaller mit console=False gebauten exe
@@ -7,23 +6,23 @@ import io
 # oder traceback.print_exc() im gesamten Programm wuerde dann selbst
 # mit einer AttributeError abstuerzen - und zwar lautlos, oft mitten in
 # einem Hintergrund-Vorgang (z.B. OSM-Download), ohne dass je eine
-# Fehlermeldung im Fenster erscheint. Deshalb hier VOR allem anderen
-# durch einen harmlosen Platzhalter ersetzen, der .write()/.flush()
-# einfach ignoriert, statt eine Exception zu werfen. Im normalen
-# Python-Start (nicht gebaute exe) bleiben stdout/stderr unveraendert.
+# Fehlermeldung im Fenster erscheint. setup_logging() ersetzt beide
+# deshalb VOR allem anderen durch einen Stream, der alles in die
+# Logdatei schreibt (und beim normalen Python-Start zusaetzlich
+# weiterhin auf die Konsole).
 # ---------------------------------------------------------------------
 
-if sys.stdout is None:
-    sys.stdout = io.StringIO()
+from src.logging_config import install_qt_message_handler, setup_logging
 
-if sys.stderr is None:
-    sys.stderr = io.StringIO()
+setup_logging()
 
 from PySide6.QtWidgets import QApplication
 from src.window import MainWindow
 
 
 def main():
+    install_qt_message_handler()
+
     app = QApplication(sys.argv)
 
     window = MainWindow()
