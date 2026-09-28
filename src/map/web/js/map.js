@@ -4,6 +4,35 @@ class MapEngine {
     #config;
     #events;
 
+    // Grundkarten, zwischen denen gewechselt werden kann (immer genau
+    // eine aktiv). "satellite" nutzt EOX Sentinel-2 cloudless per WMS -
+    // nicht-kommerziell nutzbar, siehe Quellenangabe in der Layer selbst.
+    static BASE_LAYERS = {
+        osm: {
+            type: "xyz",
+            url: "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+            attribution: "© OpenStreetMap-Mitwirkende"
+        },
+        satellite: {
+            // Esri World Imagery - laut OSM-Wiki von Esri ausdruecklich
+            // ohne Einschraenkungen freigegeben (auch ohne Attributions-
+            // pflicht). Deutlich hoehere Aufloesung als Sentinel-2 in
+            // vielen Gebieten (bis 30cm in Teilen Westeuropas statt
+            // Sentinel-2s festen 10m/Pixel), daher beim Heranzoomen
+            // laenger scharf. Sehr weit verbreitetes, gut dokumentiertes
+            // URL-Muster.
+            type: "xyz",
+            url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+            maxNativeZoom: 19,
+            attribution: "Tiles © Esri — Source: Esri, Maxar, Earthstar " +
+                "Geographics, CNES/Airbus DS, USDA FSA, USGS, Aerogrid, " +
+                "IGN, IGP und die GIS User Community"
+        }
+    };
+
+    #baseLayer = null;
+    #baseLayerName = null;
+
     constructor(config = {}) {
 
         const defaults = {
@@ -13,19 +42,12 @@ class MapEngine {
             minZoom: 2,
             maxZoom: 19,
             preferCanvas: true,
-            tileLayer: {
-                url: "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
-                attribution: "© OpenStreetMap"
-            }
+            baseLayer: "osm"
         };
 
         this.#config = Object.freeze({
             ...defaults,
-            ...config,
-            tileLayer: {
-                ...defaults.tileLayer,
-                ...(config.tileLayer || {})
-            }
+            ...config
         });
 
         this.#events = new EventTarget();
@@ -42,13 +64,7 @@ class MapEngine {
             this.#config.zoom
         );
 
-        L.tileLayer(
-            this.#config.tileLayer.url,
-            {
-                attribution: this.#config.tileLayer.attribution,
-                maxZoom: this.#config.maxZoom
-            }
-        ).addTo(this.#map);
+        this.setBaseLayer(this.#config.baseLayer);
 
         window.addEventListener(
             "resize",
@@ -56,6 +72,50 @@ class MapEngine {
         );
 
         this.#installEvents();
+    }
+
+    /**
+     * Wechselt die Grundkarte (z.B. "osm" <-> "satellite"). Entfernt die
+     * vorherige Grundkarte vollstaendig, bevor die neue hinzugefuegt
+     * wird - es ist immer nur eine aktiv.
+     */
+    setBaseLayer(name) {
+
+        const def = MapEngine.BASE_LAYERS[name];
+
+        if (!def) {
+            console.warn(`Unbekannte Grundkarte '${name}'`);
+            return;
+        }
+
+        if (this.#baseLayer) {
+            this.#map.removeLayer(this.#baseLayer);
+        }
+
+        this.#baseLayer = def.type === "wms"
+            ? L.tileLayer.wms(def.url, {
+                ...def.wmsOptions,
+                attribution: def.attribution,
+                maxZoom: this.#config.maxZoom,
+                // maxNativeZoom: ab hier gibt es beim Anbieter keine
+                // eigenen Kacheln mehr - Leaflet vergroessert dann die
+                // letzte verfuegbare Kachel, statt (leere/graue)
+                // Kacheln fuer nicht existierende Zoomstufen anzufragen.
+                maxNativeZoom: def.maxNativeZoom
+            })
+            : L.tileLayer(def.url, {
+                attribution: def.attribution,
+                maxZoom: this.#config.maxZoom,
+                maxNativeZoom: def.maxNativeZoom
+            });
+
+        this.#baseLayer.addTo(this.#map);
+        this.#baseLayerName = name;
+
+    }
+
+    get baseLayerName() {
+        return this.#baseLayerName;
     }
 
     #installEvents() {
@@ -76,6 +136,15 @@ class MapEngine {
             this.emit("zoom", {
                 zoom: this.zoom
             });
+        });
+
+        this.#map.on("mousemove", event => {
+
+            this.emit("mousemove", {
+                lat: event.latlng.lat,
+                lon: event.latlng.lng
+            });
+
         });
 
         this.#map.on("click", event => {
@@ -279,6 +348,65 @@ class Layer {
         }
 
     }
+}
+
+/**
+ * Wrapper fuer eine zuschaltbare Raster-Kartenebene (z.B. OpenRailwayMap
+ * als Overlay ueber der Grundkarte) - bietet dieselbe show()/hide()/
+ * setVisible()-Schnittstelle wie Layer, damit LayerManager.toggle() und
+ * die bestehenden Checkboxen in layer_control.js sie ohne Aenderung
+ * mitbenutzen koennen.
+ */
+class RasterLayer {
+
+    #tileLayer;
+    #options;
+
+    constructor(url, options = {}) {
+
+        this.#options = Object.freeze({
+            visible: false,
+            ...options
+        });
+
+        this.#tileLayer = L.tileLayer(url, options);
+
+    }
+
+    get leaflet() {
+        return this.#tileLayer;
+    }
+
+    get visible() {
+        return this.#options.visible;
+    }
+
+    show(map) {
+
+        if (!map.hasLayer(this.#tileLayer)) {
+            this.#tileLayer.addTo(map);
+        }
+
+    }
+
+    hide(map) {
+
+        if (map.hasLayer(this.#tileLayer)) {
+            map.removeLayer(this.#tileLayer);
+        }
+
+    }
+
+    setVisible(map, visible) {
+
+        if (visible) {
+            this.show(map);
+        } else {
+            this.hide(map);
+        }
+
+    }
+
 }
 
 class GeometryRenderer {
@@ -1491,6 +1619,73 @@ class CommandDispatcher {
 
         layers.register("selection");
         layers.register("measure");
+
+        // ---------------------------------------------------------
+        // OpenRailwayMap-Overlay (Eisenbahn-Infrastruktur) - nicht-
+        // kommerzielle Nutzung mit wenigen Anfragen laut Nutzungs-
+        // bedingungen, https://wiki.openstreetmap.org/wiki/OpenRailwayMap/API
+        // ---------------------------------------------------------
+
+        const ormLayer = new RasterLayer(
+            "https://{s}.tiles.openrailwaymap.org/standard/{z}/{x}/{y}.png",
+            {
+                subdomains: "abc",
+                maxZoom: 19,
+                opacity: 0.8,
+                attribution:
+                    "Daten © OpenStreetMap-Mitwirkende, Stil: CC-BY-SA 2.0 " +
+                    "OpenRailwayMap"
+            }
+        );
+
+        layers.registerExternal("openrailwaymap", ormLayer);
+
+        // ---------------------------------------------------------
+        // Maß-Gitter
+        // ---------------------------------------------------------
+
+        const measurementGrid = new MeasurementGrid(engine);
+
+        layers.registerExternal("measurement-grid", measurementGrid);
+
+        window.measurementGrid = measurementGrid;
+
+        engine.on("move", () => measurementGrid.redraw());
+        engine.on("zoom", () => measurementGrid.redraw());
+
+        // ---------------------------------------------------------
+        // Koordinatenanzeige unter dem Mauszeiger
+        // ---------------------------------------------------------
+
+        const coordinateReadout = new CoordinateReadout(
+            "coordinate-readout"
+        );
+
+        engine.on("mousemove", event => {
+
+            const { lat, lon } = event.detail;
+
+            coordinateReadout.update(lat, lon);
+
+        });
+
+        // ---------------------------------------------------------
+        // Grundkarten-Auswahl (OSM <-> Satellit)
+        // ---------------------------------------------------------
+
+        document
+            .querySelectorAll('input[name="base-layer"]')
+            .forEach(input => {
+
+                input.addEventListener("change", () => {
+
+                    if (input.checked) {
+                        engine.setBaseLayer(input.value);
+                    }
+
+                });
+
+            });
 
         const renderers = new RendererRegistry();
 

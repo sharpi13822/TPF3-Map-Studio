@@ -14,6 +14,8 @@
     
     <div id="map"></div>
 
+    <div id="coordinate-readout"></div>
+
     <div id="layer-control">
 
     <div class="layer-title">
@@ -72,6 +74,28 @@
 
     </div>
 
+
+    <h4>Kartenquelle</h4>
+
+    <label>
+        <input type="radio" name="base-layer" value="osm" checked>
+        OpenStreetMap
+    </label>
+
+    <label>
+        <input type="radio" name="base-layer" value="satellite">
+        Satellit (Sentinel-2)
+    </label>
+
+    <label>
+        <input type="checkbox" data-layer="openrailwaymap">
+        Eisenbahnkarte (ORM)
+    </label>
+
+    <label>
+        <input type="checkbox" data-layer="measurement-grid">
+        Maß-Gitter
+    </label>
 
     <h4>Grundkarte</h4>
 
@@ -166,7 +190,9 @@
 
     <script src="js/geometry_editor.js"></script>
 
-    <script src="js/map.js?v=7"></script>
+    <script src="js/grid.js"></script>
+
+    <script src="js/map.js?v=8"></script>
 
 </body>
 

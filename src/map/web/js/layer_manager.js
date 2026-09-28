@@ -41,6 +41,26 @@ class LayerManager {
 
 
 
+    /**
+     * Registriert ein bereits fertiges Layer-artiges Objekt (z.B.
+     * RasterLayer fuer eine externe Kachelebene) statt intern einen neuen
+     * Layer zu erzeugen wie register(). Das Objekt muss .leaflet,
+     * .show(map), .hide(map) und .setVisible(map, visible) bereitstellen -
+     * danach funktionieren toggle()/get()/clear() etc. identisch wie bei
+     * einem normalen Layer.
+     */
+    registerExternal(name, layerLike) {
+
+        if (this.#layers.has(name)) {
+            return this.#layers.get(name);
+        }
+
+        this.#layers.set(name, layerLike);
+
+        return layerLike;
+
+    }
+
     unregister(name) {
 
         return this.#layers.delete(name);

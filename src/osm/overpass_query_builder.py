@@ -78,10 +78,29 @@ def build_query(
     if config is None:
         config = OverpassQueryConfig()
 
-    bbox = (
-        f"{selection.min_lat},{selection.min_lon},"
-        f"{selection.max_lat},{selection.max_lon}"
-    )
+    # Bei einer gedrehten Auswahl ist min_lat/min_lon/max_lat/max_lon
+    # bewusst die groessere, umschliessende Bounding Box (siehe
+    # Selection-Klasse) - fuer die eigentliche Overpass-Abfrage brauchen
+    # wir hier aber die TATSAECHLICHE gedrehte Flaeche, sonst wuerden
+    # OSM-Daten fuer den viel groesseren, nicht gedrehten Umkreis
+    # geladen statt nur fuer das gedrehte Kartenband selbst. Overpass
+    # unterstuetzt dafuer den poly:-Filter (beliebiges Polygon) als
+    # Alternative zur rechteckigen bbox.
+    if selection.is_rotated:
+
+        corner_pairs = " ".join(
+            f"{lat} {lon}"
+            for lat, lon in selection.corners_latlon()
+        )
+
+        bbox = f'poly:"{corner_pairs}"'
+
+    else:
+
+        bbox = (
+            f"{selection.min_lat},{selection.min_lon},"
+            f"{selection.max_lat},{selection.max_lon}"
+        )
 
     lines: list[str] = []
 

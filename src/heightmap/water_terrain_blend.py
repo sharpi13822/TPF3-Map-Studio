@@ -91,11 +91,17 @@ def build_water_mask(
     w_px: int,
     h_px: int,
     waterway_width_px: int = 3,
+    waterway_types: frozenset[str] | None = None,
 ) -> np.ndarray:
     """
     Baut eine binäre Maske (True=Wasser) in derselben Auflösung wie das
     Höhenraster, aus den geladenen OSM-Wasserflächen (inkl. Inseln bei
     Multipolygonen) und Wasserwegen (als Linien mit fester Pixelbreite).
+
+    waterway_types: Beschränkt die Wasserwege auf bestimmte OSM-Werte des
+    Tags "waterway" (z.B. {"river", "canal"} - ohne Bäche/Gräben). None =
+    alle Wasserwege. Wasserflächen (Seen, Teiche, breite Flüsse als
+    Fläche) sind davon nicht betroffen.
     """
 
     center_lat, center_lon = selection.center
@@ -153,6 +159,13 @@ def build_water_mask(
     # Wasserwege (Flüsse/Bäche) - als Linie mit fester Breite, da sie in
     # OSM nur als Mittellinie ohne Flächen-Geometrie vorliegen.
     for way in OSMFilter.waterways(osm):
+
+        if (
+            waterway_types is not None
+            and way.tags.get("waterway") not in waterway_types
+        ):
+            continue
+
         points = way_points(way)
         if len(points) >= 2:
             draw.line(points, fill=255, width=waterway_width_px)
