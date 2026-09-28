@@ -22,6 +22,12 @@ class OverpassClient:
         self.timeout = 60
         self.parser = OSMParser()
 
+        # Zuletzt erfolgreicher Server wird beim naechsten Download
+        # zuerst gefragt - overpass-api.de ist oft ueberlastet und
+        # bricht erst nach einigen Sekunden mit 504 ab, das muss nicht
+        # bei jedem Download erneut abgewartet werden.
+        self._preferred_server = None
+
     # ---------------------------------------------------------
 
     def download(
@@ -37,7 +43,13 @@ class OverpassClient:
 
         last_exception = None
 
-        for server in self.SERVERS:
+        servers = list(self.SERVERS)
+
+        if self._preferred_server in servers:
+            servers.remove(self._preferred_server)
+            servers.insert(0, self._preferred_server)
+
+        for server in servers:
 
             print()
             print("=" * 60)
@@ -64,6 +76,8 @@ class OverpassClient:
                 print("JSON erfolgreich empfangen.")
 
                 osm = self.parser.parse(json_data)
+
+                self._preferred_server = server
 
                 print()
                 print("Download erfolgreich.")

@@ -22,9 +22,10 @@ from src.heightmap.heightmap_exporter import (
     export_heightmap_png,
 )
 from src.heightmap.water_level import suggest_water_level, render_preview
-from src.core.background_task import run_in_background
+from src.heightmap.water_terrain_blend import build_water_mask, blend_terrain_to_water
 
 DEFAULT_CACHE_DIR = Path.home() / ".tpf2_map_studio" / "dem_cache"
+DEFAULT_TRANSITION_M = 30.0
 
 
 class HeightmapDialog(QDialog):
@@ -34,13 +35,15 @@ class HeightmapDialog(QDialog):
     im TPF2-Importfenster, und exportiert die fertige 16-Bit-PNG.
     """
 
-    def __init__(self, parent, selection, project=None):
+    def __init__(self, parent, selection, project=None, osm=None):
         super().__init__(parent)
 
         self.selection = selection
         self.project = project
+        self.osm = osm
         self.heightmap_array = None
         self.suggestion = None
+        self._water_mask = None
 
         self.setWindowTitle("Heightmap")
         self.setMinimumWidth(420)
@@ -116,6 +119,44 @@ class HeightmapDialog(QDialog):
         layout.addWidget(self.note_label)
 
         # -------------------------------------------------
+        # Terrain ans Wasserniveau anpassen (Idee eines
+        # Community-Mitglieds: TPF2/TPF3 kennen kein Wassergefaelle,
+        # ohne Anpassung fallen Fluesse/Seen bei echten Hoehendaten
+        # sonst oft "trocken").
+        # -------------------------------------------------
+
+        self.water_blend_checkbox = QCheckBox(
+            "Terrain sanft ans Wasserniveau anpassen (verhindert "
+            "trockenfallende Flüsse/Seen, weicht dafür geringfügig von "
+            "den echten Höhendaten ab; sehr kleine Einzelgewässer, "
+            "z.B. Toteislöcher in einem Filz/Moor, werden dabei "
+            "automatisch ausgenommen, um Krater-Artefakte zu vermeiden)"
+        )
+        self.water_blend_checkbox.setEnabled(False)
+        self.water_blend_checkbox.toggled.connect(
+            self._on_water_blend_toggled
+        )
+        layout.addWidget(self.water_blend_checkbox)
+
+        transition_row = QHBoxLayout()
+        transition_row.addWidget(QLabel("Übergangsbreite:"))
+        self.transition_input = QDoubleSpinBox()
+        self.transition_input.setRange(4.0, 500.0)
+        self.transition_input.setDecimals(0)
+        self.transition_input.setSuffix(" m")
+        self.transition_input.setValue(DEFAULT_TRANSITION_M)
+        self.transition_input.setEnabled(False)
+        self.transition_input.valueChanged.connect(
+            self._update_preview
+        )
+        transition_row.addWidget(self.transition_input)
+        layout.addLayout(transition_row)
+
+        self.water_blend_note_label = QLabel("")
+        self.water_blend_note_label.setWordWrap(True)
+        layout.addWidget(self.water_blend_note_label)
+
+        # -------------------------------------------------
         # Buttons
         # -------------------------------------------------
 
@@ -144,36 +185,44 @@ class HeightmapDialog(QDialog):
         self.status_label.setText(
             "Lade Höhendaten... (kann je nach Kartengröße etwas dauern)"
         )
-        self._set_busy(True)
+        self.download_button.setEnabled(False)
+        # Sorgt dafuer, dass der Text vor dem (blockierenden) Download
+        # tatsaechlich schon sichtbar ist.
+        self.repaint()
 
-        selection = self.selection
-
-        def work():
-            # Laeuft im Hintergrund-Thread: nur Netzwerk und numpy,
-            # keine Widgets anfassen.
-            array = build_heightmap_array(
-                selection,
+        try:
+            self.heightmap_array = build_heightmap_array(
+                self.selection,
                 DEFAULT_CACHE_DIR,
             )
-            return array, suggest_water_level(array)
+        except Exception as exc:
+            self.status_label.setText(
+                f"Fehlgeschlagen: {exc}"
+            )
+            self.download_button.setEnabled(True)
+            return
 
-        run_in_background(
-            work,
-            on_success=self._on_download_finished,
-            on_error=self._on_download_failed,
-            name="heightmap-download",
+        self.suggestion = suggest_water_level(
+            self.heightmap_array
         )
 
-    def _on_download_failed(self, exc):
+        self._water_mask = None  # neuer Download -> alte Maske verwerfen
 
-        self.status_label.setText(
-            f"Fehlgeschlagen: {exc}"
+        has_water_data = (
+            self.osm is not None
+            and (self.osm.node_count > 0 or self.osm.way_count > 0)
         )
-        self._set_busy(False)
 
-    def _on_download_finished(self, result):
+        self.water_blend_checkbox.setEnabled(has_water_data)
+        self.water_blend_checkbox.setChecked(False)
 
-        self.heightmap_array, self.suggestion = result
+        if not has_water_data:
+            self.water_blend_note_label.setText(
+                "Keine OSM-Daten geladen - für die Terrain-Anpassung "
+                "werden die Wasserflächen aus 'OSM laden' benötigt."
+            )
+        else:
+            self.water_blend_note_label.setText("")
 
         if self.suggestion.outlier_count > 0:
 
@@ -209,20 +258,10 @@ class HeightmapDialog(QDialog):
             f"{self.heightmap_array.shape[0]} Pixel"
         )
 
-        self._set_busy(False)
         self.export_button.setEnabled(True)
+        self.download_button.setEnabled(True)
 
         self._update_preview()
-
-    def _set_busy(self, busy: bool):
-        """
-        Sperrt die Download-Knoepfe, solange ein Hintergrund-Download
-        laeuft (sonst koennten zwei gleichzeitig dieselben Kacheln in
-        den Cache schreiben).
-        """
-
-        self.download_button.setEnabled(not busy)
-        self.quick_preview_button.setEnabled(not busy)
 
     # ---------------------------------------------------------
     # Schnellvorschau (vor dem eigentlichen Download)
@@ -245,65 +284,51 @@ class HeightmapDialog(QDialog):
         self.status_label.setText(
             "Lade Schnellvorschau..."
         )
-        self._set_busy(True)
+        self.quick_preview_button.setEnabled(False)
+        self.download_button.setEnabled(False)
+        self.repaint()
 
-        selection = self.selection
-
-        def work():
-            # Laeuft im Hintergrund-Thread: liefert fertige PNG-Bytes,
-            # das QPixmap wird erst im GUI-Thread daraus erzeugt.
+        try:
             preview_array = build_heightmap_array_preview(
-                selection,
+                self.selection,
                 DEFAULT_CACHE_DIR,
             )
-
-            quick_suggestion = suggest_water_level(preview_array)
-
-            image = render_preview(
-                preview_array,
-                water_level_m=quick_suggestion.suggested_m,
-                range_min_m=quick_suggestion.range_min_m,
-                range_max_m=quick_suggestion.range_max_m,
+        except Exception as exc:
+            self.status_label.setText(
+                f"Schnellvorschau fehlgeschlagen: {exc}"
             )
+            self.quick_preview_button.setEnabled(True)
+            self.download_button.setEnabled(True)
+            return
 
-            buffer = io.BytesIO()
-            image.save(buffer, format="PNG")
+        quick_suggestion = suggest_water_level(preview_array)
 
-            return preview_array.shape, buffer.getvalue()
-
-        run_in_background(
-            work,
-            on_success=self._on_quick_preview_finished,
-            on_error=self._on_quick_preview_failed,
-            name="heightmap-preview",
+        image = render_preview(
+            preview_array,
+            water_level_m=quick_suggestion.suggested_m,
+            range_min_m=quick_suggestion.range_min_m,
+            range_max_m=quick_suggestion.range_max_m,
         )
 
-    def _on_quick_preview_failed(self, exc):
-
-        self.status_label.setText(
-            f"Schnellvorschau fehlgeschlagen: {exc}"
-        )
-        self._set_busy(False)
-
-    def _on_quick_preview_finished(self, result):
-
-        shape, png_bytes = result
+        buffer = io.BytesIO()
+        image.save(buffer, format="PNG")
 
         pixmap = QPixmap()
-        pixmap.loadFromData(png_bytes)
+        pixmap.loadFromData(buffer.getvalue())
 
         self.preview_label.setPixmap(
             pixmap.scaledToHeight(400, Qt.SmoothTransformation)
         )
 
         self.status_label.setText(
-            f"Schnellvorschau ({shape[1]} x "
-            f"{shape[0]} Pixel, niedrige Auflösung - "
+            f"Schnellvorschau ({preview_array.shape[1]} x "
+            f"{preview_array.shape[0]} Pixel, niedrige Auflösung - "
             f"noch nicht exportierbar). Sieht das plausibel aus? Dann "
             f"jetzt 'Höhendaten herunterladen' für die volle Auflösung."
         )
 
-        self._set_busy(False)
+        self.quick_preview_button.setEnabled(True)
+        self.download_button.setEnabled(True)
 
     # ---------------------------------------------------------
     # Höhenbereich (mit/ohne Ausreißer)
@@ -342,6 +367,81 @@ class HeightmapDialog(QDialog):
         self._update_preview()
 
     # ---------------------------------------------------------
+    # Terrain-Wasser-Anpassung
+    # ---------------------------------------------------------
+
+    def _on_water_blend_toggled(self, checked: bool):
+
+        self.transition_input.setEnabled(checked)
+
+        if checked:
+
+            try:
+                self._get_water_mask()
+            except Exception as exc:
+                QMessageBox.critical(
+                    self,
+                    "Wassermaske fehlgeschlagen",
+                    str(exc),
+                )
+                self.water_blend_checkbox.setChecked(False)
+                return
+
+            if self._water_mask is not None and not self._water_mask.any():
+
+                self.water_blend_note_label.setText(
+                    "In diesem Kartenausschnitt wurden keine "
+                    "Wasserflächen/-wege gefunden - die Anpassung hat "
+                    "hier keine Wirkung."
+                )
+
+            else:
+
+                self.water_blend_note_label.setText("")
+
+        self._update_preview()
+
+    def _get_water_mask(self):
+        """
+        Baut die Wassermaske einmalig und cacht sie (teure Berechnung
+        bei grossen Kartenbaendern) - wird bei jedem neuen Download
+        verworfen (siehe _download()).
+        """
+
+        if self._water_mask is None:
+
+            h_px, w_px = self.heightmap_array.shape
+
+            self._water_mask = build_water_mask(
+                self.osm,
+                self.selection,
+                w_px,
+                h_px,
+            )
+
+        return self._water_mask
+
+    def _effective_heightmap(self):
+        """
+        Liefert das Hoehenraster, das fuer Vorschau/Export tatsaechlich
+        verwendet wird - unveraendert (Standard) oder mit sanft ans
+        Wasserniveau angepasstem Terrain, falls angehakt.
+        """
+
+        if not self.water_blend_checkbox.isChecked():
+            return self.heightmap_array
+
+        water_mask = self._get_water_mask()
+
+        return blend_terrain_to_water(
+            self.heightmap_array,
+            water_mask,
+            water_level_m=self.water_level_input.value(),
+            transition_m=self.transition_input.value(),
+            pixel_size_m=self.selection.width_m / (self.heightmap_array.shape[1] - 1),
+        )
+
+    # ---------------------------------------------------------
     # Vorschau
     # ---------------------------------------------------------
 
@@ -353,7 +453,7 @@ class HeightmapDialog(QDialog):
         range_min, range_max = self._effective_range()
 
         image = render_preview(
-            self.heightmap_array,
+            self._effective_heightmap(),
             water_level_m=self.water_level_input.value(),
             range_min_m=range_min,
             range_max_m=range_max,
@@ -392,7 +492,7 @@ class HeightmapDialog(QDialog):
 
         try:
             export_heightmap_png(
-                self.heightmap_array,
+                self._effective_heightmap(),
                 Path(filename),
                 range_min_m=range_min,
                 range_max_m=range_max,
@@ -419,6 +519,17 @@ class HeightmapDialog(QDialog):
                 f"(0 bzw. 65535) - deren echte Höhe geht im Export verloren."
             )
 
+        water_blend_note = ""
+
+        if self.water_blend_checkbox.isChecked():
+
+            water_blend_note = (
+                f"\n\nDas Terrain wurde um Gewässer herum (Übergang "
+                f"{self.transition_input.value():.0f} m) sanft ans "
+                f"Wasserniveau angepasst - weicht dort geringfügig von "
+                f"den echten Höhendaten ab."
+            )
+
         QMessageBox.information(
             self,
             "Export abgeschlossen",
@@ -428,4 +539,5 @@ class HeightmapDialog(QDialog):
             f"{range_max:.0f} m\n"
             f"Wasserhöhe: {self.water_level_input.value():.0f} m"
             f"{outlier_warning}"
+            f"{water_blend_note}"
         )

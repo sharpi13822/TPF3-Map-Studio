@@ -1028,7 +1028,12 @@ class MainWindow(QMainWindow):
             )
             return
 
-        dialog = HeightmapDialog(self, selection, self.map_widget.controller.project)
+        dialog = HeightmapDialog(
+            self,
+            selection,
+            self.map_widget.controller.project,
+            osm=self.map_widget.controller.project.osm,
+        )
         dialog.exec()
 
     # ---------------------------------------------------------

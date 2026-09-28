@@ -13,7 +13,7 @@
 #
 # Ergebnis liegt danach in dist/TPF3-Map-Studio/
 
-from PyInstaller.utils.hooks import collect_data_files
+from PyInstaller.utils.hooks import collect_data_files, collect_submodules, collect_dynamic_libs
 
 block_cipher = None
 
@@ -38,16 +38,34 @@ datas = [
 datas += collect_data_files("PySide6", subdir="Qt/resources")
 datas += collect_data_files("PySide6", subdir="Qt/translations")
 
+# SSL-Zertifikate fuer HTTPS-Anfragen (requests -> Overpass-API,
+# Copernicus-Hoehendaten) - werden von PyInstaller nicht immer
+# automatisch mitgebuendelt, was zu SSL-Fehlern in der exe fuehrt,
+# obwohl der Quellcode einwandfrei funktioniert.
+datas += collect_data_files("certifi")
+
+# scipy ist dafuer bekannt, dass PyInstallers automatische Erkennung es
+# oft komplett uebersieht (verschachtelte, teils dynamisch geladene
+# Untermodule mit eigenen C-Erweiterungen) - deshalb hier explizit ALLE
+# scipy-Untermodule und binaeren Erweiterungen mitgeben, statt uns auf
+# die automatische Analyse zu verlassen.
+scipy_submodules = collect_submodules("scipy")
+scipy_binaries = collect_dynamic_libs("scipy")
+
 a = Analysis(
     ["src/main.py"],
     pathex=["."],
-    binaries=[],
+    binaries=scipy_binaries,
     datas=datas,
     hiddenimports=[
         "PySide6.QtWebEngineWidgets",
         "PySide6.QtWebEngineCore",
         "PySide6.QtNetwork",
-    ],
+        "certifi",
+        "requests",
+        "urllib3",
+        "scipy",
+    ] + scipy_submodules,
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
