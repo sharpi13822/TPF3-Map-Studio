@@ -2,7 +2,7 @@ import traceback
 from pathlib import Path
 
 from PySide6.QtCore import Qt, QThread, Signal
-from PySide6.QtGui import QAction, QKeySequence, QShortcut
+from PySide6.QtGui import QAction, QActionGroup, QKeySequence, QShortcut
 from PySide6.QtWidgets import (
     QFileDialog,
     QLabel,
@@ -101,6 +101,8 @@ class MainWindow(QMainWindow):
         # ---------------------------------------------------------
 
         self.actions = AppActions(self)
+
+        self._setup_tool_actions()
 
         # ---------------------------------------------------------
         # HTTP-Server
@@ -556,12 +558,12 @@ class MainWindow(QMainWindow):
 
         tools_menu = menu.addMenu("Werkzeuge")
 
-        marker_action = tools_menu.addAction(
-            "Marker"
+        tools_menu.addAction(
+            self.actions.marker_tool
         )
 
-        selection_action = tools_menu.addAction(
-            "Auswahl"
+        tools_menu.addAction(
+            self.actions.selection_tool
         )
 
         self.osm_action = tools_menu.addAction(
@@ -598,32 +600,6 @@ class MainWindow(QMainWindow):
 
         short_segment_action.triggered.connect(
             self._open_short_segment_dialog
-        )
-
-        marker_action.triggered.connect(
-
-            lambda: (
-                self.map_widget.controller.set_tool(
-                    Tool.MARKER
-                ),
-                self.tool_status.setText(
-                    "Werkzeug: Marker"
-                )
-            )
-
-        )
-
-        selection_action.triggered.connect(
-
-            lambda: (
-                self.map_widget.controller.set_tool(
-                    Tool.SELECTION
-                ),
-                self.tool_status.setText(
-                    "Werkzeug: Auswahl"
-                )
-            )
-
         )
 
         self.osm_action.triggered.connect(
@@ -1029,6 +1005,44 @@ class MainWindow(QMainWindow):
     # ---------------------------------------------------------
     # Koordinaten-Messwerkzeug
     # ---------------------------------------------------------
+
+    def _setup_tool_actions(self):
+        """
+        Marker-, Auswahl- und Messwerkzeug bilden eine Gruppe: immer genau
+        eines ist aktiv (Haken in Werkzeugleiste und Menue synchron).
+        Menue und Werkzeugleiste teilen sich dieselben Aktionen.
+        """
+
+        self.tool_group = QActionGroup(self)
+        self.tool_group.setExclusive(True)
+
+        self.tool_group.addAction(self.actions.marker_tool)
+        self.tool_group.addAction(self.actions.selection_tool)
+        self.tool_group.addAction(self.actions.measure_tool)
+
+        self.actions.marker_tool.setChecked(True)
+
+        self.actions.marker_tool.triggered.connect(
+            lambda: self._set_tool(Tool.MARKER)
+        )
+
+        self.actions.selection_tool.triggered.connect(
+            lambda: self._set_tool(Tool.SELECTION)
+        )
+
+    def _set_tool(self, tool):
+
+        self.map_widget.controller.set_tool(tool)
+
+        names = {
+            Tool.MARKER: "Marker",
+            Tool.SELECTION: "Auswahl",
+            Tool.MEASURE: "Koordinaten-Messwerkzeug",
+        }
+
+        self.tool_status.setText(
+            f"Werkzeug: {names.get(tool, tool.value)}"
+        )
 
     def _toggle_measure_tool(self):
 
