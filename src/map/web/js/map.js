@@ -1441,6 +1441,7 @@ class BridgeAdapter {
     selectionChanged(ids) {}
     markerMoved(id, lat, lon) {}
     polylineMoved(id, points) {}
+    rectangleChanged(centerLat, centerLon, widthM, heightM, rotationDeg) {}
 
     send(name, ...args) {}
 
@@ -1488,6 +1489,20 @@ class QtBridge extends BridgeAdapter {
 
     polylineMoved(id, points) {
         this.#bridge?.polylineMoved?.(id, points);
+    }
+
+    // Rechteck-Tool: Mittelpunkt/Groesse/Drehung nach Verschieben oder
+    // Drehen per Maus an Python melden (Bridge.rectangleChanged ->
+    // MapController.rectangle_changed). Fehlte bisher - dadurch blieb
+    // die Drehung in Python immer bei 0 Grad.
+    rectangleChanged(centerLat, centerLon, widthM, heightM, rotationDeg) {
+        this.#bridge?.rectangleChanged?.(
+            centerLat,
+            centerLon,
+            widthM,
+            heightM,
+            rotationDeg
+        );
     }
 
     polylinePropertiesChanged(
@@ -2075,6 +2090,41 @@ function removeRectHandles() {
 
 }
 
+/* ============================================================================
+ * Erzwungenes Neuzeichnen nach Batch-Operationen
+ * ========================================================================== */
+
+// Nach addBatch()/updateBatch()/removeObjects() erschienen die Objekte in
+// der QtWebEngine-Ansicht teils erst, nachdem man im Layer-Dock Haken
+// aus- und wieder eingeschaltet hat (das loest ein Neuzeichnen des
+// Canvas-Renderers aus). Eine kurze 1-px-Verschiebung der Karte mit
+// sofortigem Zurueck stoesst dasselbe an, ohne dass sich die Ansicht
+// dauerhaft aendert. Entprellt, damit mehrere Layer-Batches direkt
+// hintereinander nur ein Neuzeichnen ausloesen.
+
+let forceRedrawTimer = null;
+
+function forceMapRedraw() {
+
+    if (forceRedrawTimer !== null) {
+        return;
+    }
+
+    forceRedrawTimer = setTimeout(() => {
+
+        forceRedrawTimer = null;
+
+        const map = engine.leaflet;
+
+        map.invalidateSize();
+
+        map.panBy([1, 0], { animate: false });
+        map.panBy([-1, 0], { animate: false });
+
+    }, 50);
+
+}
+
 const bridges = new BridgeManager();
 
 if (typeof qt !== "undefined") {
@@ -2620,14 +2670,6 @@ window.MapApi = {
 
         for (const object of objects) {
 
-            console.log(
-                "DRAW",
-                layer,
-                object.id,
-                object.type,
-                object.geometry
-            );
-
             geometry.draw({
 
                 layer: layer,
@@ -2645,6 +2687,8 @@ window.MapApi = {
             count++;
 
         }
+
+        forceMapRedraw();
 
         return count;
 
@@ -2674,6 +2718,8 @@ window.MapApi = {
 
         }
 
+        forceMapRedraw();
+
         return count;
 
     },
@@ -2688,6 +2734,8 @@ window.MapApi = {
             );
 
         }
+
+        forceMapRedraw();
 
         return ids.length;
 

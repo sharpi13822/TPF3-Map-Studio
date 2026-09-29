@@ -774,7 +774,10 @@ class MapController(QObject):
         # --------------------------------------------------
 
         output_path = (
-            Path("exports")
+            Path.home()
+            / "Documents"
+            / "TPF3-Map-Studio"
+            / "exports"
             / "osm_map_1"
         )
 

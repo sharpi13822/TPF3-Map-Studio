@@ -1,6 +1,7 @@
+import traceback
 from pathlib import Path
 
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, QThread, Signal
 from PySide6.QtGui import QAction, QKeySequence, QShortcut
 from PySide6.QtWidgets import (
     QFileDialog,
@@ -41,6 +42,48 @@ from src.undo.rename_marker_command import RenameMarkerCommand
 from src.undo.delete_marker_command import DeleteMarkerCommand
 
 
+class _OsmWorker(QThread):
+    """
+    Fuehrt MapController.fetch_osm() im Hintergrund aus.
+
+    Darf keine Qt-Objekte (Karte, Widgets) anfassen: das Ergebnis
+    geht per Signal zurueck in den GUI-Thread, wo apply_osm() laeuft.
+    """
+
+    loaded = Signal(object)   # OSMData
+    failed = Signal(str)
+
+    def __init__(self, controller, selection, config, parent=None):
+        super().__init__(parent)
+
+        self._controller = controller
+        self._selection = selection
+        self._config = config
+
+    def run(self):
+
+        print(">>> _OsmWorker.run() gestartet")
+
+        try:
+
+            osm = self._controller.fetch_osm(
+                self._selection,
+                self._config,
+            )
+
+        except Exception as exc:
+
+            traceback.print_exc()
+
+            self.failed.emit(str(exc))
+
+            return
+
+        print(">>> _OsmWorker.run() fertig, sende Ergebnis")
+
+        self.loaded.emit(osm)
+
+
 class MainWindow(QMainWindow):
     """
     Hauptfenster von TPF3-Map-Studio.
@@ -50,6 +93,8 @@ class MainWindow(QMainWindow):
         super().__init__()
 
         self.resize(1600, 900)
+
+        self._osm_worker = None
 
         # ---------------------------------------------------------
         # Aktionen
@@ -111,24 +156,6 @@ class MainWindow(QMainWindow):
         )
 
         self.setStatusBar(status)
-
-        # ---------------------------------------------------------
-        # Undo / Redo Shortcuts
-        # ---------------------------------------------------------
-
-       # QShortcut(
-       #     QKeySequence.Undo,
-       #    self
-       #).activated.connect(
-       #    self.map_widget.controller.undo
-       #)
-
-       # QShortcut(
-       #    QKeySequence.Redo,
-       #    self
-       #).activated.connect(
-       #    self.map_widget.controller.redo
-       #)
 
         # ---------------------------------------------------------
         # Projektaktionen
@@ -364,10 +391,7 @@ class MainWindow(QMainWindow):
     def _edit_project_properties(self):
         """
         Erlaubt das Setzen/Aendern des Projektnamens (z.B. "Rheintal",
-        "Nürnberg-Korridor"). Der Name wird bereits von ProjectSerializer
-        gespeichert/geladen - bisher gab es nur keine Stelle im UI, um
-        ihn ueberhaupt einzugeben, er blieb also dauerhaft bei
-        "Neues Projekt".
+        "Nürnberg-Korridor").
         """
 
         project = self.map_widget.controller.project
@@ -513,13 +537,6 @@ class MainWindow(QMainWindow):
         # ---------------------------------------------------------
 
         view_menu = menu.addMenu("Ansicht")
-
-        # toggleViewAction() ist Qt-Bordmittel: die Action bleibt
-        # automatisch mit der tatsaechlichen Sichtbarkeit synchron,
-        # auch wenn das Dock ueber sein eigenes X geschlossen wird
-        # (anders als vorher, wo diese drei Eintraege gar nicht erst
-        # verbunden waren und ein geschlossenes Dock nie wieder
-        # geoeffnet werden konnte).
 
         view_menu.addAction(
             self.project_dock.toggleViewAction()
@@ -683,56 +700,123 @@ class MainWindow(QMainWindow):
             )
         )
 
-            # ---------------------------------------------------------
+    # ---------------------------------------------------------
     # OSM herunterladen
     # ---------------------------------------------------------
 
     def _download_osm(self):
+        """
+        Startet den OSM-Download in einem Hintergrund-Thread. Das
+        Ergebnis wird per Signal im GUI-Thread uebernommen
+        (_on_osm_loaded -> controller.apply_osm()).
+        """
+
+        print(">>> _download_osm aufgerufen")
+
+        if self._osm_worker is not None and self._osm_worker.isRunning():
+            return
+
+        controller = self.map_widget.controller
+
+        selection = controller.project.selection
+
+        if selection is None:
+
+            QMessageBox.warning(
+                self,
+                "Keine Auswahl",
+                "Bitte zuerst mit dem Rechteck-Tool einen "
+                "Kartenausschnitt festlegen."
+            )
+
+            return
 
         self.osm_action.setEnabled(False)
 
-        self.statusBar().showMessage(
-            "OSM-Daten werden geladen... (Fenster bleibt bedienbar)"
+        filter_text = (
+            "gedrehtes Polygon (poly-Filter)"
+            if selection.is_rotated
+            else "ungedrehte Box"
         )
 
-        def on_finished(success: bool, message: str):
+        self.statusBar().showMessage(
+            f"OSM-Daten werden geladen... "
+            f"Drehung {selection.rotation_deg:.2f}°, {filter_text}"
+        )
 
-            self.osm_action.setEnabled(True)
+        # Als Attribut speichern, sonst raeumt Python den Thread weg.
+        self._osm_worker = _OsmWorker(
+            controller,
+            selection,
+            controller.overpass_config,
+            self,
+        )
 
-            if success:
+        self._osm_worker.loaded.connect(
+            self._on_osm_loaded
+        )
 
-                project = self.map_widget.controller.project
+        self._osm_worker.failed.connect(
+            self._on_osm_failed
+        )
 
-                self.statusBar().showMessage(
+        self._osm_worker.finished.connect(
+            self._on_osm_worker_finished
+        )
 
-                    f"OSM geladen: "
+        self._osm_worker.start()
 
-                    f"{project.node_count} Nodes, "
+    def _on_osm_loaded(self, osm):
+        """
+        Laeuft im GUI-Thread: Daten ins Projekt uebernehmen und die
+        Karte neu zeichnen.
+        """
 
-                    f"{project.way_count} Ways, "
+        print(">>> _on_osm_loaded (GUI-Thread)")
 
-                    f"{project.relation_count} Relations"
+        controller = self.map_widget.controller
 
-                )
+        controller.apply_osm(osm)
 
-                # QtWebEngine zeichnet die per page().runJavaScript() aus
-                # einem Hintergrund-Thread-Callback (Queued Connection)
-                # gesendeten Objekte manchmal nicht sofort neu - erst
-                # eine echte Nutzerinteraktion (z.B. ein Checkbox-Klick)
-                # stiess bisher ein Neuzeichnen an. Deshalb hier explizit
-                # nachstossen, statt darauf zu warten.
-                self.map_widget.update()
-                self.map_widget.repaint()
+        # Sichtbarkeit aller Layer erneut an die Karte senden. Bisher
+        # erschienen die Daten erst, nachdem man die Haken im Layer-Dock
+        # aus- und wieder eingeschaltet hat - das macht genau dieser
+        # Aufruf jetzt automatisch.
+        for layer in controller.layer_manager.layers:
+            controller.api.set_layer_visible(
+                layer,
+                controller.layer_manager.is_visible(layer),
+            )
 
-            else:
+        selection = controller.project.selection
 
-                self.statusBar().showMessage(
-                    f"OSM-Download fehlgeschlagen: {message}"
-                    if message else
-                    "OSM-Download fehlgeschlagen."
-                )
+        rotation_text = (
+            f", Drehung {selection.rotation_deg:.2f}°"
+            if selection is not None
+            else ""
+        )
 
-        self.map_widget.controller.download_osm_async(on_finished)
+        self.statusBar().showMessage(
+            f"OSM geladen: "
+            f"{osm.node_count} Nodes, "
+            f"{osm.way_count} Ways, "
+            f"{osm.relation_count} Relations"
+            f"{rotation_text}"
+        )
+
+        self._update_window_title()
+
+    def _on_osm_failed(self, message: str):
+
+        self.statusBar().showMessage(
+            f"OSM-Download fehlgeschlagen: {message}"
+            if message else
+            "OSM-Download fehlgeschlagen."
+        )
+
+    def _on_osm_worker_finished(self):
+
+        self.osm_action.setEnabled(True)
 
     # ---------------------------------------------------------
     # Overpass-Abfrage-Baukasten
@@ -758,8 +842,7 @@ class MainWindow(QMainWindow):
     def _export_osm_xml(self):
         """
         Exportiert die aktuell geladenen OSM-Daten als Standard-OSM-XML-
-        Datei (.osm), z.B. als Eingabe fuer den Converter-Teil externer
-        Import-Werkzeuge.
+        Datei (.osm).
         """
 
         osm = self.map_widget.controller.project.osm
@@ -825,8 +908,7 @@ class MainWindow(QMainWindow):
     def _open_converter_command(self):
         """
         Oeffnet den Dialog, der den fertigen Aufrufbefehl fuer den
-        externen OSM-TPF-Converter (main.exe) aus der aktuellen
-        Auswahl zusammensetzt.
+        externen OSM-TPF-Converter (main.exe) zusammensetzt.
         """
 
         dialog = ConverterCommandDialog(
@@ -842,8 +924,7 @@ class MainWindow(QMainWindow):
 
     def _open_short_segment_dialog(self):
         """
-        Oeffnet die Analyse/Vereinfachung fuer sehr kurze _link-Segmente
-        (siehe src/osm/short_edge_simplifier.py).
+        Oeffnet die Analyse/Vereinfachung fuer sehr kurze _link-Segmente.
         """
 
         dialog = ShortSegmentDialog(
@@ -858,10 +939,6 @@ class MainWindow(QMainWindow):
     # ---------------------------------------------------------
 
     def _open_import_guide(self):
-        """
-        Oeffnet die Referenz-Anleitung fuer den kompletten Import-Ablauf
-        des OSM-TPF2-Importers (Schritte 0-4, inkl. Optionen-Tabelle).
-        """
 
         dialog = ImportGuideDialog(self)
 
@@ -872,10 +949,6 @@ class MainWindow(QMainWindow):
     # ---------------------------------------------------------
 
     def _open_feature_overview(self):
-        """
-        Oeffnet die Uebersicht aller in dieser Zusammenarbeit
-        hinzugefuegten Studio-Funktionen.
-        """
 
         dialog = FeatureOverviewDialog(self)
 
@@ -916,11 +989,6 @@ class MainWindow(QMainWindow):
     # ---------------------------------------------------------
 
     def _toggle_measure_tool(self):
-        """
-        Aktiviert das Koordinaten-Messwerkzeug: erster Klick auf der
-        Karte zeigt lat/lon, zweiter Klick zeigt zusaetzlich die
-        Distanz zum ersten Punkt (siehe MapController.map_clicked()).
-        """
 
         self.map_widget.controller.set_tool(
             Tool.MEASURE
@@ -940,8 +1008,7 @@ class MainWindow(QMainWindow):
 
     def _open_heightmap_tool(self):
         """
-        Oeffnet den Heightmap-Dialog fuer die aktuelle Selection (also
-        das zuletzt mit dem Rechteck-Tool gesetzte Kartenband).
+        Oeffnet den Heightmap-Dialog fuer die aktuelle Selection.
         """
 
         selection = self.map_widget.controller.project.selection
@@ -968,10 +1035,6 @@ class MainWindow(QMainWindow):
     # ---------------------------------------------------------
 
     def _open_mod_checker(self):
-        """
-        Oeffnet den Mod-Checker: gleicht installierte Mods gegen die
-        offizielle Anforderungsliste des OSM-TPF2-Importers ab.
-        """
 
         dialog = ModCheckerDialog(self)
         dialog.exec()
@@ -981,9 +1044,6 @@ class MainWindow(QMainWindow):
     # ---------------------------------------------------------
 
     def _open_preflight_check(self):
-        """
-        Oeffnet die Vorab-Pruefung fuer das aktuell geladene OSM-Projekt.
-        """
 
         dialog = PreflightCheckDialog(
             self,
@@ -1035,12 +1095,11 @@ class MainWindow(QMainWindow):
 
     def _undo(self):
 
-        self.map_widget.controller.undo() 
+        self.map_widget.controller.undo()
 
     def _redo(self):
 
-        self.map_widget.controller.redo()   
-
+        self.map_widget.controller.redo()
 
     # ---------------------------------------------------------
     # Marker ausgewählt
@@ -1050,11 +1109,11 @@ class MainWindow(QMainWindow):
         self,
         marker_id: str
     ):
-
-        print(f"Marker ausgewählt: {marker_id}")    
         """
         Aktualisiert die Statusleiste nach Auswahl eines Markers.
         """
+
+        print(f"Marker ausgewählt: {marker_id}")
 
         project = self.map_widget.controller.project
 
@@ -1101,7 +1160,6 @@ class MainWindow(QMainWindow):
                 self.project_list.setCurrentItem(item)
 
                 break
- 
 
     def refresh_project_list(self):
 
@@ -1309,7 +1367,6 @@ class MainWindow(QMainWindow):
             )
         )
 
-
     # ---------------------------------------------------------
     # Fenster schließen
     # ---------------------------------------------------------
@@ -1356,6 +1413,10 @@ class MainWindow(QMainWindow):
                 if project.dirty:
                     event.ignore()
                     return
+
+        # Laufenden OSM-Download nicht mitten im Thread abschiessen
+        if self._osm_worker is not None and self._osm_worker.isRunning():
+            self._osm_worker.wait(5000)
 
         try:
             self.server.stop()

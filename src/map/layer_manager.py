@@ -29,9 +29,7 @@ class LayerManager:
     # ---------------------------------------------------------
 
     def is_visible(self, layer: Layer) -> bool:
-        value = self._visible[layer]
-        print(f"GET  id={id(self)}  layer={layer.name}  visible={value}")
-        return value
+        return self._visible[layer]
 
     def set_visible(
         self,
@@ -39,7 +37,6 @@ class LayerManager:
         visible: bool,
     ) -> None:
 
-        print(f"SET  id={id(self)}  layer={layer.name}  visible={visible}")
         self._visible[layer] = visible
 
     # ---------------------------------------------------------
