@@ -56,8 +56,9 @@ class BaseRenderer(ABC):
 
     def draw(self, osm):
 
-        if not self.visible():
-            return
+        # Auch ausgeblendete Ebenen werden an die Karte gesendet. Ob sie
+        # sichtbar sind, entscheidet allein die Karte (set_layer_visible).
+        # So erscheinen die Daten sofort, sobald man den Haken setzt.
 
         items = self.pipeline.build(osm)
 

@@ -18,7 +18,7 @@ class LayerControl {
 
 
         document
-            .querySelectorAll("#layer-control input")
+            .querySelectorAll('#layer-control input[type="checkbox"]')
             .forEach(input => {
 
 
@@ -45,7 +45,7 @@ class LayerControl {
                 () => {
 
                     document
-                        .querySelectorAll("#layer-control input")
+                        .querySelectorAll('#layer-control input[type="checkbox"]')
                         .forEach(input => {
 
                             if (!input.checked) {
@@ -71,7 +71,7 @@ class LayerControl {
                 () => {
 
                     document
-                        .querySelectorAll("#layer-control input")
+                        .querySelectorAll('#layer-control input[type="checkbox"]')
                         .forEach(input => {
 
                             if (input.checked) {

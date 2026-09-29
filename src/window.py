@@ -1,3 +1,4 @@
+import json
 import traceback
 from pathlib import Path
 
@@ -131,6 +132,15 @@ class MainWindow(QMainWindow):
         # Oberfläche
         # ---------------------------------------------------------
 
+        # Alle Datenebenen starten ausgeblendet. Muss vor dem Anlegen der
+        # Docks passieren, damit die Haken im Layer-Dock leer starten.
+        layer_manager = self.map_widget.controller.layer_manager
+
+        for layer in layer_manager.layers:
+            layer_manager.set_visible(layer, False)
+
+        self._hook_layer_controls()
+
         self._build_docks()
         self._build_menu()
         self._build_toolbar()
@@ -240,7 +250,18 @@ class MainWindow(QMainWindow):
             self._project_item_renamed
         )
 
-        controller.show_start_position()
+        # Startansicht: Deutschland, ohne vorgesetzten Marker.
+        controller.api.center_and_zoom(51.1657, 10.4515, 6)
+
+        # Ausgeblendeten Startzustand der Ebenen an die Karte melden.
+        for layer in controller.layer_manager.layers:
+            controller.api.set_layer_visible(
+                layer,
+                controller.layer_manager.is_visible(layer),
+            )
+            self._send_layer_opacity(layer)
+
+        self._send_layer_order()
 
         self.refresh_project_list()
 
@@ -754,16 +775,6 @@ class MainWindow(QMainWindow):
 
         controller.apply_osm(osm)
 
-        # Sichtbarkeit aller Layer erneut an die Karte senden. Bisher
-        # erschienen die Daten erst, nachdem man die Haken im Layer-Dock
-        # aus- und wieder eingeschaltet hat - das macht genau dieser
-        # Aufruf jetzt automatisch.
-        for layer in controller.layer_manager.layers:
-            controller.api.set_layer_visible(
-                layer,
-                controller.layer_manager.is_visible(layer),
-            )
-
         selection = controller.project.selection
 
         rotation_text = (
@@ -1005,6 +1016,70 @@ class MainWindow(QMainWindow):
     # ---------------------------------------------------------
     # Koordinaten-Messwerkzeug
     # ---------------------------------------------------------
+
+    # ---------------------------------------------------------
+    # Layer-Dock: Deckkraft und Reihenfolge an die Karte melden
+    # ---------------------------------------------------------
+
+    @staticmethod
+    def _js_layer_name(layer) -> str:
+        """Name der Ebene in map.js (ROADS -> 'roads')."""
+
+        return layer.name.lower()
+
+    def _run_js(self, code: str):
+
+        self.map_widget.page().runJavaScript(code)
+
+    def _send_layer_opacity(self, layer):
+
+        opacity = self.map_widget.controller.layer_manager.opacity(layer)
+
+        self._run_js(
+            f"window.MapApi.setLayerOpacity("
+            f"{json.dumps(self._js_layer_name(layer))}, {opacity});"
+        )
+
+    def _send_layer_order(self):
+
+        names = [
+            self._js_layer_name(layer)
+            for layer in self.map_widget.controller.layer_manager.layers
+        ]
+
+        self._run_js(
+            f"window.MapApi.setLayerOrder({json.dumps(names)});"
+        )
+
+    def _hook_layer_controls(self):
+        """
+        Der Controller aendert bei Deckkraft und Reihenfolge nur seinen
+        eigenen Zustand. Diese Huelle meldet die Aenderung zusaetzlich
+        an die Karte. Muss vor dem Anlegen der Docks laufen, damit deren
+        Regler die umhuellten Methoden bekommen.
+        """
+
+        controller = self.map_widget.controller
+
+        set_opacity = controller.set_layer_opacity
+        move_up = controller.move_layer_up
+        move_down = controller.move_layer_down
+
+        def set_layer_opacity(layer, opacity):
+            set_opacity(layer, opacity)
+            self._send_layer_opacity(layer)
+
+        def move_layer_up(layer):
+            move_up(layer)
+            self._send_layer_order()
+
+        def move_layer_down(layer):
+            move_down(layer)
+            self._send_layer_order()
+
+        controller.set_layer_opacity = set_layer_opacity
+        controller.move_layer_up = move_layer_up
+        controller.move_layer_down = move_layer_down
 
     def _setup_tool_actions(self):
         """

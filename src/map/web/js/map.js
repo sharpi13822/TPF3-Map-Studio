@@ -55,6 +55,13 @@ class MapEngine {
         this.#map = L.map(this.#config.target, {
             zoomControl: true,
             preferCanvas: this.#config.preferCanvas,
+            // Linien lassen sich 6 Pixel neben der Linie anklicken. Ohne
+            // diese Toleranz muessen duenne Strassen auf den Pixel genau
+            // getroffen werden, und Flaechen (Wald, Wiese) darueber
+            // gewinnen den Klick.
+            renderer: this.#config.preferCanvas
+                ? L.canvas({ tolerance: 6 })
+                : undefined,
             minZoom: this.#config.minZoom,
             maxZoom: this.#config.maxZoom
         });
@@ -543,6 +550,45 @@ class RendererRegistry {
 
 }
 
+/**
+ * Kleine Einblendung unten links (5 Sekunden). Zeigt Rueckmeldungen und
+ * Fehler an, auch wenn keine Entwicklerkonsole zu sehen ist.
+ */
+let toastTimer = null;
+
+function showToast(text, isError = false) {
+
+    let element = document.getElementById("tpf-toast");
+
+    if (!element) {
+
+        element = document.createElement("div");
+
+        element.id = "tpf-toast";
+
+        element.style.cssText =
+            "position:fixed;left:12px;bottom:12px;z-index:100000;" +
+            "max-width:70%;padding:6px 10px;border-radius:4px;" +
+            "font:12px sans-serif;color:#fff;pointer-events:none;";
+
+        document.body.appendChild(element);
+
+    }
+
+    element.style.background = isError ? "#b71c1c" : "#333333";
+
+    element.textContent = text;
+
+    element.style.display = "block";
+
+    clearTimeout(toastTimer);
+
+    toastTimer = setTimeout(() => {
+        element.style.display = "none";
+    }, 5000);
+
+}
+
 class GeometryManager {
 
     #layers;
@@ -631,33 +677,46 @@ class GeometryManager {
             "click",
             (event) => {
 
-                console.log("TEST MAP.JS"); 
+                try {
 
-                L.DomEvent.stopPropagation(event);
+                    L.DomEvent.stopPropagation(event);
 
-                this.highlight(object);
+                    this.highlight(object);
 
-                console.log("GeometryEditor:", window.geometryEditor);
-
-                console.log(
-                    "Info Daten",
-                    object.tpf2
-                );
-                
-                window.infoPanel.show(
-                    object.tpf2
-                );
-
-                if (window.geometryEditor) {
-
-                    console.log("START WIRD AUFGERUFEN");
-
-                    window.geometryEditor.start(
-                        object
+                    window.infoPanel.show(
+                        object.tpf2
                     );
+
+                    if (window.geometryEditor) {
+
+                        window.geometryEditor.start(
+                            object
+                        );
+
+                    }
+
+                    const meta = object.tpf2 || {};
+
+                    const handles = window.geometryEditor
+                        ? window.geometryEditor.vertexHandles.length
+                        : 0;
+
+                    showToast(
+                        `Ausgewählt: ${meta.layer} ${meta.id} ` +
+                        `(${meta.type}), Eckpunkte: ${handles}`
+                    );
+
+                } catch (error) {
+
+                    console.error("Objekt-Auswahl:", error);
+
+                    showToast(
+                        "Fehler bei der Auswahl: " + error.message,
+                        true
+                    );
+
                 }
 
-               
             }
         );
         
@@ -716,6 +775,11 @@ restoreOriginalStyle(object) {
 
     object.setStyle(
         object.originalStyle
+    );
+
+    applyObjectOpacity(
+        object,
+        layerOpacity[object.tpf2?.layer] ?? 1
     );
 
 }    
@@ -1635,6 +1699,7 @@ class CommandDispatcher {
         layers.register("selection");
         layers.register("measure");
 
+
         // ---------------------------------------------------------
         // OpenRailwayMap-Overlay (Eisenbahn-Infrastruktur) - nicht-
         // kommerzielle Nutzung mit wenigen Anfragen laut Nutzungs-
@@ -1859,21 +1924,30 @@ document
         );
 
         
-        loader.load(
-    "test-tpf2-raw.json"
-)
-.then(objects => {
+        // Testdaten (Muenchen) nur zum Entwickeln laden. Im Normalbetrieb
+        // aus, sonst erscheinen sie in den Ebenen und ueberlagern die
+        // eigenen OSM-Daten.
+        const LOAD_TEST_DATA = false;
 
-    console.log(
-        "Loaded objects:",
-        objects
-    );
-    
-    console.log(topologyManager);
-    topologyManager.buildVertexIndex();
-    topologyManager.showSharedVertices();
+        if (LOAD_TEST_DATA) {
 
-});
+            loader.load(
+                "test-tpf2-raw.json"
+            )
+            .then(objects => {
+
+                console.log(
+                    "Loaded objects:",
+                    objects
+                );
+
+                console.log(topologyManager);
+                topologyManager.buildVertexIndex();
+                topologyManager.showSharedVertices();
+
+            });
+
+        }
 
 const batch = new BatchRenderer(
     geometry
@@ -2104,6 +2178,81 @@ function removeRectHandles() {
 
 let forceRedrawTimer = null;
 
+/* ============================================================================
+ * Ebenen: Deckkraft und Reihenfolge (Layer-Dock in der Oberflaeche)
+ * ========================================================================== */
+
+// Deckkraft je Ebene als Faktor 0..1 (1 = wie gezeichnet).
+const layerOpacity = {};
+
+// Ebenennamen von oben nach unten, wie im Layer-Dock.
+let layerOrderNames = [];
+
+let layerOrderTimer = null;
+
+function applyObjectOpacity(object, factor) {
+
+    const base = object.originalStyle;
+
+    if (!base || typeof object.setStyle !== "function") {
+        return;
+    }
+
+    object.setStyle({
+        opacity: (base.opacity ?? 1) * factor,
+        fillOpacity: (base.fillOpacity ?? 0.2) * factor
+    });
+
+}
+
+function applyLayerOpacity(name) {
+
+    const factor = layerOpacity[name] ?? 1;
+
+    const layer = layers.get(name);
+
+    if (!layer) {
+        return;
+    }
+
+    layer.forEach(object => applyObjectOpacity(object, factor));
+
+}
+
+function applyLayerOrder() {
+
+    // Von unten nach oben: die zuletzt behandelte Ebene liegt oben.
+    for (let i = layerOrderNames.length - 1; i >= 0; i--) {
+
+        const layer = layers.get(layerOrderNames[i]);
+
+        if (!layer) {
+            continue;
+        }
+
+        layer.forEach(object => object.bringToFront?.());
+
+    }
+
+}
+
+// Entprellt: mehrere Aenderungen kurz hintereinander ordnen nur einmal.
+function scheduleLayerOrder() {
+
+    if (!layerOrderNames.length || layerOrderTimer !== null) {
+        return;
+    }
+
+    layerOrderTimer = setTimeout(() => {
+
+        layerOrderTimer = null;
+
+        applyLayerOrder();
+
+    }, 30);
+
+}
+
 function forceMapRedraw() {
 
     if (forceRedrawTimer !== null) {
@@ -2172,6 +2321,23 @@ engine.on("click", event => {
     } 
 
     
+    // Ein Objekt wird gerade bearbeitet (Eckpunkte sichtbar): ein Klick
+    // ins Leere waehlt es nur ab. Es wird dabei kein Marker gesetzt.
+    if (
+        window.geometryEditor &&
+        window.geometryEditor.isEditing()
+    ) {
+
+        window.geometryEditor.stop();
+
+        geometry.clearHighlight();
+
+        window.infoPanel.show(null);
+
+        return;
+
+    }
+
     geometry.clearHighlight();
 
     window.infoPanel.show(null);
@@ -2399,7 +2565,8 @@ window.MapApi = {
             style: {
                 color: "#3388ff",
                 weight: 1,
-                fillOpacity: 0.15
+                fillOpacity: 0.15,
+                interactive: false
             }
 
         });
@@ -2492,7 +2659,8 @@ window.MapApi = {
             style: {
                 color: "#3388ff",
                 weight: 1,
-                fillOpacity: 0.15
+                fillOpacity: 0.15,
+                interactive: false
             }
 
         });
@@ -2586,7 +2754,8 @@ window.MapApi = {
             style: {
                 color: "#3388ff",
                 weight: 1,
-                fillOpacity: 0.15
+                fillOpacity: 0.15,
+                interactive: false
             }
 
         });
@@ -2609,6 +2778,26 @@ window.MapApi = {
             engine.leaflet,
             visible
         );
+
+        // Erst jetzt sichtbar gewordene Objekte in die richtige
+        // Reihenfolge bringen.
+        scheduleLayerOrder();
+
+    },
+
+    setLayerOpacity(layerName, opacity) {
+
+        layerOpacity[layerName] = Math.max(0, Math.min(1, opacity));
+
+        applyLayerOpacity(layerName);
+
+    },
+
+    setLayerOrder(names = []) {
+
+        layerOrderNames = names;
+
+        scheduleLayerOrder();
 
     },
 
@@ -2688,6 +2877,10 @@ window.MapApi = {
 
         }
 
+        applyLayerOpacity(layer);
+
+        scheduleLayerOrder();
+
         forceMapRedraw();
 
         return count;
@@ -2717,6 +2910,10 @@ window.MapApi = {
             count++;
 
         }
+
+        applyLayerOpacity(layer);
+
+        scheduleLayerOrder();
 
         forceMapRedraw();
 

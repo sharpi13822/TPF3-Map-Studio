@@ -25,15 +25,15 @@
 
     <div class="layer-buttons">
 
-        <button id="layers-on">
+        <button id="layers-on" title="Alle Ebenen im Panel einschalten">
             Alle
         </button>
 
-        <button id="layers-off">
+        <button id="layers-off" title="Alle Ebenen im Panel ausschalten">
             Keine
         </button>
 
-        <button id="export-json">
+        <button id="export-json" title="Speichert die Objekte der Karte als JSON-Datei">
            JSON Export
         </button>
 
@@ -43,25 +43,25 @@
 
         <br>
 
-        <button id="draw-road">
+        <button id="draw-road" title="Eigene Straße zeichnen: Punkte auf der Karte anklicken, dann Fertig">
              Straße
         </button>
 
-        <button id="draw-river">
+        <button id="draw-river" title="Eigenen Fluss zeichnen: Punkte auf der Karte anklicken, dann Fertig">
              Fluss
         </button>
 
-        <button id="draw-building">
+        <button id="draw-building" title="Eigenes Gebäude zeichnen: Punkte auf der Karte anklicken, dann Fertig">
              Gebäude
         </button>
 
-        <button id="draw-finish">
+        <button id="draw-finish" title="Zeichnen beenden und das Objekt übernehmen">
              Fertig
         </button>
 
         </div>
         
-        <button id="import-json">
+        <button id="import-json" title="Lädt eine gespeicherte JSON-Datei auf die Karte">
            JSON Import
         </button>
 
@@ -77,79 +77,26 @@
 
     <h4>Kartenquelle</h4>
 
-    <label>
+    <label title="Normale Straßenkarte als Hintergrund">
         <input type="radio" name="base-layer" value="osm" checked>
         OpenStreetMap
     </label>
 
-    <label>
+    <label title="Luftbilder als Hintergrund, praktisch zum Erkennen von Feldern, Wäldern und Gelände">
         <input type="radio" name="base-layer" value="satellite">
-        Satellit (Sentinel-2)
+        Satellit (Esri)
     </label>
 
-    <label>
+    <label title="Legt die OpenRailwayMap über die Karte: Gleise, Bahnhöfe und Signale">
         <input type="checkbox" data-layer="openrailwaymap">
         Eisenbahnkarte (ORM)
     </label>
 
-    <label>
+    <label title="Blendet ein Gitter über die Karte ein, mit dem sich Abstände und Größen abschätzen lassen">
         <input type="checkbox" data-layer="measurement-grid">
         Maß-Gitter
     </label>
 
-    <h4>Grundkarte</h4>
-
-    <label>
-        <input type="checkbox" data-layer="landuse" checked>
-        Landnutzung
-    </label>
-
-    <label>
-        <input type="checkbox" data-layer="vegetation" checked>
-        Vegetation
-    </label>
-
-    <label>
-        <input type="checkbox" data-layer="parks" checked>
-        Parks
-    </label>
-
-
-
-    <h4>Verkehr</h4>
-
-    <label>
-        <input type="checkbox" data-layer="roads" checked>
-        Straßen
-    </label>
-
-    <label>
-        <input type="checkbox" data-layer="railways" checked>
-        Schienen
-    </label>
-
-
-
-    <h4>Gewässer</h4>
-
-    <label>
-        <input type="checkbox" data-layer="water" checked>
-        Wasser
-    </label>
-
-    <label>
-        <input type="checkbox" data-layer="waterways" checked>
-        Wasserwege
-    </label>
-
-
-
-    <h4>Objekte</h4>
-
-    <label>
-        <input type="checkbox" data-layer="buildings" checked>
-        Gebäude
-    </label>
 
 
 </div>

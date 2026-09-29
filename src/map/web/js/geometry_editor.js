@@ -64,6 +64,11 @@ class GeometryEditor {
 
         this.snapDistance = 10;   // Pixel
 
+        // Mindestabstand zwischen Eckpunkt-Griffen und Mindestlaenge
+        // eines Segments fuer einen Mittelpunkt-Griff (jeweils Pixel).
+        this.minHandleDistance = 14;
+        this.minSegmentLength = 26;
+
         this.vertexHandleZIndex = 10000;
 
         this.segmentHandleZIndex = 9000;
@@ -85,6 +90,17 @@ class GeometryEditor {
 
         if (!object)
             return;
+
+        // Nur Linien und Polygone mit gueltigen Punkten sind editierbar.
+        // Alles andere (z.B. Sonderformen aus OSM) wird nur ausgewaehlt,
+        // ohne Eckpunkte - so gibt es keine kaputten Griffe.
+        if (!this.isEditable(object)) {
+
+            this.stop();
+
+            return;
+
+        }
 
         this.stop();
 
@@ -214,6 +230,12 @@ class GeometryEditor {
             this
         );
 
+        this.map.on(
+            "moveend",
+            this.onZoom,
+            this
+        );
+
         document.addEventListener(
             "keydown",
             this.keyDownHandler
@@ -232,6 +254,12 @@ class GeometryEditor {
             this.map.off(
                 "click",
                 this.onMapClick,
+                this
+            );
+
+            this.map.off(
+                "moveend",
+                this.onZoom,
                 this
             );
 
@@ -290,6 +318,101 @@ class GeometryEditor {
     
 
     //====================================================
+    // POLYGON RING
+    //====================================================
+
+    // Liefert den aeusseren Ring eines Polygons. Unterstuetzt beide
+    // Formate: [[lat, lon], ...] und [[[lat, lon], ...], ...].
+
+    polygonRing(geometry) {
+
+        if (!Array.isArray(geometry) || geometry.length === 0) {
+            return null;
+        }
+
+        if (
+            Array.isArray(geometry[0]) &&
+            typeof geometry[0][0] === "number"
+        ) {
+            return geometry;
+        }
+
+        if (
+            Array.isArray(geometry[0]) &&
+            Array.isArray(geometry[0][0])
+        ) {
+            return geometry[0];
+        }
+
+        return null;
+
+    }
+
+    //====================================================
+    // IS EDITABLE
+    //====================================================
+
+    isEditable(object) {
+
+        const type = object?.tpf2?.type;
+
+        if (type !== "polygon" && type !== "polyline") {
+            return false;
+        }
+
+        const points = this.getGeometryArray(object);
+
+        return (
+            points.length > 0 &&
+            points.every(point =>
+                Array.isArray(point) &&
+                typeof point[0] === "number" &&
+                typeof point[1] === "number"
+            )
+        );
+
+    }
+
+    //====================================================
+    // NEARBY OBJECTS (fuer Snapping)
+    //====================================================
+
+    // Nur sichtbare Objekte im aktuellen Kartenausschnitt: bei grossen
+    // OSM-Datenmengen sonst pro Mausbewegung alle Objekte durchsucht.
+
+    getNearbyObjects() {
+
+        const all = window.geometryManager.getLeafletObjects();
+
+        if (!this.map) {
+            return all;
+        }
+
+        const view = this.map.getBounds().pad(0.1);
+
+        return all.filter(object => {
+
+            if (!object._map) {
+                return false;
+            }
+
+            try {
+
+                const bounds = object.getBounds?.();
+
+                return !bounds || view.intersects(bounds);
+
+            } catch (error) {
+
+                return true;
+
+            }
+
+        });
+
+    }
+
+    //====================================================
     // RETURN GEOMETRY ARRAY
     //====================================================
 
@@ -312,13 +435,11 @@ class GeometryEditor {
 
     if (type === "polygon") {
 
-        if (
-            Array.isArray(geometry) &&
-            Array.isArray(geometry[0]) &&
-            geometry[0].length > 0
-        ) {
+        const ring = this.polygonRing(geometry);
 
-            return geometry[0];
+        if (ring && ring.length > 0) {
+
+            return ring;
 
         }
 
@@ -397,16 +518,7 @@ class GeometryEditor {
 
         if (type === "polygon") {
 
-            if (
-                Array.isArray(geometry) &&
-                Array.isArray(geometry[0])
-            ) {
-
-               return geometry[0];
-           
-            }
-
-            return [];
+            return this.polygonRing(geometry) ?? [];
 
         }
 
@@ -618,6 +730,46 @@ class GeometryEditor {
     }
         
     //====================================================
+    // SEGMENT ZU KURZ FUER EINEN GRIFF?
+    //====================================================
+
+    isSegmentOutOfView(a, b) {
+
+        const view = this._editView || this.map.getBounds().pad(0.3);
+
+        return !(
+            view.contains(L.latLng(a[0], a[1])) ||
+            view.contains(L.latLng(b[0], b[1])) ||
+            view.contains(L.latLng(
+                (a[0] + b[0]) / 2,
+                (a[1] + b[1]) / 2
+            ))
+        );
+
+    }
+
+    isSegmentTooShort(a, b) {
+
+        const pa = this.map.latLngToContainerPoint(L.latLng(a[0], a[1]));
+        const pb = this.map.latLngToContainerPoint(L.latLng(b[0], b[1]));
+
+        return pa.distanceTo(pb) < this.minSegmentLength;
+
+    }
+
+    //====================================================
+    // ZOOM: GRIFFE NEU AUFBAUEN
+    //====================================================
+
+    onZoom() {
+
+        if (this.object) {
+            this.refresh();
+        }
+
+    }
+
+    //====================================================
     // CREATE ALL VERTEX HANDLES
     //====================================================
 
@@ -629,7 +781,38 @@ class GeometryEditor {
 
         const points = this.getGeometryPoints();
 
+        // Zu dicht liegende Punkte weglassen (Mindestabstand in Pixeln),
+        // sonst entsteht bei langen Linien ein unbedienbarer Haufen.
+        // Anfang und Ende bleiben immer. Beim Hineinzoomen erscheinen
+        // mehr Punkte (siehe onZoom()).
+        let lastPixel = null;
+
+        // Nur Punkte im sichtbaren Ausschnitt (plus Rand). Bei grossen
+        // Flaechen sonst tausende Griffe ausserhalb des Bildes.
+        this._editView = this.map.getBounds().pad(0.3);
+
         points.forEach((point, index) => {
+
+            const latlng = L.latLng(point[0], point[1]);
+
+            if (!this._editView.contains(latlng)) {
+                return;
+            }
+
+            const pixel = this.map.latLngToContainerPoint(latlng);
+
+            const isEnd =
+                index === 0 || index === points.length - 1;
+
+            if (
+                !isEnd &&
+                lastPixel &&
+                pixel.distanceTo(lastPixel) < this.minHandleDistance
+            ) {
+                return;
+            }
+
+            lastPixel = pixel;
 
             this.createHandle(point, index);
 
@@ -758,7 +941,11 @@ class GeometryEditor {
 
             this.refresh();
 
-            this.topology.rebuild();
+            // Nur die Indizes neu aufbauen; rebuild() wuerde zusaetzlich
+            // alle geteilten Punkte und Kanten in die Konsole schreiben.
+            this.topology.buildVertexIndex();
+
+            this.topology.buildEdgeIndex();
 
         });
 
@@ -839,7 +1026,7 @@ class GeometryEditor {
 
             if (!element) return;
 
-            if (i === index) {
+            if (handle.vertexIndex === index) {
 
                 element.classList.add("active");
 
@@ -1046,6 +1233,13 @@ class GeometryEditor {
 
         for (let i = 0; i < points.length - 1; i++) {
 
+            if (
+                this.isSegmentTooShort(points[i], points[i + 1]) ||
+                this.isSegmentOutOfView(points[i], points[i + 1])
+            ) {
+                continue;
+            }
+
             this.createSegmentHandle(
 
                 points[i],
@@ -1058,7 +1252,11 @@ class GeometryEditor {
 
         // Polygon schließen
 
-        if (this.object.tpf2.type === "polygon") {
+        if (
+            this.object.tpf2.type === "polygon" &&
+            !this.isSegmentTooShort(points[points.length - 1], points[0]) &&
+            !this.isSegmentOutOfView(points[points.length - 1], points[0])
+        ) {
 
             this.createSegmentHandle(
 
@@ -1323,7 +1521,7 @@ class GeometryEditor {
         };
 
         const objects =
-            window.geometryManager.getLeafletObjects();
+            this.getNearbyObjects();
 
         for (const object of objects) {
 
@@ -1381,7 +1579,7 @@ class GeometryEditor {
 
         };
 
-        const objects =  window.geometryManager.getLeafletObjects();
+        const objects = this.getNearbyObjects();
 
         for (const object of objects) {
 
@@ -1421,7 +1619,10 @@ class GeometryEditor {
 
         for (let i = 0; i < vertices.length; i++) {
 
-           if (i === ignoreIndex) continue;
+           if (
+               ignoreIndex >= 0 &&
+               vertices[i].vertexIndex === ignoreIndex
+           ) continue;
            
            const p = this.getContainerPoint(
                vertices[i].getLatLng()
