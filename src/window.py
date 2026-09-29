@@ -958,15 +958,57 @@ class MainWindow(QMainWindow):
     # Rechteck-Tool
     # ---------------------------------------------------------
 
+    def _rectangle_center_from_marker(self, has_selection: bool):
+        """
+        Liefert (lat, lon) eines Markers als Vorbelegung fuer das
+        Rechteck-Tool, oder None.
+
+        - Ist ein Marker ausgewaehlt, gilt seine Position immer.
+        - Sonst, wenn es noch keine Auswahl gibt, der zuletzt
+          gesetzte Marker.
+        - Sonst None (bestehende Auswahl bleibt unveraendert).
+        """
+
+        controller = self.map_widget.controller
+
+        markers = controller.project.markers
+
+        if not markers:
+            return None
+
+        selected_id = controller.selected_marker
+
+        if selected_id:
+
+            for marker in markers:
+
+                if marker.id == selected_id:
+                    return (marker.lat, marker.lon)
+
+        if not has_selection:
+
+            last = markers[-1]
+
+            return (last.lat, last.lon)
+
+        return None
+
     def _open_rectangle_tool(self):
         """
         Oeffnet den Dialog fuer das Rechteck-Tool und legt bei OK das
         eingegebene (ggf. gedrehte) Kartenband als aktuelle Auswahl an.
+        Der Mittelpunkt wird aus einem Marker vorbelegt (siehe
+        _rectangle_center_from_marker()).
         """
+
+        selection = self.map_widget.controller.project.selection
 
         dialog = RectangleToolDialog(
             self,
-            initial_selection=self.map_widget.controller.project.selection,
+            initial_center=self._rectangle_center_from_marker(
+                selection is not None
+            ),
+            initial_selection=selection,
         )
 
         if dialog.exec() != RectangleToolDialog.Accepted:

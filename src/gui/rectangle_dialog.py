@@ -50,6 +50,12 @@ class RectangleToolDialog(QDialog):
                 )
                 prefill_rotation = initial_selection.rotation_deg
 
+        # Ein explizit uebergebener Mittelpunkt (z.B. die Position eines
+        # Markers) hat Vorrang vor dem Mittelpunkt der Auswahl. Groesse
+        # und Drehwinkel der Auswahl bleiben dabei erhalten.
+        if initial_center is not None:
+            prefill_center = initial_center
+
         # -------------------------------------------------
         # Mittelpunkt
         # -------------------------------------------------

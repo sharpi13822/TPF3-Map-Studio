@@ -86,7 +86,7 @@ exe = EXE(
     bootloader_ignore_signals=False,
     strip=False,
     upx=False,  # UPX-Kompression mit QtWebEngine hat oefter Probleme verursacht
-    console=True,  # TEMPORÄR für Fehlersuche
+    console=False,  # TEMPORÄR für Fehlersuche
     disable_windowed_traceback=False,
 )
 
