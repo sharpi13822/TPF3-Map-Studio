@@ -79,6 +79,13 @@ class GeometryEditor {
 
         this.debug = false;
 
+        // Merkt, ob ein Polygonring geschlossen ist (letzter Punkt = erster)
+        this.closedRings = new WeakMap();
+
+        // Fuer die Rueckmeldung in map.js (Einblendung nach dem Klick)
+        this.lastEditable = true;
+        this.lastStats = null;
+
     }
 
     //====================================================
@@ -96,11 +103,16 @@ class GeometryEditor {
         // ohne Eckpunkte - so gibt es keine kaputten Griffe.
         if (!this.isEditable(object)) {
 
+            this.lastEditable = false;
+            this.lastStats = null;
+
             this.stop();
 
             return;
 
         }
+
+        this.lastEditable = true;
 
         this.stop();
 
@@ -326,25 +338,59 @@ class GeometryEditor {
 
     polygonRing(geometry) {
 
-        if (!Array.isArray(geometry) || geometry.length === 0) {
-            return null;
-        }
+        // Loest [[ring]], [[[ring]]] usw. bis zu einem Ring aus
+        // [lat, lon]-Paaren auf (der erste, aeussere Ring).
+        let ring = geometry;
 
-        if (
-            Array.isArray(geometry[0]) &&
-            typeof geometry[0][0] === "number"
-        ) {
-            return geometry;
-        }
+        for (let depth = 0; depth < 6; depth++) {
 
-        if (
-            Array.isArray(geometry[0]) &&
-            Array.isArray(geometry[0][0])
-        ) {
-            return geometry[0];
+            if (!Array.isArray(ring) || ring.length === 0) {
+                return null;
+            }
+
+            if (
+                Array.isArray(ring[0]) &&
+                typeof ring[0][0] === "number"
+            ) {
+                return ring;
+            }
+
+            ring = ring[0];
+
         }
 
         return null;
+
+    }
+
+    //====================================================
+    // CLOSED RING
+    //====================================================
+
+    // Geschlossener Polygonring: letzter Punkt ist eine Kopie des ersten
+    // (typisch fuer OSM). Beim Verschieben muessen beide zusammenbleiben.
+
+    isClosedRing(points, object = this.object) {
+
+        if (object?.tpf2?.type !== "polygon") {
+            return false;
+        }
+
+        if (!this.closedRings.has(points)) {
+
+            const first = points[0];
+            const last = points[points.length - 1];
+
+            this.closedRings.set(
+                points,
+                points.length > 3 &&
+                Math.abs(first[0] - last[0]) < 1e-9 &&
+                Math.abs(first[1] - last[1]) < 1e-9
+            );
+
+        }
+
+        return this.closedRings.get(points);
 
     }
 
@@ -632,7 +678,9 @@ class GeometryEditor {
 
         if (object.tpf2.type === "polygon") {
 
-            object.setLatLngs([latlngs]);
+            // Geometrie mit ihrer urspruenglichen Verschachtelung
+            // (Loecher, mehrere Teile) an Leaflet geben.
+            object.setLatLngs(object.tpf2.geometry);
 
         } else {
 
@@ -781,6 +829,17 @@ class GeometryEditor {
 
         const points = this.getGeometryPoints();
 
+        // Bei geschlossenen Ringen ist der letzte Punkt nur die Kopie des
+        // ersten und bekommt keinen eigenen Griff.
+        const closed = this.isPolygon() && this.isClosedRing(points);
+
+        const stats = {
+            total: points.length,
+            outOfView: 0,
+            thinned: 0,
+            created: 0
+        };
+
         // Zu dicht liegende Punkte weglassen (Mindestabstand in Pixeln),
         // sonst entsteht bei langen Linien ein unbedienbarer Haufen.
         // Anfang und Ende bleiben immer. Beim Hineinzoomen erscheinen
@@ -793,9 +852,14 @@ class GeometryEditor {
 
         points.forEach((point, index) => {
 
+            if (closed && index === points.length - 1) {
+                return;
+            }
+
             const latlng = L.latLng(point[0], point[1]);
 
             if (!this._editView.contains(latlng)) {
+                stats.outOfView++;
                 return;
             }
 
@@ -809,6 +873,7 @@ class GeometryEditor {
                 lastPixel &&
                 pixel.distanceTo(lastPixel) < this.minHandleDistance
             ) {
+                stats.thinned++;
                 return;
             }
 
@@ -816,7 +881,11 @@ class GeometryEditor {
 
             this.createHandle(point, index);
 
+            stats.created++;
+
         });
+
+        this.lastStats = stats;
 
     }
 
@@ -998,7 +1067,7 @@ class GeometryEditor {
 
         if (!object) return;
 
-        const points = 
+        const points =
            this.getGeometryArray(object);
 
         if (index < 0 || index >= points.length)
@@ -1007,8 +1076,20 @@ class GeometryEditor {
         points[index][0] = latlng.lat;
         points[index][1] = latlng.lng;
 
-        this.redrawObject(object);
+        // Geschlossener Ring: erster und letzter Punkt bleiben gleich.
+        if (
+            this.isClosedRing(points, object) &&
+            (index === 0 || index === points.length - 1)
+        ) {
 
+            const other = index === 0 ? points.length - 1 : 0;
+
+            points[other][0] = latlng.lat;
+            points[other][1] = latlng.lng;
+
+        }
+
+        this.redrawObject(object);
 
     }
 
@@ -1171,7 +1252,7 @@ class GeometryEditor {
 
         if (
             this.isPolygon() &&
-            points.length <= 3
+            points.length <= (this.isClosedRing(points) ? 4 : 3)
         ) {
 
             return false;
@@ -1206,8 +1287,16 @@ class GeometryEditor {
 
         const points = 
             this.getGeometryPoints();
-        
+
+        const closed = this.isPolygon() && this.isClosedRing(points);
+
         points.splice(index, 1);
+
+        // Wurde der erste Punkt eines geschlossenen Rings geloescht,
+        // muss der Ring wieder am neuen ersten Punkt schliessen.
+        if (closed && index === 0) {
+            points[points.length - 1] = [points[0][0], points[0][1]];
+        }
 
         this.redrawObject();
 

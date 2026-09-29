@@ -5,7 +5,6 @@ from PySide6.QtWidgets import (
     QLabel,
 )
 
-from src.map.layer import Layer
 from src.gui.layer_row import LayerRowWidget
 
 
@@ -22,6 +21,8 @@ class LayerPanel(QWidget):
 
         layout = QVBoxLayout(self)
 
+        self._layout = layout
+
         # ---------------------------------------------------------
         # Titel
         # ---------------------------------------------------------
@@ -33,12 +34,12 @@ class LayerPanel(QWidget):
         layout.addWidget(title)
 
         # ---------------------------------------------------------
-        # Layer
+        # Layer (in der Reihenfolge des LayerManagers)
         # ---------------------------------------------------------
 
         self.rows = []
 
-        for layer in Layer:
+        for layer in controller.layer_manager.layers:
             self._add_layer(
                 layout,
                 layer.label,
@@ -71,3 +72,46 @@ class LayerPanel(QWidget):
         self.rows.append(
             row
         )
+
+    # ---------------------------------------------------------
+    # Reihenfolge neu anzeigen
+    # ---------------------------------------------------------
+
+    def refresh_order(self):
+        """
+        Ordnet die Zeilen nach der aktuellen Reihenfolge des
+        LayerManagers neu an (nach einem Klick auf die Pfeile).
+        Index 0 im Layout ist der Titel, danach folgen die Zeilen.
+        """
+
+        by_layer = {
+            row.layer: row
+            for row in self.rows
+        }
+
+        self.rows = [
+            by_layer[layer]
+            for layer in self.controller.layer_manager.layers
+            if layer in by_layer
+        ]
+
+        for row in self.rows:
+            self._layout.removeWidget(row)
+
+        for index, row in enumerate(self.rows):
+            self._layout.insertWidget(1 + index, row)
+
+    # ---------------------------------------------------------
+    # Komplett aus dem LayerManager neu uebernehmen
+    # ---------------------------------------------------------
+
+    def sync_from_state(self):
+        """
+        Uebernimmt Haken, Schloss, Balken und Reihenfolge aus dem
+        LayerManager (z.B. nach dem Laden eines Projekts).
+        """
+
+        for row in self.rows:
+            row.sync_from_state()
+
+        self.refresh_order()

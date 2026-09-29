@@ -701,9 +701,34 @@ class GeometryManager {
                         ? window.geometryEditor.vertexHandles.length
                         : 0;
 
+                    let detail = `Eckpunkte: ${handles}`;
+
+                    const editor = window.geometryEditor;
+
+                    if (editor && handles === 0) {
+
+                        if (editor.lastEditable === false) {
+
+                            detail +=
+                                " (nicht bearbeitbar, Geometrie: " +
+                                String(JSON.stringify(meta.geometry))
+                                    .slice(0, 90) +
+                                ")";
+
+                        } else if (editor.lastStats) {
+
+                            detail +=
+                                ` (von ${editor.lastStats.total} Punkten ` +
+                                `liegen ${editor.lastStats.outOfView} ` +
+                                `außerhalb des Bildes)`;
+
+                        }
+
+                    }
+
                     showToast(
                         `Ausgewählt: ${meta.layer} ${meta.id} ` +
-                        `(${meta.type}), Eckpunkte: ${handles}`
+                        `(${meta.type}), ${detail}`
                     );
 
                 } catch (error) {

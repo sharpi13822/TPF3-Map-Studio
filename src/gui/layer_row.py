@@ -14,6 +14,7 @@ ICON_MAP = {
     "Straßen":      "🛣️",
     "Bahn":         "🚆",
     "Gebäude":      "🏘️",
+    "Wasser":       "💧",
     "Gewässer":     "💦",
     "Flüsse":       "🏞️",
     "Parks":        "🌳",
@@ -25,15 +26,11 @@ ICON_MAP = {
 class LayerRowWidget(QWidget):
     """
     Eine einzelne Zeile im LayerPanel.
+
+    Der Anfangszustand von Haken, Schloss und Balken wird aus dem
+    LayerManager gelesen, damit die Zeile immer zum tatsaechlichen
+    Zustand passt (z.B. Ebenen beim Start ausgeblendet).
     """
-
-    def __init__(self, controller, layer, text):
-        super().__init__()
-
-        print("LayerRowWidget erstellt:", layer)
-
-        self.controller = controller
-        self.layer = layer
 
     def __init__(
         self,
@@ -45,6 +42,8 @@ class LayerRowWidget(QWidget):
 
         self.controller = controller
         self.layer = layer
+
+        manager = controller.layer_manager
 
         # ---------------------------------------------------------
         # Layout
@@ -72,7 +71,9 @@ class LayerRowWidget(QWidget):
 
         self.visible = QCheckBox()
 
-        self.visible.setChecked(True)
+        self.visible.setChecked(
+            manager.is_visible(layer)
+        )
 
         self.visible.toggled.connect(
             self._visibility_changed
@@ -82,9 +83,15 @@ class LayerRowWidget(QWidget):
         # Sperren
         # ---------------------------------------------------------
 
-        self.lock = QPushButton("🔓")
+        locked = manager.is_locked(layer)
+
+        self.lock = QPushButton(
+            "🔒" if locked else "🔓"
+        )
 
         self.lock.setCheckable(True)
+
+        self.lock.setChecked(locked)
 
         self.lock.setFixedWidth(34)
 
@@ -121,7 +128,7 @@ class LayerRowWidget(QWidget):
         )
 
         self.slider.setValue(
-            100
+            int(round(manager.opacity(layer) * 100))
         )
 
         self.slider.setFixedWidth(
@@ -165,11 +172,44 @@ class LayerRowWidget(QWidget):
         layout.addWidget(self.down_button)
 
     # ---------------------------------------------------------
+    # Zustand aus dem LayerManager uebernehmen
+    # ---------------------------------------------------------
+
+    def sync_from_state(self):
+        """
+        Setzt Haken, Schloss und Balken auf den Zustand des
+        LayerManagers (z.B. nach dem Laden eines Projekts). Die Signale
+        sind dabei gesperrt, es wird also nichts erneut ausgeloest.
+        """
+
+        manager = self.controller.layer_manager
+
+        locked = manager.is_locked(self.layer)
+
+        widgets = (self.visible, self.lock, self.slider)
+
+        for widget in widgets:
+            widget.blockSignals(True)
+
+        self.visible.setChecked(manager.is_visible(self.layer))
+
+        self.lock.setChecked(locked)
+
+        self.lock.setText("🔒" if locked else "🔓")
+
+        self.slider.setValue(
+            int(round(manager.opacity(self.layer) * 100))
+        )
+
+        for widget in widgets:
+            widget.blockSignals(False)
+
+    # ---------------------------------------------------------
     # Sichtbarkeit
     # ---------------------------------------------------------
 
     def _visibility_changed(self, checked):
-        print(f"GUI  layer={self.layer.name}  checked={checked}")
+
         self.controller.set_layer_visible(self.layer, checked)
 
     # ---------------------------------------------------------
@@ -214,11 +254,26 @@ class LayerRowWidget(QWidget):
             self.layer
         )
 
+        self._refresh_panel()
+
     def _move_down(self):
 
         self.controller.move_layer_down(
             self.layer
         )
+
+        self._refresh_panel()
+
+    def _refresh_panel(self):
+        """
+        Sortiert die Zeilen im Panel nach der neuen Reihenfolge des
+        LayerManagers neu.
+        """
+
+        panel = self.parentWidget()
+
+        if panel is not None and hasattr(panel, "refresh_order"):
+            panel.refresh_order()
 
     # ---------------------------------------------------------
     # Kontextmenü

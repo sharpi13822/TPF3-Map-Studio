@@ -12,7 +12,9 @@ from PySide6.QtWidgets import (
     QStatusBar,
     QListWidgetItem,
     QMenu,
-    QInputDialog
+    QInputDialog,
+    QVBoxLayout,
+    QWidget,
 
 )
 
@@ -41,6 +43,28 @@ from src.map.map_widget import MapWidget
 from src.map.map_controller import Tool
 from src.undo.rename_marker_command import RenameMarkerCommand
 from src.undo.delete_marker_command import DeleteMarkerCommand
+
+
+LAYER_HELP_HTML = """
+<p><b>So funktioniert das Layer-Panel</b></p>
+
+<p><b>Haken:</b> blendet die Ebene auf der Karte ein oder aus.
+Beim Start sind alle Ebenen aus. Erst <i>Werkzeuge &rarr; OSM
+laden</i>, dann die gewünschten Haken setzen.</p>
+
+<p><b>Balken:</b> stellt die Deckkraft der Ebene ein. Nach links
+ziehen macht sie durchsichtiger, ganz rechts ist sie voll
+sichtbar. So siehst du Ebenen, die darunter liegen.</p>
+
+<p><b>Pfeile:</b> verschieben die Ebene in der Stapelreihenfolge
+auf der Karte. Pfeil hoch legt sie vor die anderen Ebenen, Pfeil
+runter dahinter. Praktisch, wenn zum Beispiel Wald die Straßen
+verdeckt.</p>
+
+<p><b>Tipp:</b> Ein Klick auf ein Objekt auf der Karte zeigt seine
+Eckpunkte. Die Punkte lassen sich ziehen. Ein Klick ins Leere oder
+die Esc-Taste beendet das.</p>
+"""
 
 
 class _OsmWorker(QThread):
@@ -96,6 +120,8 @@ class MainWindow(QMainWindow):
         self.resize(1600, 900)
 
         self._osm_worker = None
+
+        self.layer_panel = None
 
         # ---------------------------------------------------------
         # Aktionen
@@ -253,15 +279,8 @@ class MainWindow(QMainWindow):
         # Startansicht: Deutschland, ohne vorgesetzten Marker.
         controller.api.center_and_zoom(51.1657, 10.4515, 6)
 
-        # Ausgeblendeten Startzustand der Ebenen an die Karte melden.
-        for layer in controller.layer_manager.layers:
-            controller.api.set_layer_visible(
-                layer,
-                controller.layer_manager.is_visible(layer),
-            )
-            self._send_layer_opacity(layer)
-
-        self._send_layer_order()
+        # Startzustand der Ebenen (ausgeblendet) an die Karte melden.
+        self._sync_layers_to_map()
 
         self.refresh_project_list()
 
@@ -387,6 +406,12 @@ class MainWindow(QMainWindow):
             )
 
             return
+
+        # Layer-Dock und Karte auf den geladenen Ebenenzustand bringen.
+        if self.layer_panel is not None:
+            self.layer_panel.sync_from_state()
+
+        self._sync_layers_to_map()
 
         self.statusBar().showMessage(
             "Projekt geladen."
@@ -1040,6 +1065,28 @@ class MainWindow(QMainWindow):
             f"{json.dumps(self._js_layer_name(layer))}, {opacity});"
         )
 
+    def _sync_layers_to_map(self):
+        """
+        Schickt Sichtbarkeit, Deckkraft und Reihenfolge aller Ebenen aus
+        dem LayerManager an die Karte (beim Start und nach dem Laden
+        eines Projekts).
+        """
+
+        controller = self.map_widget.controller
+
+        manager = controller.layer_manager
+
+        for layer in manager.layers:
+
+            controller.api.set_layer_visible(
+                layer,
+                manager.is_visible(layer),
+            )
+
+            self._send_layer_opacity(layer)
+
+        self._send_layer_order()
+
     def _send_layer_order(self):
 
         names = [
@@ -1207,6 +1254,43 @@ class MainWindow(QMainWindow):
             Qt.RightDockWidgetArea,
             self.properties_dock
         )
+
+        self._add_layer_help()
+
+    def _add_layer_help(self):
+        """
+        Haengt unter die Ebenenliste im Layer-Dock einen Hilfetext, der
+        Haken, Balken und Pfeile erklaert. Das bestehende Dock-Widget
+        bleibt unveraendert und wird nur in einen Container gesetzt.
+        """
+
+        original = self.layer_dock.widget()
+
+        if original is None:
+            return
+
+        self.layer_panel = original
+
+        container = QWidget()
+
+        layout = QVBoxLayout(container)
+        layout.setContentsMargins(0, 0, 0, 0)
+
+        # Erst den Container einsetzen (das alte Widget wird dabei
+        # ausgeblendet), dann das alte Widget hineinsetzen.
+        self.layer_dock.setWidget(container)
+
+        layout.addWidget(original)
+        original.show()
+
+        help_label = QLabel(LAYER_HELP_HTML)
+        help_label.setTextFormat(Qt.RichText)
+        help_label.setWordWrap(True)
+        help_label.setMargin(8)
+        help_label.setAlignment(Qt.AlignTop | Qt.AlignLeft)
+
+        layout.addWidget(help_label)
+        layout.addStretch(1)
 
     # ---------------------------------------------------------
     # Undo / Redo
