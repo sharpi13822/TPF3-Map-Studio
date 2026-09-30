@@ -24,7 +24,7 @@ import math
 
 import numpy as np
 from PIL import Image, ImageDraw
-from scipy.ndimage import distance_transform_edt, label
+from scipy.ndimage import distance_transform_edt, gaussian_filter, label
 
 from src.osm.objects.osm_data import OSMData
 from src.osm.osm_filter import OSMFilter
@@ -252,6 +252,65 @@ def build_water_mask(
     return np.array(mask_img, dtype=bool)
 
 
+def smooth_underwater(
+    heightmap: np.ndarray,
+    water_level_m: float,
+    sigma_m: float,
+    pixel_size_m: float,
+    full_depth_m: float = 2.0,
+) -> np.ndarray:
+    """
+    Zeichnet das Gelaende UNTERHALB des Wasserspiegels weich (Flussbett,
+    Seegrund, tiefe Senken), damit dort keine Stufen, Rillen oder Krater
+    bleiben.
+
+    Es wird nur zwischen Pixeln gemittelt, die selbst unter Wasser liegen
+    (normierte Faltung). Dadurch bleibt jeder Wert unter dem Wasserspiegel und
+    die Uferlinie verschiebt sich nicht. Direkt am Ufer (Tiefe 0) ist die
+    Glaettung aus und steigt bis full_depth_m Wassertiefe auf volle Staerke,
+    so dass die Uferkante nicht steiler wird.
+
+    Liefert eine NEUE Kopie, heightmap bleibt unveraendert.
+    """
+
+    heights = heightmap.astype(np.float32, copy=False)
+
+    level = np.float32(water_level_m)
+
+    below = heights < level
+
+    if sigma_m <= 0 or not below.any():
+        return heightmap.copy()
+
+    sigma_px = max(0.5, sigma_m / pixel_size_m)
+
+    mask = below.astype(np.float32)
+
+    numerator = gaussian_filter(
+        heights * mask, sigma=sigma_px, mode="nearest", truncate=3.0
+    )
+
+    denominator = gaussian_filter(
+        mask, sigma=sigma_px, mode="nearest", truncate=3.0
+    )
+
+    smooth = np.where(
+        denominator > 1e-4,
+        numerator / np.maximum(denominator, 1e-4),
+        heights,
+    ).astype(np.float32)
+
+    del numerator, denominator, mask
+
+    depth = level - heights
+
+    weight = np.clip(depth / np.float32(max(full_depth_m, 0.1)), 0.0, 1.0)
+
+    result = np.where(below, heights * (1 - weight) + smooth * weight, heights)
+
+    return result.astype(heightmap.dtype, copy=False)
+
+
 def blend_terrain_to_water(
     heightmap: np.ndarray,
     water_mask: np.ndarray,
@@ -261,6 +320,7 @@ def blend_terrain_to_water(
     water_depth_m: float = 1.0,
     min_area_px: float | None = None,
     max_height_above_water_m: float | None = None,
+    underwater_smoothing_m: float | None = None,
 ) -> np.ndarray:
     """
     Passt das Terrain sanft an das Wasserniveau an. Liefert eine NEUE
@@ -284,6 +344,11 @@ def blend_terrain_to_water(
     natürlich viel höher liegen (Bäche in den Bergen, Bergseen), bleiben
     unangetastet - sonst würden sie tief ins Gelände geschnitten und zu
     Schluchten. None = keine Begrenzung (altes Verhalten).
+
+    underwater_smoothing_m: Wird ein Wert angegeben (Sigma in Metern, im
+    Studio die halbe Uebergangsbreite), wird das Gelaende unterhalb von
+    water_level_m zusaetzlich weichgezeichnet (siehe smooth_underwater) -
+    auch dort, wo kein OSM-Wasser liegt.
     """
 
     if heightmap.shape != water_mask.shape:
@@ -307,23 +372,36 @@ def blend_terrain_to_water(
     filtered_mask = filter_small_water_bodies(active_mask, min_area_px)
 
     if not filtered_mask.any():
-        # Kein (ausreichend grosses) Wasser im Ausschnitt - nichts zu
-        # tun, Original unveraendert.
-        return heightmap.copy()
+        # Kein (ausreichend grosses) Wasser im Ausschnitt: kein Uebergang
+        # noetig, Original unveraendert (nur ggf. unter Wasser glaetten).
+        blended = heightmap.copy()
 
-    # Distanz (in Pixeln) jedes Punkts zum naechsten Wasserpixel;
-    # innerhalb des Wassers selbst ist die Distanz 0.
-    distance_px = distance_transform_edt(~filtered_mask)
+    else:
 
-    # Smoothstep: 1 direkt am/im Wasser, 0 ab transition_px Entfernung.
-    t = np.clip(1.0 - distance_px / transition_px, 0.0, 1.0)
-    weight = t * t * (3 - 2 * t)
+        # Distanz (in Pixeln) jedes Punkts zum naechsten Wasserpixel;
+        # innerhalb des Wassers selbst ist die Distanz 0.
+        distance_px = distance_transform_edt(~filtered_mask)
 
-    target_height = water_level_m - water_depth_m
+        # Smoothstep: 1 direkt am/im Wasser, 0 ab transition_px Entfernung.
+        t = np.clip(1.0 - distance_px / transition_px, 0.0, 1.0)
+        weight = t * t * (3 - 2 * t)
 
-    blended = heightmap * (1 - weight) + target_height * weight
+        target_height = water_level_m - water_depth_m
 
-    return blended.astype(heightmap.dtype)
+        blended = (
+            heightmap * (1 - weight) + target_height * weight
+        ).astype(heightmap.dtype)
+
+    if underwater_smoothing_m:
+
+        blended = smooth_underwater(
+            blended,
+            water_level_m,
+            underwater_smoothing_m,
+            pixel_size_m,
+        )
+
+    return blended
 
 
 def enforce_osm_water(
@@ -332,10 +410,12 @@ def enforce_osm_water(
     water_level_m: float,
     pixel_size_m: float,
     transition_m: float = 60.0,
-    bed_depth_m: float = 5.0,
+    bed_depth_m: float = 8.0,
     bank_height_m: float = 2.0,
     max_height_above_water_m: float | None = 15.0,
     min_area_px: float = 50.0,
+    edge_depth_m: float = 2.0,
+    core_ramp_m: float = 40.0,
 ) -> np.ndarray:
     """
     Wasser nur dort, wo OpenStreetMap Wasser hat.
@@ -348,8 +428,11 @@ def enforce_osm_water(
 
     - Gelaende ausserhalb der Gewaesser wird mindestens auf
       water_level_m + bank_height_m angehoben: dort kann nie Wasser stehen.
-    - Innerhalb der Gewaesser (aus OSM) liegt das Bett auf
-      water_level_m - bed_depth_m.
+    - Innerhalb der Gewaesser (aus OSM) liegt das Bett am Ufer auf
+      water_level_m - edge_depth_m und wird zur Mitte hin bis
+      water_level_m - bed_depth_m tiefer (Fahrrinne). core_ramp_m ist der
+      Abstand vom Ufer, ab dem die volle Tiefe erreicht ist. Schmale Fluesse
+      erreichen die volle Tiefe nur teilweise.
     - Dazwischen glaettet eine Boeschung der Breite transition_m (Smoothstep).
 
     max_height_above_water_m: Gewaesser, die von Natur aus hoeher als
@@ -382,7 +465,20 @@ def enforce_osm_water(
 
     land = np.maximum(heights, np.float32(water_level_m + bank_height_m))
 
-    bed = np.float32(water_level_m - bed_depth_m)
+    # Tiefe des Betts: flach am Ufer, tiefer in der Mitte (Smoothstep ueber
+    # den Abstand zum naechsten Ufer innerhalb des Wassers).
+    inside_px = distance_transform_edt(active)
+
+    ramp_px = max(1.0, core_ramp_m / pixel_size_m)
+
+    ramp = np.clip(inside_px / ramp_px, 0.0, 1.0)
+    ramp = ramp * ramp * (3 - 2 * ramp)
+
+    depth = edge_depth_m + (bed_depth_m - edge_depth_m) * ramp
+
+    bed = (water_level_m - depth).astype(np.float32)
+
+    del inside_px, ramp, depth
 
     transition_px = max(1.0, transition_m / pixel_size_m)
 
