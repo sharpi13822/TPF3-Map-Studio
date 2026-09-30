@@ -81,6 +81,7 @@ class MapController(QObject):
     marker_updated = Signal(str)
     markers_changed = Signal()
     measurement_changed = Signal(str)
+    layer_state_changed = Signal()
 
     def __init__(self, api):
         super().__init__()
@@ -1260,3 +1261,22 @@ class MapController(QObject):
         self.layer_manager.set_visible(layer, visible)
 
         self.api.set_layer_visible(layer, visible)
+
+    def ensure_layer_visible(self, layer_name: str):
+        """
+        Schaltet eine ausgeblendete Ebene sichtbar (z.B. beim Zeichnen)
+        und meldet das dem Layer-Dock.
+        """
+
+        for layer in self.layer_manager.layers:
+
+            if layer.name.lower() != layer_name:
+                continue
+
+            if not self.layer_manager.is_visible(layer):
+
+                self.set_layer_visible(layer, True)
+
+                self.layer_state_changed.emit()
+
+            return

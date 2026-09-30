@@ -67,6 +67,19 @@ class Bridge(QObject):
         )
 
     # ---------------------------------------------------------
+    # Ebene sichtbar schalten (Zeichnen)
+    # ---------------------------------------------------------
+
+    @Slot(str)
+    def ensureLayerVisible(
+        self,
+        layer_name: str
+    ):
+        self.controller.ensure_layer_visible(
+            layer_name
+        )
+
+    # ---------------------------------------------------------
     # Marker angeklickt
     # ---------------------------------------------------------
 

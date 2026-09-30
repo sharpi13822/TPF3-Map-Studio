@@ -1289,6 +1289,10 @@ class MainWindow(QMainWindow):
 
         self.layer_panel = original
 
+        self.map_widget.controller.layer_state_changed.connect(
+            self.layer_panel.sync_from_state
+        )
+
         container = QWidget()
 
         layout = QVBoxLayout(container)

@@ -28,6 +28,30 @@ class DrawManager {
         this.points = [];
 
 
+        // Ausgeblendete Ebene einschalten, sonst bleibt das fertige
+        // Objekt unsichtbar. Python setzt auch den Haken im Layer-Dock.
+        const layerName = this.getLayer();
+
+        if (
+            typeof bridges !== "undefined" &&
+            bridges.adapter &&
+            typeof bridges.adapter.ensureLayerVisible === "function"
+        ) {
+
+            bridges.adapter.ensureLayerVisible(layerName);
+
+        }
+
+        if (window.layerManager && window.engine) {
+
+            window.layerManager.get(layerName)?.setVisible(
+                window.engine.leaflet,
+                true
+            );
+
+        }
+
+
         console.log(
             "DRAW MODE:",
             type

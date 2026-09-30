@@ -1573,6 +1573,7 @@ class BridgeAdapter {
 
     mapClicked(lat, lon) {}
     addPolyline(id, points, text) {}
+    ensureLayerVisible(layerName) {}
     markerClicked(id) {}
     selectionChanged(ids) {}
     markerMoved(id, lat, lon) {}
@@ -1605,6 +1606,10 @@ class QtBridge extends BridgeAdapter {
 
     mapClicked(lat, lon) {
         this.#bridge?.mapClicked?.(lat, lon);
+    }
+
+    ensureLayerVisible(layerName) {
+        this.#bridge?.ensureLayerVisible?.(layerName);
     }
 
     addPolyline(id, points, text) {
