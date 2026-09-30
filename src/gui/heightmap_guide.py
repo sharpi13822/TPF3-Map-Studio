@@ -71,8 +71,10 @@ am Ufer 2 m, Tiefe in der Mitte 8 m (Fahrrinne), Ufer über Wasser 2 m, nur Gew�
 15 m über Wasserspiegel (höher gelegene Bäche und Bergseen bleiben unverändert). Die Option
 „Terrain sanft ans Wasserniveau anpassen“ schaltet sich dabei ab, beide zusammen gehen
 nicht.</li>
-<li><b>Höhen stauchen</b> nur, wenn im Spiel weiße Flächen (Schneegrenze) auf den Höhen
-stören. Erst den Schneegrenzen-Test machen (siehe Teil C). Standard 100 % = unverändert.</li>
+<li><b>Höhen stauchen</b> gegen weiße und graue Flächen auf den Höhen. Das Spiel färbt nach der
+Höhe über dem Wasser (Fels ab etwa 325-350 m, Schnee ab etwa 375-425 m). Die höchste Stelle landet auf
+diesem Anteil, der untere Teil des Geländes bleibt unverändert. Beim Rhein hat 45 % funktioniert.
+Standard 100 % = unverändert.</li>
 <li><b>Gefälle ausgleichen</b> nur bei Bedarf und mit Vorsicht: Es verschiebt alle Höhen.
 Bezug 30 m, Glättung 1000 m. Die Zahlen für das Spiel ändern sich dabei stark.</li>
 </ol>

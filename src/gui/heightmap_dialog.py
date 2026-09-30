@@ -57,6 +57,13 @@ DEFAULT_TRANSITION_M = 100.0
 # Anpassung nicht abgesenkt - sonst entstehen tiefe Schluchten.
 DEFAULT_BLEND_MAX_RISE_M = 12.0
 
+# Gemessen im Spiel (Terrassen-Tests, 01.10.2026): Das Spiel faerbt das
+# Gelaende nach der Hoehe UEBER DEM WASSERSPIEGEL. Fels beginnt zwischen
+# ca. 325 und 350 m, Schnee zwischen ca. 375 und 425 m. Im Rhein-Test war bei
+# 258 m ueber Wasser alles gruen, bei 287 m gab es noch einzelne weisse
+# Flaechen. Ab dieser Hoehe warnt der Dialog.
+WARN_HEIGHT_ABOVE_WATER_M = 270.0
+
 # Beim Gefaelle-Ausgleich zaehlen nur Gewaesser bis zu dieser Hoehe ueber dem
 # gewaehlten Wasserspiegel als Bezug. Der Rhein hat im Mittelrhein-Abschnitt
 # rund 15-20 m Gefaelle; Nebenfluesse und Bergseen (Eifel, Westerwald) liegen
@@ -275,10 +282,12 @@ class HeightmapDialog(QDialog):
         self.compress_input.setMinimumWidth(110)
         self.compress_input.setKeyboardTracking(False)
         self.compress_input.setToolTip(
-            "Staucht alle Höhen über dem Wasserspiegel auf diesen Anteil. "
-            "100 % = unverändert. Hilft, wenn Hochflächen im Spiel über die "
-            "Schneegrenze ragen (weiße Flächen). Die Hänge werden dabei "
-            "flacher."
+            "Die höchste Stelle landet auf diesem Anteil ihrer Höhe über dem "
+            "Wasserspiegel. 100 % = unverändert. Der untere Teil des "
+            "Geländes bleibt unverändert (Talhänge behalten ihre Steilheit), "
+            "erst darüber wird weich gestaucht. Hilft gegen weiße und graue "
+            "Flächen auf Hochflächen: Das Spiel färbt nach der Höhe über "
+            "dem Wasser."
         )
         self.compress_input.valueChanged.connect(
             self._update_preview
@@ -1552,6 +1561,18 @@ class HeightmapDialog(QDialog):
                 f"Maximalhöhe {range_max:.0f}, "
                 f"Wasserhöhe {water:.0f}",
             ]
+
+        above_water = range_max - water
+
+        if above_water > WARN_HEIGHT_ABOVE_WATER_M:
+
+            lines.append(
+                f"Achtung: Die höchste Stelle liegt {above_water:.0f} m über "
+                f"dem Wasser. Im Spiel gibt es ab etwa 325-350 m Fels und ab "
+                f"etwa 375-425 m Schnee (graue/weiße Flächen). Getestet: bei "
+                f"258 m keine Flecken, bei 287 m einzelne weiße Flecken. "
+                f"Abhilfe: \"Höhen stauchen auf\" verkleinern."
+            )
 
         size_hint = self._game_size_hint()
 

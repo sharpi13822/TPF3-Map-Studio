@@ -43,17 +43,30 @@ def smooth_terrain(
     return smoothed.astype(heightmap.dtype, copy=False)
 
 
+# Bis zu diesem Anteil der neuen Gipfelhoehe (ueber dem Wasser) bleibt das
+# Gelaende unveraendert. Erst darueber wird weich gestaucht.
+COMPRESS_KNEE_SHARE = 0.6
+
+
+def _log_compress(excess: np.ndarray, scale: float) -> np.ndarray:
+    return scale * np.log1p(excess / scale)
+
+
 def compress_heights(
     heightmap: np.ndarray,
     water_level_m: float,
     factor: float,
 ) -> np.ndarray:
     """
-    Staucht alle Hoehen ueber dem Wasserspiegel auf factor (0..1) ihres
-    Abstands zum Wasserspiegel. Das Wasserniveau selbst bleibt unveraendert
-    und der Uebergang ist stetig. Sinnvoll, wenn Hochflaechen im Spiel sonst
-    ueber die Schneegrenze des Klimas ragen (weisse Flaechen).
+    Begrenzt die Hoehen ueber dem Wasserspiegel "mit Knie": Die hoechste Stelle
+    landet auf factor (0..1) ihrer urspruenglichen Hoehe ueber dem Wasser.
+    Unterhalb des Knies (COMPRESS_KNEE_SHARE der neuen Gipfelhoehe) bleibt das
+    Gelaende UNVERAENDERT - Talhaenge und Schluchtwaende behalten ihre Steilheit.
+    Darueber wird logarithmisch (weich, ohne Knick in der Steigung) gestaucht,
+    so dass Hochflaechen unter der Schnee-/Felsgrenze des Spiels bleiben und
+    ihr Relief trotzdem nicht flachgedrueckt wird.
 
+    Das Wasserniveau selbst bleibt unveraendert, der Uebergang ist stetig.
     Liefert eine NEUE Kopie. factor >= 1 bedeutet keine Veraenderung.
     """
 
@@ -64,9 +77,41 @@ def compress_heights(
 
     level = np.float32(water_level_m)
 
+    max_above = float(heights.max()) - float(level)
+
+    cap = max_above * float(factor)
+
+    knee = cap * COMPRESS_KNEE_SHARE
+
+    # Nichts zu tun, wenn schon alles unter dem Knie liegt.
+    if max_above <= knee or cap <= 0.0:
+        return heightmap.copy()
+
+    # Skalenwert so bestimmen, dass die hoechste Stelle genau auf cap landet
+    # (Bisektion; die Kurve waechst mit dem Skalenwert stetig an).
+    top_excess = max_above - knee
+    target = cap - knee
+
+    low, high = 1e-3, max(top_excess, 1.0)
+
+    for _ in range(60):
+        mid = 0.5 * (low + high)
+        if float(_log_compress(np.float64(top_excess), mid)) < target:
+            low = mid
+        else:
+            high = mid
+
+    scale = 0.5 * (low + high)
+
+    above = heights - level
+
+    excess = np.maximum(above - np.float32(knee), 0.0)
+
+    compressed = np.float32(knee) + _log_compress(excess, np.float32(scale))
+
     result = np.where(
-        heights > level,
-        level + (heights - level) * np.float32(factor),
+        above > np.float32(knee),
+        level + compressed,
         heights,
     )
 
