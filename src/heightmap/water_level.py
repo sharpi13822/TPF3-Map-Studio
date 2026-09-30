@@ -118,6 +118,44 @@ def suggest_water_level(heightmap: np.ndarray) -> WaterLevelSuggestion:
     )
 
 
+def hillshade(
+    heights: np.ndarray,
+    cell_size_m: float,
+    azimuth_deg: float = 315.0,
+    altitude_deg: float = 45.0,
+    z_factor: float = 2.0,
+) -> np.ndarray:
+    """
+    Schattenrelief. Liefert pro Pixel k = Helligkeit relativ zur ebenen
+    Flaeche (1.0 = eben, < 1 Schattenseite, > 1 Lichtseite).
+
+    Das Raster laeuft wie ein Bild: Zeilen nach unten, Spalten nach rechts.
+    Licht kommt aus azimuth_deg (0 = oben/Norden, 90 = rechts/Osten,
+    315 = oben links) in altitude_deg Grad Hoehe. Bei einem gedrehten
+    Kartenband gilt "oben" relativ zum Band, nicht zum echten Norden.
+    """
+
+    z = np.nan_to_num(heights.astype(np.float64), nan=0.0)
+
+    dz_dr, dz_dc = np.gradient(z, cell_size_m, cell_size_m)
+
+    # Flaechennormale (x = rechts, y = oben): Zeilen laufen nach unten,
+    # daher +dz/dr fuer die Komponente nach oben.
+    nx = -dz_dc * z_factor
+    ny = dz_dr * z_factor
+
+    az = np.radians(azimuth_deg)
+    alt = np.radians(altitude_deg)
+
+    lx = np.sin(az) * np.cos(alt)
+    ly = np.cos(az) * np.cos(alt)
+    lz = np.sin(alt)
+
+    shade = (nx * lx + ny * ly + lz) / np.sqrt(nx * nx + ny * ny + 1.0)
+
+    return shade / lz
+
+
 def render_preview(
     heightmap: np.ndarray,
     water_level_m: float,
@@ -125,6 +163,7 @@ def render_preview(
     range_max_m: float,
     output_path: Path | None = None,
     max_size_px: int = 900,
+    pixel_size_m: float | None = None,
 ):
     """Vorschau wie im TPF2-Importfenster: graues Gelaende-Relief,
     Wasserflaeche blau eingefaerbt, mit Min/Max und Wasserhoehe als
@@ -137,7 +176,16 @@ def render_preview(
     small = heightmap[::step, ::step]
 
     norm = np.clip((small - range_min_m) / (range_max_m - range_min_m), 0, 1)
-    gray = (norm * 200 + 30).astype(np.uint8)
+    gray = norm * 200 + 30
+
+    # Mit pixel_size_m (Meter pro Pixel des vollen Rasters) wird das Relief
+    # zusaetzlich schattiert - Taeler, Haenge und Kaemme sind damit viel
+    # besser zu erkennen als in reinem Grau.
+    if pixel_size_m:
+        k = hillshade(small, pixel_size_m * step)
+        gray = gray * np.clip(0.45 + 0.55 * k, 0.2, 1.25)
+
+    gray = np.clip(gray, 0, 255).astype(np.uint8)
     rgb = np.stack([gray, gray, gray], axis=-1)
 
     water_mask = small <= water_level_m

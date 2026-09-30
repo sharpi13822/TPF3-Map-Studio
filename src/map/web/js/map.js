@@ -27,6 +27,19 @@ class MapEngine {
             attribution: "Tiles © Esri — Source: Esri, Maxar, Earthstar " +
                 "Geographics, CNES/Airbus DS, USDA FSA, USGS, Aerogrid, " +
                 "IGN, IGP und die GIS User Community"
+        },
+
+        // Zusammengesetzte Grundkarten: eine der Grundkarten oben plus ein
+        // im Browser berechnetes Schattenrelief (siehe relief_layer.js).
+        satellite_relief: {
+            type: "composite",
+            base: "satellite",
+            relief: true
+        },
+        osm_relief: {
+            type: "composite",
+            base: "osm",
+            relief: true
         }
     };
 
@@ -99,15 +112,41 @@ class MapEngine {
             this.#map.removeLayer(this.#baseLayer);
         }
 
-        this.#baseLayer = def.type === "wms"
+        this.#baseLayer = this.#buildBaseLayer(def);
+
+        this.#baseLayer.addTo(this.#map);
+        this.#baseLayerName = name;
+
+    }
+
+    #buildBaseLayer(def) {
+
+        if (def.type === "composite") {
+
+            const layers = [
+                this.#buildBaseLayer(MapEngine.BASE_LAYERS[def.base])
+            ];
+
+            if (def.relief && typeof ReliefLayer !== "undefined") {
+
+                layers.push(
+                    new ReliefLayer({
+                        zIndex: 2,
+                        attribution: RELIEF_ATTRIBUTION
+                    })
+                );
+
+            }
+
+            return L.layerGroup(layers);
+
+        }
+
+        return def.type === "wms"
             ? L.tileLayer.wms(def.url, {
                 ...def.wmsOptions,
                 attribution: def.attribution,
                 maxZoom: this.#config.maxZoom,
-                // maxNativeZoom: ab hier gibt es beim Anbieter keine
-                // eigenen Kacheln mehr - Leaflet vergroessert dann die
-                // letzte verfuegbare Kachel, statt (leere/graue)
-                // Kacheln fuer nicht existierende Zoomstufen anzufragen.
                 maxNativeZoom: def.maxNativeZoom
             })
             : L.tileLayer(def.url, {
@@ -115,9 +154,6 @@ class MapEngine {
                 maxZoom: this.#config.maxZoom,
                 maxNativeZoom: def.maxNativeZoom
             });
-
-        this.#baseLayer.addTo(this.#map);
-        this.#baseLayerName = name;
 
     }
 

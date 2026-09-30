@@ -181,6 +181,7 @@ def blend_terrain_to_water(
     pixel_size_m: float,
     water_depth_m: float = 1.0,
     min_area_px: float | None = None,
+    max_height_above_water_m: float | None = None,
 ) -> np.ndarray:
     """
     Passt das Terrain sanft an das Wasserniveau an. Liefert eine NEUE
@@ -198,6 +199,12 @@ def blend_terrain_to_water(
     des Übergangsbereichs selbst verwendet - ein Gewässer sollte
     mindestens so groß wie sein eigener Übergangsbereich sein, damit
     ein sauberer "Kern" entsteht statt nur ein Trichter.
+
+    max_height_above_water_m: Nur Wasserpixel, deren ORIGINALE Höhe höchstens
+    so viel über water_level_m liegt, werden angepasst. Gewässer, die
+    natürlich viel höher liegen (Bäche in den Bergen, Bergseen), bleiben
+    unangetastet - sonst würden sie tief ins Gelände geschnitten und zu
+    Schluchten. None = keine Begrenzung (altes Verhalten).
     """
 
     if heightmap.shape != water_mask.shape:
@@ -211,7 +218,14 @@ def blend_terrain_to_water(
     if min_area_px is None:
         min_area_px = math.pi * transition_px ** 2
 
-    filtered_mask = filter_small_water_bodies(water_mask, min_area_px)
+    active_mask = water_mask
+
+    if max_height_above_water_m is not None:
+        active_mask = water_mask & (
+            heightmap <= water_level_m + max_height_above_water_m
+        )
+
+    filtered_mask = filter_small_water_bodies(active_mask, min_area_px)
 
     if not filtered_mask.any():
         # Kein (ausreichend grosses) Wasser im Ausschnitt - nichts zu

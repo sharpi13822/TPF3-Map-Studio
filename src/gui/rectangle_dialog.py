@@ -101,7 +101,12 @@ class RectangleToolDialog(QDialog):
         else:
             # Sinnvoller Standard fuer lange, gedrehte Baender, wenn
             # keine vorhandene Auswahl zum Vorbelegen da ist:
-            default_index = self.size_combo.findText("Größenwahnsinnig 1:5")
+            default_size = get_by_label("Größenwahnsinnig 1:5")
+            default_index = (
+                self.size_combo.findText(default_size.label)
+                if default_size is not None
+                else -1
+            )
             if default_index >= 0:
                 self.size_combo.setCurrentIndex(default_index)
 

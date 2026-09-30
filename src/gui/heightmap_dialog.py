@@ -17,11 +17,14 @@ from PySide6.QtWidgets import (
 from PySide6.QtGui import QPixmap
 from PySide6.QtCore import Qt
 
+from src.gui.map_size_presets import find_by_pixels
 from src.heightmap.heightmap_exporter import (
     build_heightmap_array,
     build_heightmap_array_preview,
     export_heightmap_png,
+    pixel_size_for_selection,
 )
+from src.heightmap.tpf3_paths import find_tpf3_heightmaps_folder
 from src.heightmap.water_level import suggest_water_level, render_preview
 from src.heightmap.water_terrain_blend import build_water_mask, blend_terrain_to_water
 from src.heightmap.water_slope_compensation import (
@@ -30,7 +33,20 @@ from src.heightmap.water_slope_compensation import (
 )
 
 DEFAULT_CACHE_DIR = Path.home() / ".tpf2_map_studio" / "dem_cache"
-DEFAULT_TRANSITION_M = 30.0
+# Das Copernicus-Hoehenmodell hat nur etwa 30 m pro Pixel: eine Uebergangs-
+# breite von 30 m ist genau ein Pixel und erzeugt steile Waende am Ufer.
+DEFAULT_TRANSITION_M = 100.0
+
+# Gewaesser, die von Natur aus hoeher als diese Grenze ueber dem gewaehlten
+# Wasserspiegel liegen (Baeche und Bergseen), werden bei der Terrain-
+# Anpassung nicht abgesenkt - sonst entstehen tiefe Schluchten.
+DEFAULT_BLEND_MAX_RISE_M = 12.0
+
+# Beim Gefaelle-Ausgleich zaehlen nur Gewaesser bis zu dieser Hoehe ueber dem
+# gewaehlten Wasserspiegel als Bezug. Der Rhein hat im Mittelrhein-Abschnitt
+# rund 15-20 m Gefaelle; Nebenfluesse und Bergseen (Eifel, Westerwald) liegen
+# deutlich hoeher und wuerden ihre Taeler sonst unter Wasser druecken.
+DEFAULT_SLOPE_MAX_REF_M = 30.0
 
 # Als Bezug fuer den Gefaelle-Ausgleich zaehlen Seen/Wasserflaechen sowie
 # diese Wasserwege - Baeche und Graeben bewusst nicht: sie liegen oft weit
@@ -58,6 +74,7 @@ class HeightmapDialog(QDialog):
         self._processed_key = None
         self._processed_array = None
         self._processed_suggestion = None
+        self._downloaded_once = False
 
         self.setWindowTitle("Heightmap")
         self.setMinimumWidth(420)
@@ -180,6 +197,24 @@ class HeightmapDialog(QDialog):
         )
         slope_row.addWidget(self.slope_smoothing_input)
 
+        slope_row.addWidget(QLabel("Bezug: Gewässer bis"))
+        self.slope_max_ref_input = QDoubleSpinBox()
+        self.slope_max_ref_input.setRange(1.0, 1000.0)
+        self.slope_max_ref_input.setDecimals(0)
+        self.slope_max_ref_input.setSuffix(" m über Wasserspiegel")
+        self.slope_max_ref_input.setValue(DEFAULT_SLOPE_MAX_REF_M)
+        self.slope_max_ref_input.setEnabled(False)
+        self.slope_max_ref_input.setKeyboardTracking(False)
+        self.slope_max_ref_input.setToolTip(
+            "Nur Gewässer, die höchstens so hoch über dem Wasserspiegel "
+            "liegen, dienen als Bezug. Höher gelegene Nebenflüsse und "
+            "Bergseen werden ignoriert, sonst würde ihr Tal überflutet."
+        )
+        self.slope_max_ref_input.valueChanged.connect(
+            self._update_preview
+        )
+        slope_row.addWidget(self.slope_max_ref_input)
+
         layout.addLayout(slope_row)
 
         self.slope_note_label = QLabel("")
@@ -218,11 +253,40 @@ class HeightmapDialog(QDialog):
             self._update_preview
         )
         transition_row.addWidget(self.transition_input)
+
+        transition_row.addWidget(QLabel("Nur Gewässer bis"))
+        self.blend_max_rise_input = QDoubleSpinBox()
+        self.blend_max_rise_input.setRange(1.0, 500.0)
+        self.blend_max_rise_input.setDecimals(0)
+        self.blend_max_rise_input.setSuffix(" m über Wasserspiegel")
+        self.blend_max_rise_input.setValue(DEFAULT_BLEND_MAX_RISE_M)
+        self.blend_max_rise_input.setEnabled(False)
+        self.blend_max_rise_input.setKeyboardTracking(False)
+        self.blend_max_rise_input.setToolTip(
+            "Gewässer, die von Natur aus höher liegen (Bäche in den Bergen, "
+            "Bergseen), bleiben unverändert und werden nicht zu Schluchten."
+        )
+        self.blend_max_rise_input.valueChanged.connect(
+            self._update_preview
+        )
+        transition_row.addWidget(self.blend_max_rise_input)
+
         layout.addLayout(transition_row)
 
         self.water_blend_note_label = QLabel("")
         self.water_blend_note_label.setWordWrap(True)
         layout.addWidget(self.water_blend_note_label)
+
+        # -------------------------------------------------
+        # Werte fuer den TPF3-Import (immer passend zum Export)
+        # -------------------------------------------------
+
+        self.game_values_label = QLabel("")
+        self.game_values_label.setWordWrap(True)
+        self.game_values_label.setTextInteractionFlags(
+            Qt.TextSelectableByMouse
+        )
+        layout.addWidget(self.game_values_label)
 
         # -------------------------------------------------
         # Buttons
@@ -283,15 +347,31 @@ class HeightmapDialog(QDialog):
             and (self.osm.node_count > 0 or self.osm.way_count > 0)
         )
 
-        self.water_blend_checkbox.setEnabled(has_water_data)
-        self.water_blend_checkbox.setChecked(False)
-
+        # Die Einstellungen (Haken, Staerke, Glaettung, Uebergangsbreite)
+        # bleiben nach dem Download erhalten - sie wurden frueher hier
+        # zurueckgesetzt, dadurch zeigte der volle Download wieder das
+        # unbearbeitete Original.
+        self.water_blend_checkbox.blockSignals(True)
         self.slope_checkbox.blockSignals(True)
-        self.slope_checkbox.setChecked(False)
-        self.slope_checkbox.blockSignals(False)
+
+        self.water_blend_checkbox.setEnabled(has_water_data)
         self.slope_checkbox.setEnabled(has_water_data)
-        self.slope_strength_input.setEnabled(False)
-        self.slope_smoothing_input.setEnabled(False)
+
+        if not has_water_data:
+            self.water_blend_checkbox.setChecked(False)
+            self.slope_checkbox.setChecked(False)
+
+        self.water_blend_checkbox.blockSignals(False)
+        self.slope_checkbox.blockSignals(False)
+
+        blend_on = self.water_blend_checkbox.isChecked()
+        slope_on = self.slope_checkbox.isChecked()
+
+        self.transition_input.setEnabled(blend_on)
+        self.blend_max_rise_input.setEnabled(blend_on)
+        self.slope_strength_input.setEnabled(slope_on)
+        self.slope_smoothing_input.setEnabled(slope_on)
+        self.slope_max_ref_input.setEnabled(slope_on)
 
         if not has_water_data:
             self.water_blend_note_label.setText(
@@ -325,11 +405,18 @@ class HeightmapDialog(QDialog):
         self._update_range_label()
 
         self.water_level_input.setEnabled(True)
-        self.water_level_input.blockSignals(True)
-        self.water_level_input.setValue(
-            self.suggestion.suggested_m
-        )
-        self.water_level_input.blockSignals(False)
+
+        # Den Vorschlag nur beim ersten Download uebernehmen - eine vom
+        # Nutzer angepasste Wasserhoehe bleibt bei erneutem Laden erhalten.
+        if not self._downloaded_once:
+
+            self.water_level_input.blockSignals(True)
+            self.water_level_input.setValue(
+                self.suggestion.suggested_m
+            )
+            self.water_level_input.blockSignals(False)
+
+        self._downloaded_once = True
 
         self.note_label.setText(
             self.suggestion.note
@@ -390,6 +477,9 @@ class HeightmapDialog(QDialog):
             water_level_m=quick_suggestion.suggested_m,
             range_min_m=quick_suggestion.range_min_m,
             range_max_m=quick_suggestion.range_max_m,
+            pixel_size_m=(
+                self.selection.width_m / preview_array.shape[1]
+            ),
         )
 
         buffer = io.BytesIO()
@@ -462,6 +552,7 @@ class HeightmapDialog(QDialog):
 
         self.slope_strength_input.setEnabled(checked)
         self.slope_smoothing_input.setEnabled(checked)
+        self.slope_max_ref_input.setEnabled(checked)
 
         if not checked:
 
@@ -492,7 +583,9 @@ class HeightmapDialog(QDialog):
 
             self.slope_note_label.setText(
                 "Als Bezug dienen Seen und Wasserflächen sowie Flüsse "
-                "und Kanäle; Bäche und Gräben zählen dafür nicht."
+                "und Kanäle bis zur eingestellten Höhe über dem "
+                "Wasserspiegel; Bäche, Gräben und höher gelegene "
+                "Gewässer zählen dafür nicht."
             )
 
         self._update_preview()
@@ -531,11 +624,12 @@ class HeightmapDialog(QDialog):
     def _on_water_blend_toggled(self, checked: bool):
 
         self.transition_input.setEnabled(checked)
+        self.blend_max_rise_input.setEnabled(checked)
 
         if checked:
 
             try:
-                self._get_water_mask()
+                water_mask = self._get_water_mask()
             except Exception as exc:
                 QMessageBox.critical(
                     self,
@@ -545,7 +639,7 @@ class HeightmapDialog(QDialog):
                 self.water_blend_checkbox.setChecked(False)
                 return
 
-            if self._water_mask is not None and not self._water_mask.any():
+            if not water_mask.any():
 
                 self.water_blend_note_label.setText(
                     "In diesem Kartenausschnitt wurden keine "
@@ -561,21 +655,15 @@ class HeightmapDialog(QDialog):
 
     def _get_water_mask(self):
         """
-        Baut die Wassermaske einmalig und cacht sie (teure Berechnung
-        bei grossen Kartenbaendern) - wird bei jedem neuen Download
-        verworfen (siehe _download()).
+        Wassermaske fuer die Terrain-Anpassung. Es zaehlen dieselben
+        Bezugsgewaesser wie beim Gefaelle-Ausgleich (Seen/Wasserflaechen,
+        Fluesse, Kanaele). Baeche und Graeben sind bewusst NICHT dabei:
+        mit ihnen wurde jedes Seitental zu einer Schlucht abgesenkt.
+        Gecacht, bei neuem Download verworfen (siehe _download()).
         """
 
         if self._water_mask is None:
-
-            h_px, w_px = self.heightmap_array.shape
-
-            self._water_mask = build_water_mask(
-                self.osm,
-                self.selection,
-                w_px,
-                h_px,
-            )
+            self._water_mask = self._get_reference_mask()
 
         return self._water_mask
 
@@ -594,8 +682,10 @@ class HeightmapDialog(QDialog):
             self.slope_checkbox.isChecked(),
             self.slope_strength_input.value(),
             self.slope_smoothing_input.value(),
+            self.slope_max_ref_input.value(),
             self.water_blend_checkbox.isChecked(),
             self.transition_input.value(),
+            self.blend_max_rise_input.value(),
             self.water_level_input.value(),
         )
 
@@ -646,6 +736,9 @@ class HeightmapDialog(QDialog):
                     pixel_size_m=pixel_size,
                     strength=self.slope_strength_input.value() / 100.0,
                     smoothing_m=self.slope_smoothing_input.value(),
+                    max_reference_height_above_water_m=(
+                        self.slope_max_ref_input.value()
+                    ),
                 )
 
             if blend_on:
@@ -656,6 +749,9 @@ class HeightmapDialog(QDialog):
                     water_level_m=water_level,
                     transition_m=self.transition_input.value(),
                     pixel_size_m=pixel_size,
+                    max_height_above_water_m=(
+                        self.blend_max_rise_input.value()
+                    ),
                 )
 
         finally:
@@ -713,6 +809,50 @@ class HeightmapDialog(QDialog):
         checkbox.blockSignals(False)
 
     # ---------------------------------------------------------
+    # Werte fuer den TPF3-Import
+    # ---------------------------------------------------------
+
+    def _game_size_hint(self) -> str | None:
+        """Kartengroesse/-format im Spiel, passend zur Pixelgroesse."""
+
+        w_px, h_px = pixel_size_for_selection(self.selection)
+
+        matches = find_by_pixels(w_px, h_px)
+
+        if not matches:
+            return None
+
+        return " oder ".join(size.label for size in matches)
+
+    def _game_values_text(self) -> str:
+        """
+        Was im TPF3-Heightmap-Import einzutragen ist. Das Spiel verteilt
+        Schwarz..Weiss auf Mindest- bis Maximalhoehe; laut TPF3-Wiki liefert
+        Wasserhoehe 0 die besten Ergebnisse bei Biomen und Materialien.
+        Deshalb wird alles um die Wasserhoehe nach unten verschoben.
+        """
+
+        range_min, range_max = self._effective_range()
+
+        water = self.water_level_input.value()
+
+        lines = [
+            "Im TPF3-Import eintragen (empfohlen, Wasserhöhe 0): "
+            f"Mindesthöhe {range_min - water:.0f}, "
+            f"Maximalhöhe {range_max - water:.0f}, Wasserhöhe 0",
+            "Alternativ mit den echten Höhen: "
+            f"Mindesthöhe {range_min:.0f}, Maximalhöhe {range_max:.0f}, "
+            f"Wasserhöhe {water:.0f}",
+        ]
+
+        size_hint = self._game_size_hint()
+
+        if size_hint:
+            lines.append(f"Kartengröße und -format im Spiel: {size_hint}")
+
+        return "\n".join(lines)
+
+    # ---------------------------------------------------------
     # Vorschau
     # ---------------------------------------------------------
 
@@ -731,11 +871,14 @@ class HeightmapDialog(QDialog):
             f"{range_min:.0f} – {range_max:.0f} m"
         )
 
+        self.game_values_label.setText(self._game_values_text())
+
         image = render_preview(
             array,
             water_level_m=self.water_level_input.value(),
             range_min_m=range_min,
             range_max_m=range_max,
+            pixel_size_m=self._pixel_size_m(),
         )
 
         buffer = io.BytesIO()
@@ -757,10 +900,20 @@ class HeightmapDialog(QDialog):
 
     def _export(self):
 
+        # Vorschlag: der heightmaps-Ordner von TPF3 (falls gefunden), damit
+        # die Datei im Spiel sofort in der Liste erscheint.
+        game_folder = find_tpf3_heightmaps_folder()
+
+        default_name = (
+            str(game_folder / "heightmap.png")
+            if game_folder is not None
+            else "heightmap.png"
+        )
+
         filename, _ = QFileDialog.getSaveFileName(
             self,
             "Heightmap exportieren",
-            "heightmap.png",
+            default_name,
             "PNG-Bilder (*.png)"
         )
 
@@ -826,10 +979,7 @@ class HeightmapDialog(QDialog):
             self,
             "Export abgeschlossen",
             f"Heightmap gespeichert unter:\n{filename}\n\n"
-            f"Höhenbereich für den TPF2-Import: "
-            f"{range_min:.0f} – "
-            f"{range_max:.0f} m\n"
-            f"Wasserhöhe: {self.water_level_input.value():.0f} m"
+            f"{self._game_values_text()}"
             f"{outlier_warning}"
             f"{slope_note}"
             f"{water_blend_note}"

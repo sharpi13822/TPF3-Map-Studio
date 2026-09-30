@@ -87,6 +87,16 @@
         Satellit (Esri)
     </label>
 
+    <label title="Satellitenbild mit Schattenrelief: zeigt Täler, Hänge und Bergkämme, hilft beim Wählen des Ausschnitts">
+        <input type="radio" name="base-layer" value="satellite_relief">
+        Satellit + Relief
+    </label>
+
+    <label title="Straßenkarte mit Schattenrelief">
+        <input type="radio" name="base-layer" value="osm_relief">
+        Karte + Relief
+    </label>
+
     <label title="Legt die OpenRailwayMap über die Karte: Gleise, Bahnhöfe und Signale">
         <input type="checkbox" data-layer="openrailwaymap">
         Eisenbahnkarte (ORM)
@@ -138,6 +148,8 @@
     <script src="js/geometry_editor.js"></script>
 
     <script src="js/grid.js"></script>
+
+    <script src="js/relief_layer.js"></script>
 
     <script src="js/map.js?v=8"></script>
 
