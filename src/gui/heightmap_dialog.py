@@ -25,8 +25,16 @@ from src.heightmap.heightmap_exporter import (
     pixel_size_for_selection,
 )
 from src.heightmap.tpf3_paths import find_tpf3_heightmaps_folder
+from src.heightmap.terrain_smoothing import (
+    smooth_terrain,
+    DEFAULT_SMOOTHING_SIGMA_M,
+)
 from src.heightmap.water_level import suggest_water_level, render_preview
-from src.heightmap.water_terrain_blend import build_water_mask, blend_terrain_to_water
+from src.heightmap.water_terrain_blend import (
+    build_water_mask,
+    blend_terrain_to_water,
+    enforce_osm_water,
+)
 from src.heightmap.water_slope_compensation import (
     compensate_water_slope,
     DEFAULT_SMOOTHING_M,
@@ -47,6 +55,14 @@ DEFAULT_BLEND_MAX_RISE_M = 12.0
 # rund 15-20 m Gefaelle; Nebenfluesse und Bergseen (Eifel, Westerwald) liegen
 # deutlich hoeher und wuerden ihre Taeler sonst unter Wasser druecken.
 DEFAULT_SLOPE_MAX_REF_M = 30.0
+
+# "Wasser nur dort, wo OSM Wasser hat": Boeschungsbreite, Wassertiefe, Hoehe des
+# Ufers ueber dem Wasserspiegel und Hoehengrenze fuer Gewaesser, die angepasst
+# werden (hoeher gelegene Baeche/Bergseen bleiben unangetastet).
+DEFAULT_ENFORCE_TRANSITION_M = 60.0
+DEFAULT_ENFORCE_DEPTH_M = 5.0
+DEFAULT_ENFORCE_BANK_M = 2.0
+DEFAULT_ENFORCE_MAX_RISE_M = 15.0
 
 # Als Bezug fuer den Gefaelle-Ausgleich zaehlen Seen/Wasserflaechen sowie
 # diese Wasserwege - Baeche und Graeben bewusst nicht: sie liegen oft weit
@@ -155,6 +171,37 @@ class HeightmapDialog(QDialog):
         # zu uebernehmen - siehe water_slope_compensation.py).
         # -------------------------------------------------
 
+        self.smooth_checkbox = QCheckBox(
+            "Gelände glätten (gegen Treppenstufen und Kristallflächen an "
+            "Hängen: das Höhenmodell hat nur etwa 30 m pro Pixel, das "
+            "Spiel 4 m)"
+        )
+        self.smooth_checkbox.setEnabled(False)
+        self.smooth_checkbox.toggled.connect(
+            self._on_smooth_toggled
+        )
+        layout.addWidget(self.smooth_checkbox)
+
+        smooth_row = QHBoxLayout()
+        smooth_row.addWidget(QLabel("Glättung:"))
+        self.smooth_sigma_input = QDoubleSpinBox()
+        self.smooth_sigma_input.setRange(3.0, 200.0)
+        self.smooth_sigma_input.setDecimals(0)
+        self.smooth_sigma_input.setSuffix(" m")
+        self.smooth_sigma_input.setValue(DEFAULT_SMOOTHING_SIGMA_M)
+        self.smooth_sigma_input.setEnabled(False)
+        self.smooth_sigma_input.setKeyboardTracking(False)
+        self.smooth_sigma_input.setToolTip(
+            "Breite der Glättung. 15 m entfernt die gröbsten Stufen, "
+            "30 m glättet stärker, flacht aber Gipfel und Kämme leicht ab."
+        )
+        self.smooth_sigma_input.valueChanged.connect(
+            self._update_preview
+        )
+        smooth_row.addWidget(self.smooth_sigma_input)
+        smooth_row.addStretch(1)
+        layout.addLayout(smooth_row)
+
         self.slope_checkbox = QCheckBox(
             "Gefälle ausgleichen (legt Flüsse und Seen auf eine "
             "gemeinsame Ebene und zieht das Gelände relativ dazu mit; "
@@ -227,6 +274,57 @@ class HeightmapDialog(QDialog):
         # ohne Anpassung fallen Fluesse/Seen bei echten Hoehendaten
         # sonst oft "trocken").
         # -------------------------------------------------
+
+        self.enforce_checkbox = QCheckBox(
+            "Wasser nur dort, wo OpenStreetMap Wasser hat (empfohlen): "
+            "Gewässer bekommen ein festes Bett, alles andere Land liegt "
+            "knapp über dem Wasserspiegel - keine überfluteten Auen und "
+            "Tümpel. Ersetzt die sanfte Anpassung unten."
+        )
+        self.enforce_checkbox.setEnabled(False)
+        self.enforce_checkbox.toggled.connect(
+            self._on_enforce_toggled
+        )
+        layout.addWidget(self.enforce_checkbox)
+
+        enforce_row = QHBoxLayout()
+
+        def _enforce_spin(label, value, low, high, decimals, suffix, tip):
+            enforce_row.addWidget(QLabel(label))
+            spin = QDoubleSpinBox()
+            spin.setRange(low, high)
+            spin.setDecimals(decimals)
+            spin.setSuffix(suffix)
+            spin.setValue(value)
+            spin.setEnabled(False)
+            spin.setKeyboardTracking(False)
+            spin.setToolTip(tip)
+            spin.valueChanged.connect(self._update_preview)
+            enforce_row.addWidget(spin)
+            return spin
+
+        self.enforce_transition_input = _enforce_spin(
+            "Böschung:", DEFAULT_ENFORCE_TRANSITION_M, 10.0, 300.0, 0, " m",
+            "Breite der Böschung zwischen Flussbett und Land. Breiter = "
+            "flacheres Ufer, aber auch etwas breiteres Wasser."
+        )
+        self.enforce_depth_input = _enforce_spin(
+            "Wassertiefe:", DEFAULT_ENFORCE_DEPTH_M, 1.0, 30.0, 0, " m",
+            "Tiefe des Flussbetts unter dem Wasserspiegel."
+        )
+        self.enforce_bank_input = _enforce_spin(
+            "Ufer über Wasser:", DEFAULT_ENFORCE_BANK_M, 0.5, 10.0, 1, " m",
+            "So hoch liegt Land am Ufer mindestens über dem Wasserspiegel. "
+            "Alles darunter wird angehoben und kann nicht überflutet werden."
+        )
+        self.enforce_max_rise_input = _enforce_spin(
+            "Nur Gewässer bis", DEFAULT_ENFORCE_MAX_RISE_M, 1.0, 500.0, 0,
+            " m über Wasserspiegel",
+            "Gewässer, die von Natur aus höher liegen (Bäche in den "
+            "Bergen, Bergseen), bleiben unverändert."
+        )
+
+        layout.addLayout(enforce_row)
 
         self.water_blend_checkbox = QCheckBox(
             "Terrain sanft ans Wasserniveau anpassen (verhindert "
@@ -363,6 +461,30 @@ class HeightmapDialog(QDialog):
 
         self.water_blend_checkbox.blockSignals(False)
         self.slope_checkbox.blockSignals(False)
+
+        self.smooth_checkbox.setEnabled(True)
+        self.smooth_sigma_input.setEnabled(self.smooth_checkbox.isChecked())
+
+        self.enforce_checkbox.blockSignals(True)
+        self.enforce_checkbox.setEnabled(has_water_data)
+
+        if not has_water_data:
+            self.enforce_checkbox.setChecked(False)
+
+        self.enforce_checkbox.blockSignals(False)
+
+        enforce_on = self.enforce_checkbox.isChecked()
+
+        for widget in self._enforce_inputs():
+            widget.setEnabled(enforce_on)
+
+        # Die sanfte Anpassung ist nicht zusammen mit "Wasser nur dort, wo
+        # OSM Wasser hat" verwendbar.
+        if enforce_on:
+            self.water_blend_checkbox.blockSignals(True)
+            self.water_blend_checkbox.setChecked(False)
+            self.water_blend_checkbox.setEnabled(False)
+            self.water_blend_checkbox.blockSignals(False)
 
         blend_on = self.water_blend_checkbox.isChecked()
         slope_on = self.slope_checkbox.isChecked()
@@ -621,6 +743,66 @@ class HeightmapDialog(QDialog):
     # Terrain-Wasser-Anpassung
     # ---------------------------------------------------------
 
+    def _on_smooth_toggled(self, checked: bool):
+
+        self.smooth_sigma_input.setEnabled(checked)
+
+        self._update_preview()
+
+    def _enforce_inputs(self):
+
+        return (
+            self.enforce_transition_input,
+            self.enforce_depth_input,
+            self.enforce_bank_input,
+            self.enforce_max_rise_input,
+        )
+
+    def _on_enforce_toggled(self, checked: bool):
+
+        for widget in self._enforce_inputs():
+            widget.setEnabled(checked)
+
+        # Sanfte Anpassung und "Wasser nur dort, wo OSM Wasser hat" schliessen
+        # sich aus - beide veraendern das Gelaende um Gewaesser herum.
+        if checked:
+
+            self.water_blend_checkbox.blockSignals(True)
+            self.water_blend_checkbox.setChecked(False)
+            self.water_blend_checkbox.blockSignals(False)
+
+            self.transition_input.setEnabled(False)
+            self.blend_max_rise_input.setEnabled(False)
+
+        self.water_blend_checkbox.setEnabled(
+            not checked and self.enforce_checkbox.isEnabled()
+        )
+
+        if checked:
+
+            try:
+                water_mask = self._get_water_mask()
+            except Exception as exc:
+                QMessageBox.critical(
+                    self,
+                    "Wassermaske fehlgeschlagen",
+                    str(exc),
+                )
+                self.enforce_checkbox.setChecked(False)
+                return
+
+            if not water_mask.any():
+
+                QMessageBox.information(
+                    self,
+                    "Keine Gewässer",
+                    "In diesem Kartenausschnitt wurden keine Wasserflächen "
+                    "oder -wege gefunden - die Einstellung hat keine "
+                    "Wirkung. Zuerst OSM-Daten laden (Werkzeuge → OSM laden).",
+                )
+
+        self._update_preview()
+
     def _on_water_blend_toggled(self, checked: bool):
 
         self.transition_input.setEnabled(checked)
@@ -679,6 +861,8 @@ class HeightmapDialog(QDialog):
         """
 
         return (
+            self.smooth_checkbox.isChecked(),
+            self.smooth_sigma_input.value(),
             self.slope_checkbox.isChecked(),
             self.slope_strength_input.value(),
             self.slope_smoothing_input.value(),
@@ -686,6 +870,11 @@ class HeightmapDialog(QDialog):
             self.water_blend_checkbox.isChecked(),
             self.transition_input.value(),
             self.blend_max_rise_input.value(),
+            self.enforce_checkbox.isChecked(),
+            self.enforce_transition_input.value(),
+            self.enforce_depth_input.value(),
+            self.enforce_bank_input.value(),
+            self.enforce_max_rise_input.value(),
             self.water_level_input.value(),
         )
 
@@ -710,8 +899,10 @@ class HeightmapDialog(QDialog):
 
         slope_on = self.slope_checkbox.isChecked()
         blend_on = self.water_blend_checkbox.isChecked()
+        enforce_on = self.enforce_checkbox.isChecked()
+        smooth_on = self.smooth_checkbox.isChecked()
 
-        if not slope_on and not blend_on:
+        if not slope_on and not blend_on and not enforce_on and not smooth_on:
             return self.heightmap_array
 
         key = self._processing_key()
@@ -727,6 +918,16 @@ class HeightmapDialog(QDialog):
             water_level = self.water_level_input.value()
             pixel_size = self._pixel_size_m()
 
+            # 1. Glaetten (vor allen Wasserschritten, damit Flussbett und
+            #    Ufer danach scharf bleiben)
+            if smooth_on:
+
+                array = smooth_terrain(
+                    array,
+                    self.smooth_sigma_input.value(),
+                    pixel_size,
+                )
+
             if slope_on:
 
                 array = compensate_water_slope(
@@ -741,7 +942,22 @@ class HeightmapDialog(QDialog):
                     ),
                 )
 
-            if blend_on:
+            if enforce_on:
+
+                array = enforce_osm_water(
+                    array,
+                    self._get_water_mask(),
+                    water_level_m=water_level,
+                    pixel_size_m=pixel_size,
+                    transition_m=self.enforce_transition_input.value(),
+                    bed_depth_m=self.enforce_depth_input.value(),
+                    bank_height_m=self.enforce_bank_input.value(),
+                    max_height_above_water_m=(
+                        self.enforce_max_rise_input.value()
+                    ),
+                )
+
+            elif blend_on:
 
                 array = blend_terrain_to_water(
                     array,
@@ -770,7 +986,11 @@ class HeightmapDialog(QDialog):
         Gefaelle-Ausgleich eine frische Analyse des angepassten Rasters.
         """
 
-        if not self.slope_checkbox.isChecked():
+        if (
+            not self.slope_checkbox.isChecked()
+            and not self.enforce_checkbox.isChecked()
+            and not self.smooth_checkbox.isChecked()
+        ):
             return self.suggestion
 
         array = self._effective_heightmap()
@@ -964,6 +1184,26 @@ class HeightmapDialog(QDialog):
                 f"ü. NN stimmen dadurch nicht mehr."
             )
 
+        smooth_note = ""
+
+        if self.smooth_checkbox.isChecked():
+
+            smooth_note = (
+                f"\n\nGelände geglättet ({self.smooth_sigma_input.value():.0f} m)."
+            )
+
+        enforce_note = ""
+
+        if self.enforce_checkbox.isChecked():
+
+            enforce_note = (
+                f"\n\nWasser nur dort, wo OpenStreetMap Wasser hat: "
+                f"Flussbett {self.enforce_depth_input.value():.0f} m unter "
+                f"dem Wasserspiegel, Land mindestens "
+                f"{self.enforce_bank_input.value():.1f} m darüber, Böschung "
+                f"{self.enforce_transition_input.value():.0f} m."
+            )
+
         water_blend_note = ""
 
         if self.water_blend_checkbox.isChecked():
@@ -981,6 +1221,8 @@ class HeightmapDialog(QDialog):
             f"Heightmap gespeichert unter:\n{filename}\n\n"
             f"{self._game_values_text()}"
             f"{outlier_warning}"
+            f"{smooth_note}"
             f"{slope_note}"
+            f"{enforce_note}"
             f"{water_blend_note}"
         )
