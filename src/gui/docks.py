@@ -71,7 +71,7 @@ Messwerkzeug Koordinaten und Entfernungen anzeigen.</p>
 
 <p><b>7. Speichern und weiterverarbeiten</b><br>
 Speichere dein Projekt mit <i>Datei &rarr; Speichern</i>. Für den
-Import in Transport Fever 2 gibt es unter <i>Werkzeuge</i> den
+Import in Transport Fever 3 gibt es unter <i>Werkzeuge</i> den
 OSM-Export, die Heightmap, die Vorab-Prüfung und den Mod-Checker.
 Die Schritte dazu stehen unter <i>Hilfe &rarr; Import-Anleitung</i>.</p>
 """
