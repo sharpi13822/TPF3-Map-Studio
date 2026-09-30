@@ -46,20 +46,12 @@ schneller.</li>
 </ol>
 
 <h4>Einstellungen</h4>
-<p><b>Schnellstart:</b> Oben im Dialog unter <b>Voreinstellung</b> <i>„Empfohlen“</i> wählen
-(Glätten, Einebnen, Wasser nach OSM mit den Standardwerten) oder <i>„Original“</i> (alle
-Optionen aus, echte Höhen). Die Voreinstellung springt auf <i>„Eigene Einstellungen“</i>, sobald
-du etwas von Hand änderst. Optionen, die OSM-Daten brauchen, bleiben ohne geladene OSM-Daten
-aus. Die folgenden Schritte erklären die einzelnen Optionen.</p>
 <p>Empfohlene Reihenfolge. Jede Änderung aktualisiert die Vorschau und die Zahlen
 unten im Dialog.</p>
 <ol start="6">
 <li><b>Wasserhöhe</b> prüfen. Tipp: etwas höher als der tiefste Teil des Flusses, aber nicht
 so hoch, dass der Fluss an der höchsten Stelle mehr als 10 bis 15 m über dem Pegel liegt.
-Bei Flüssen mit Gefälle (zum Beispiel Rhein) ist das ein Kompromiss. Der Knopf
-<b>„Wasserhöhe aus den OSM-Gewässern vorschlagen“</b> setzt sie in die Mitte zwischen
-tiefstem und höchstem Punkt des Hauptflusses und passt die Grenze „Nur Gewässer bis“
-an (braucht OSM-Daten).</li>
+Bei Flüssen mit Gefälle (zum Beispiel Rhein) ist das ein Kompromiss.</li>
 <li><b>Gelände glätten</b> anhaken, Standard 15 m. Entfernt die Treppenstufen an den Hängen
 (das Höhenmodell hat nur 30 m pro Pixel, das Spiel 4 m).</li>
 <li><b>Trassen und Siedlungen einebnen</b> anhaken, Standard 60 m. Bahnstrecken, größere

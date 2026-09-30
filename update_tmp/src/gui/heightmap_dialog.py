@@ -12,7 +12,6 @@ from PySide6.QtWidgets import (
     QFileDialog,
     QMessageBox,
     QCheckBox,
-    QComboBox,
     QApplication,
 )
 from PySide6.QtGui import QKeySequence, QPixmap, QShortcut
@@ -103,7 +102,6 @@ class HeightmapDialog(QDialog):
         self._processed_array = None
         self._processed_suggestion = None
         self._downloaded_once = False
-        self._applying_preset = False
 
         self.setWindowTitle("Heightmap")
         self.setMinimumWidth(420)
@@ -134,34 +132,6 @@ class HeightmapDialog(QDialog):
             self._download
         )
         layout.addWidget(self.download_button)
-
-        # -------------------------------------------------
-        # Voreinstellungen (setzen die Haken mit einem Klick)
-        # -------------------------------------------------
-
-        preset_row = QHBoxLayout()
-        preset_row.addWidget(QLabel("Voreinstellung:"))
-
-        self.preset_combo = QComboBox()
-        self.preset_combo.addItems([
-            "Eigene Einstellungen",
-            "Original (1:1, unverändert)",
-            "Empfohlen (Glätten, Einebnen, Wasser nach OSM)",
-        ])
-        self.preset_combo.setEnabled(False)
-        self.preset_combo.setToolTip(
-            "Original: alle Optionen aus, die echten Höhen. Empfohlen: "
-            "Gelände glätten, Trassen und Siedlungen einebnen und Wasser "
-            "nur dort, wo OpenStreetMap Wasser hat, jeweils mit den "
-            "Standardwerten. Optionen, die OSM-Daten brauchen, bleiben "
-            "ohne geladene OSM-Daten aus."
-        )
-        self.preset_combo.currentIndexChanged.connect(
-            self._on_preset_changed
-        )
-        preset_row.addWidget(self.preset_combo, 1)
-
-        layout.addLayout(preset_row)
 
         # -------------------------------------------------
         # Vorschau
@@ -206,39 +176,16 @@ class HeightmapDialog(QDialog):
         self.note_label.setWordWrap(True)
         layout.addWidget(self.note_label)
 
-        # Wasserhoehe aus den OSM-Gewaessern: der Vorschlag oben (7,5.
-        # Perzentil der ganzen Flaeche) passt schlecht zu Fluessen mit
-        # Gefaelle. Hier wird die Mitte zwischen tiefstem und hoechstem
-        # Punkt des Hauptflusses vorgeschlagen.
-        self.suggest_water_button = QPushButton(
-            "Wasserhöhe aus den OSM-Gewässern vorschlagen"
-        )
-        self.suggest_water_button.setEnabled(False)
-        self.suggest_water_button.setToolTip(
-            "Liest die Höhen des Hauptflusses (aus OpenStreetMap) und setzt "
-            "die Wasserhöhe in die Mitte zwischen tiefstem und höchstem "
-            "Punkt. So wird der Fluss an beiden Enden um etwa gleich viel "
-            "korrigiert. Braucht geladene OSM-Daten."
-        )
-        self.suggest_water_button.clicked.connect(
-            self._suggest_water_from_osm
-        )
-        layout.addWidget(self.suggest_water_button)
-
-        self.water_hint_label = QLabel("")
-        self.water_hint_label.setWordWrap(True)
-        layout.addWidget(self.water_hint_label)
-
         # -------------------------------------------------
         # Gefaelle ausgleichen (Idee eines Community-Mitglieds: die
         # Karte "vertikal gerade richten", statt nur die Hoehe ue. NN
         # zu uebernehmen - siehe water_slope_compensation.py).
         # -------------------------------------------------
 
-        self.smooth_checkbox = QCheckBox("Gelände glätten")
-        self.smooth_checkbox.setToolTip(
-            "Gegen Treppenstufen und Kristallflächen an Hängen: das "
-            "Höhenmodell hat nur etwa 30 m pro Pixel, das Spiel 4 m."
+        self.smooth_checkbox = QCheckBox(
+            "Gelände glätten (gegen Treppenstufen und Kristallflächen an "
+            "Hängen: das Höhenmodell hat nur etwa 30 m pro Pixel, das "
+            "Spiel 4 m)"
         )
         self.smooth_checkbox.setEnabled(False)
         self.smooth_checkbox.toggled.connect(
@@ -254,7 +201,6 @@ class HeightmapDialog(QDialog):
         self.smooth_sigma_input.setSuffix(" m")
         self.smooth_sigma_input.setValue(DEFAULT_SMOOTHING_SIGMA_M)
         self.smooth_sigma_input.setEnabled(False)
-        self.smooth_sigma_input.setMinimumWidth(110)
         self.smooth_sigma_input.setKeyboardTracking(False)
         self.smooth_sigma_input.setToolTip(
             "Breite der Glättung. 15 m entfernt die gröbsten Stufen, "
@@ -272,7 +218,6 @@ class HeightmapDialog(QDialog):
         self.compress_input.setSuffix(" %")
         self.compress_input.setValue(100.0)
         self.compress_input.setEnabled(False)
-        self.compress_input.setMinimumWidth(110)
         self.compress_input.setKeyboardTracking(False)
         self.compress_input.setToolTip(
             "Staucht alle Höhen über dem Wasserspiegel auf diesen Anteil. "
@@ -288,11 +233,10 @@ class HeightmapDialog(QDialog):
         smooth_row.addStretch(1)
         layout.addLayout(smooth_row)
 
-        self.flatten_checkbox = QCheckBox("Trassen und Siedlungen einebnen")
-        self.flatten_checkbox.setToolTip(
-            "Bahnstrecken, größere Straßen und Gebäude aus OpenStreetMap: "
-            "das Gelände dort wird abgeflacht, damit im Spiel weniger "
-            "Rampen nötig sind. Braucht geladene OSM-Daten."
+        self.flatten_checkbox = QCheckBox(
+            "Trassen und Siedlungen einebnen (Bahnstrecken, größere Straßen "
+            "und Gebäude aus OpenStreetMap: das Gelände dort wird "
+            "abgeflacht, damit im Spiel weniger Rampen nötig sind)"
         )
         self.flatten_checkbox.setEnabled(False)
         self.flatten_checkbox.toggled.connect(
@@ -308,7 +252,6 @@ class HeightmapDialog(QDialog):
         self.flatten_sigma_input.setSuffix(" m")
         self.flatten_sigma_input.setValue(DEFAULT_FLATTEN_SIGMA_M)
         self.flatten_sigma_input.setEnabled(False)
-        self.flatten_sigma_input.setMinimumWidth(110)
         self.flatten_sigma_input.setKeyboardTracking(False)
         self.flatten_sigma_input.setToolTip(
             "Je größer, desto ebener wird das Gelände entlang der Trassen "
@@ -321,12 +264,12 @@ class HeightmapDialog(QDialog):
         flatten_row.addStretch(1)
         layout.addLayout(flatten_row)
 
-        self.slope_checkbox = QCheckBox("Gefälle ausgleichen")
-        self.slope_checkbox.setToolTip(
-            "Legt Flüsse und Seen auf eine gemeinsame Ebene und zieht das "
-            "Gelände relativ dazu mit. Das Relief über dem jeweiligen "
-            "Wasserspiegel bleibt erhalten, die absoluten Höhen ü. NN "
-            "stimmen danach aber nicht mehr."
+        self.slope_checkbox = QCheckBox(
+            "Gefälle ausgleichen (legt Flüsse und Seen auf eine "
+            "gemeinsame Ebene und zieht das Gelände relativ dazu mit; "
+            "das Relief über dem jeweiligen Wasserspiegel bleibt "
+            "erhalten, die absoluten Höhen ü. NN stimmen danach aber "
+            "nicht mehr)"
         )
         self.slope_checkbox.setEnabled(False)
         self.slope_checkbox.toggled.connect(
@@ -338,7 +281,6 @@ class HeightmapDialog(QDialog):
 
         slope_row.addWidget(QLabel("Stärke:"))
         self.slope_strength_input = QDoubleSpinBox()
-        self.slope_strength_input.setMinimumWidth(100)
         self.slope_strength_input.setRange(0.0, 100.0)
         self.slope_strength_input.setDecimals(0)
         self.slope_strength_input.setSuffix(" %")
@@ -353,7 +295,6 @@ class HeightmapDialog(QDialog):
 
         slope_row.addWidget(QLabel("Glättung:"))
         self.slope_smoothing_input = QDoubleSpinBox()
-        self.slope_smoothing_input.setMinimumWidth(110)
         self.slope_smoothing_input.setRange(50.0, 5000.0)
         self.slope_smoothing_input.setDecimals(0)
         self.slope_smoothing_input.setSuffix(" m")
@@ -370,7 +311,6 @@ class HeightmapDialog(QDialog):
         self.slope_max_ref_input.setRange(1.0, 1000.0)
         self.slope_max_ref_input.setDecimals(0)
         self.slope_max_ref_input.setSuffix(" m über Wasserspiegel")
-        self.slope_max_ref_input.setMinimumWidth(250)
         self.slope_max_ref_input.setValue(DEFAULT_SLOPE_MAX_REF_M)
         self.slope_max_ref_input.setEnabled(False)
         self.slope_max_ref_input.setKeyboardTracking(False)
@@ -398,11 +338,9 @@ class HeightmapDialog(QDialog):
         # -------------------------------------------------
 
         self.enforce_checkbox = QCheckBox(
-            "Wasser nur dort, wo OpenStreetMap Wasser hat (empfohlen)"
-        )
-        self.enforce_checkbox.setToolTip(
+            "Wasser nur dort, wo OpenStreetMap Wasser hat (empfohlen): "
             "Gewässer bekommen ein festes Bett, alles andere Land liegt "
-            "knapp über dem Wasserspiegel: keine überfluteten Auen und "
+            "knapp über dem Wasserspiegel - keine überfluteten Auen und "
             "Tümpel. Ersetzt die sanfte Anpassung unten."
         )
         self.enforce_checkbox.setEnabled(False)
@@ -411,19 +349,11 @@ class HeightmapDialog(QDialog):
         )
         layout.addWidget(self.enforce_checkbox)
 
-        # Zwei Zeilen, damit die Felder auch in einem schmalen Fenster
-        # vollstaendig lesbar bleiben.
         enforce_row = QHBoxLayout()
-        enforce_row2 = QHBoxLayout()
 
-        def _enforce_spin(
-            label, value, low, high, decimals, suffix, tip,
-            row=None, min_width=100,
-        ):
-            target = row if row is not None else enforce_row
-            target.addWidget(QLabel(label))
+        def _enforce_spin(label, value, low, high, decimals, suffix, tip):
+            enforce_row.addWidget(QLabel(label))
             spin = QDoubleSpinBox()
-            spin.setMinimumWidth(min_width)
             spin.setRange(low, high)
             spin.setDecimals(decimals)
             spin.setSuffix(suffix)
@@ -432,7 +362,7 @@ class HeightmapDialog(QDialog):
             spin.setKeyboardTracking(False)
             spin.setToolTip(tip)
             spin.valueChanged.connect(self._update_preview)
-            target.addWidget(spin)
+            enforce_row.addWidget(spin)
             return spin
 
         self.enforce_transition_input = _enforce_spin(
@@ -452,32 +382,24 @@ class HeightmapDialog(QDialog):
         self.enforce_bank_input = _enforce_spin(
             "Ufer über Wasser:", DEFAULT_ENFORCE_BANK_M, 0.5, 10.0, 1, " m",
             "So hoch liegt Land am Ufer mindestens über dem Wasserspiegel. "
-            "Alles darunter wird angehoben und kann nicht überflutet werden.",
-            row=enforce_row2,
+            "Alles darunter wird angehoben und kann nicht überflutet werden."
         )
         self.enforce_max_rise_input = _enforce_spin(
             "Nur Gewässer bis", DEFAULT_ENFORCE_MAX_RISE_M, 1.0, 500.0, 0,
             " m über Wasserspiegel",
             "Gewässer, die von Natur aus höher liegen (Bäche in den "
-            "Bergen, Bergseen), bleiben unverändert.",
-            row=enforce_row2,
-            min_width=250,
+            "Bergen, Bergseen), bleiben unverändert."
         )
-
-        enforce_row.addStretch(1)
-        enforce_row2.addStretch(1)
 
         layout.addLayout(enforce_row)
-        layout.addLayout(enforce_row2)
 
         self.water_blend_checkbox = QCheckBox(
-            "Terrain sanft ans Wasserniveau anpassen"
-        )
-        self.water_blend_checkbox.setToolTip(
-            "Verhindert trockenfallende Flüsse und Seen, weicht dafür "
-            "geringfügig von den echten Höhendaten ab. Sehr kleine "
-            "Einzelgewässer werden ausgenommen, um Krater zu vermeiden. "
-            "Das Gelände unterhalb des Wasserspiegels wird zusätzlich "
+            "Terrain sanft ans Wasserniveau anpassen (verhindert "
+            "trockenfallende Flüsse/Seen, weicht dafür geringfügig von "
+            "den echten Höhendaten ab; sehr kleine Einzelgewässer, "
+            "z.B. Toteislöcher in einem Filz/Moor, werden dabei "
+            "automatisch ausgenommen, um Krater-Artefakte zu vermeiden). "
+            "Das Gelände unterhalb des Wasserspiegels wird dabei zusätzlich "
             "weichgezeichnet."
         )
         self.water_blend_checkbox.setEnabled(False)
@@ -504,7 +426,6 @@ class HeightmapDialog(QDialog):
         self.blend_max_rise_input.setRange(1.0, 500.0)
         self.blend_max_rise_input.setDecimals(0)
         self.blend_max_rise_input.setSuffix(" m über Wasserspiegel")
-        self.blend_max_rise_input.setMinimumWidth(250)
         self.blend_max_rise_input.setValue(DEFAULT_BLEND_MAX_RISE_M)
         self.blend_max_rise_input.setEnabled(False)
         self.blend_max_rise_input.setKeyboardTracking(False)
@@ -528,11 +449,9 @@ class HeightmapDialog(QDialog):
         # -------------------------------------------------
 
         self.relative_values_checkbox = QCheckBox(
-            "Werte auf Wasserhöhe 0 beziehen"
-        )
-        self.relative_values_checkbox.setToolTip(
-            "Empfehlung des TPF3-Wikis für Biome und Materialien. Die "
-            "Mindesthöhe kann dabei negativ werden."
+            "Werte auf Wasserhöhe 0 beziehen (Empfehlung des TPF3-Wikis für "
+            "Biome und Materialien; die Mindesthöhe kann dabei negativ "
+            "werden)"
         )
         self.relative_values_checkbox.toggled.connect(
             self._on_relative_values_toggled
@@ -564,8 +483,6 @@ class HeightmapDialog(QDialog):
             self,
             activated=self._open_guide,
         )
-
-        self._connect_custom_markers()
 
         self.export_button = QPushButton(
             "Exportieren..."
@@ -654,9 +571,6 @@ class HeightmapDialog(QDialog):
         self.flatten_checkbox.blockSignals(False)
 
         self.flatten_sigma_input.setEnabled(self.flatten_checkbox.isChecked())
-
-        self.preset_combo.setEnabled(True)
-        self.suggest_water_button.setEnabled(has_water_data)
 
         self.smooth_checkbox.setEnabled(True)
         self.smooth_sigma_input.setEnabled(self.smooth_checkbox.isChecked())
@@ -965,211 +879,6 @@ class HeightmapDialog(QDialog):
             )
 
         return self._flatten_mask
-
-    # ---------------------------------------------------------
-    # Voreinstellungen
-    # ---------------------------------------------------------
-
-    def _connect_custom_markers(self):
-        """
-        Jede manuelle Aenderung setzt die Voreinstellung auf "Eigene
-        Einstellungen" zurueck.
-        """
-
-        boxes = (
-            self.smooth_checkbox,
-            self.flatten_checkbox,
-            self.slope_checkbox,
-            self.enforce_checkbox,
-            self.water_blend_checkbox,
-        )
-
-        spins = (
-            self.smooth_sigma_input,
-            self.compress_input,
-            self.flatten_sigma_input,
-            self.slope_strength_input,
-            self.slope_smoothing_input,
-            self.slope_max_ref_input,
-            self.enforce_transition_input,
-            self.enforce_edge_input,
-            self.enforce_depth_input,
-            self.enforce_bank_input,
-            self.enforce_max_rise_input,
-            self.transition_input,
-            self.blend_max_rise_input,
-        )
-
-        for box in boxes:
-            box.toggled.connect(self._on_manual_change)
-
-        for spin in spins:
-            spin.valueChanged.connect(self._on_manual_change)
-
-    def _on_manual_change(self, *_):
-
-        if self._applying_preset:
-            return
-
-        if self.preset_combo.currentIndex() != 0:
-
-            self.preset_combo.blockSignals(True)
-            self.preset_combo.setCurrentIndex(0)
-            self.preset_combo.blockSignals(False)
-
-    def _on_preset_changed(self, index: int):
-
-        if index > 0:
-            self._apply_preset(index)
-
-    def _apply_preset(self, index: int):
-        """
-        1 = Original (alles aus), 2 = Empfohlen. Haken, die OSM-Daten
-        brauchen, werden nur gesetzt, wenn sie verfuegbar sind.
-        """
-
-        if self.heightmap_array is None:
-            return
-
-        wanted_on = {
-            1: (),
-            2: (
-                self.smooth_checkbox,
-                self.flatten_checkbox,
-                self.enforce_checkbox,
-            ),
-        }[index]
-
-        boxes = (
-            self.smooth_checkbox,
-            self.flatten_checkbox,
-            self.slope_checkbox,
-            self.enforce_checkbox,
-            self.water_blend_checkbox,
-        )
-
-        self._applying_preset = True
-
-        try:
-
-            # Standardwerte, damit eine Voreinstellung reproduzierbar ist
-            self.smooth_sigma_input.setValue(DEFAULT_SMOOTHING_SIGMA_M)
-            self.flatten_sigma_input.setValue(DEFAULT_FLATTEN_SIGMA_M)
-            self.compress_input.setValue(100.0)
-            self.enforce_transition_input.setValue(
-                DEFAULT_ENFORCE_TRANSITION_M
-            )
-            self.enforce_edge_input.setValue(DEFAULT_ENFORCE_EDGE_M)
-            self.enforce_depth_input.setValue(DEFAULT_ENFORCE_DEPTH_M)
-            self.enforce_bank_input.setValue(DEFAULT_ENFORCE_BANK_M)
-            self.enforce_max_rise_input.setValue(DEFAULT_ENFORCE_MAX_RISE_M)
-
-            # erst alles aus, dann die gewuenschten an
-            for box in boxes:
-                box.setChecked(False)
-
-            for box in wanted_on:
-                if box.isEnabled():
-                    box.setChecked(True)
-
-        finally:
-
-            self._applying_preset = False
-
-        self._update_preview()
-
-    def _suggest_water_from_osm(self):
-        """
-        Setzt die Wasserhoehe in die Mitte zwischen tiefstem und hoechstem
-        Punkt des Hauptflusses (Gewaesser aus OSM). Hoch gelegene Nebenfluesse
-        und Bergseen bleiben aussen vor (mehr als 40 m ueber dem tiefsten
-        Gewaesser). Passt bei Bedarf die Grenze "Nur Gewaesser bis" an, damit
-        auch das obere Ende des Flusses noch erfasst wird.
-        """
-
-        import math
-
-        import numpy as np
-
-        if self.heightmap_array is None or self.osm is None:
-            return
-
-        QApplication.setOverrideCursor(Qt.WaitCursor)
-
-        try:
-            mask = self._get_water_mask()
-        except Exception as exc:
-            QApplication.restoreOverrideCursor()
-            QMessageBox.critical(self, "Wassermaske fehlgeschlagen", str(exc))
-            return
-
-        QApplication.restoreOverrideCursor()
-
-        if not mask.any():
-
-            QMessageBox.information(
-                self,
-                "Keine Gewässer",
-                "In diesem Kartenausschnitt wurden keine Wasserflächen oder "
-                "-wege gefunden. Zuerst OSM-Daten laden "
-                "(Werkzeuge → OSM laden).",
-            )
-
-            return
-
-        heights = self.heightmap_array[mask]
-
-        low = float(np.percentile(heights, 2))
-
-        main = heights[heights <= low + 40.0]
-
-        river_low, river_high = (
-            float(value) for value in np.percentile(main, [2, 98])
-        )
-
-        middle = float(round((river_low + river_high) / 2))
-
-        # Die Hoehen aus dem Hoehenmodell sind die Wasseroberflaeche des
-        # Flusses. Sie wird auf die Wasserhoehe gelegt: das obere Ende sinkt,
-        # das untere steigt.
-        lowered = max(0.0, river_high - middle)
-        raised = max(0.0, middle - river_low)
-
-        needed_rise = math.ceil(max(0.0, river_high - middle)) + 3
-
-        raised_threshold = False
-
-        self._applying_preset = True
-
-        try:
-
-            self.water_level_input.setValue(middle)
-
-            if self.enforce_max_rise_input.value() < needed_rise:
-                self.enforce_max_rise_input.setValue(needed_rise)
-                raised_threshold = True
-
-        finally:
-
-            self._applying_preset = False
-
-        text = (
-            f"Hauptfluss liegt zwischen {river_low:.0f} und "
-            f"{river_high:.0f} m. Wasserhöhe auf {middle:.0f} m gesetzt "
-            f"(Mitte). Die Wasseroberfläche wird am oberen Ende um bis zu "
-            f"{lowered:.0f} m abgesenkt und am unteren um bis zu "
-            f"{raised:.0f} m angehoben."
-        )
-
-        if raised_threshold:
-            text += (
-                f" Die Grenze „Nur Gewässer bis“ wurde auf "
-                f"{needed_rise} m erhöht."
-            )
-
-        self.water_hint_label.setText(text)
-
-        self._update_preview()
 
     def _on_relative_values_toggled(self, checked: bool):
 
@@ -1565,11 +1274,6 @@ class HeightmapDialog(QDialog):
     # ---------------------------------------------------------
 
     def _update_preview(self):
-
-        # Waehrend eine Voreinstellung die Haken setzt, nicht nach jedem
-        # einzelnen Haken neu rechnen - am Ende einmal.
-        if self._applying_preset:
-            return
 
         if self.heightmap_array is None or self.suggestion is None:
             return
