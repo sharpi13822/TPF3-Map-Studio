@@ -1065,6 +1065,16 @@ class MainWindow(QMainWindow):
             f"{json.dumps(self._js_layer_name(layer))}, {opacity});"
         )
 
+    def _send_layer_locked(self, layer):
+
+        locked = self.map_widget.controller.layer_manager.is_locked(layer)
+
+        self._run_js(
+            f"window.MapApi.setLayerLocked("
+            f"{json.dumps(self._js_layer_name(layer))}, "
+            f"{json.dumps(bool(locked))});"
+        )
+
     def _sync_layers_to_map(self):
         """
         Schickt Sichtbarkeit, Deckkraft und Reihenfolge aller Ebenen aus
@@ -1084,6 +1094,8 @@ class MainWindow(QMainWindow):
             )
 
             self._send_layer_opacity(layer)
+
+            self._send_layer_locked(layer)
 
         self._send_layer_order()
 
@@ -1111,6 +1123,11 @@ class MainWindow(QMainWindow):
         set_opacity = controller.set_layer_opacity
         move_up = controller.move_layer_up
         move_down = controller.move_layer_down
+        set_locked = controller.set_layer_locked
+
+        def set_layer_locked(layer, locked):
+            set_locked(layer, locked)
+            self._send_layer_locked(layer)
 
         def set_layer_opacity(layer, opacity):
             set_opacity(layer, opacity)
@@ -1124,6 +1141,7 @@ class MainWindow(QMainWindow):
             move_down(layer)
             self._send_layer_order()
 
+        controller.set_layer_locked = set_layer_locked
         controller.set_layer_opacity = set_layer_opacity
         controller.move_layer_up = move_layer_up
         controller.move_layer_down = move_layer_down

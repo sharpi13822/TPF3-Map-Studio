@@ -717,6 +717,17 @@ class GeometryManager {
 
                     L.DomEvent.stopPropagation(event);
 
+                    // Schloss im Layer-Dock: keine Auswahl, keine Bearbeitung.
+                    if (lockedLayers.has(object.tpf2?.layer)) {
+
+                        showToast(
+                            `Ebene '${object.tpf2.layer}' ist gesperrt`
+                        );
+
+                        return;
+
+                    }
+
                     this.highlight(object);
 
                     window.infoPanel.show(
@@ -2246,6 +2257,10 @@ let forceRedrawTimer = null;
 // Deckkraft je Ebene als Faktor 0..1 (1 = wie gezeichnet).
 const layerOpacity = {};
 
+// Gesperrte Ebenen (Schloss im Layer-Dock): ihre Objekte lassen sich nicht
+// auswaehlen oder bearbeiten. Namen wie in map.js ("roads", "water", ...).
+const lockedLayers = new Set();
+
 // Ebenennamen von oben nach unten, wie im Layer-Dock.
 let layerOrderNames = [];
 
@@ -2851,6 +2866,29 @@ window.MapApi = {
         layerOpacity[layerName] = Math.max(0, Math.min(1, opacity));
 
         applyLayerOpacity(layerName);
+
+    },
+
+    setLayerLocked(layerName, locked) {
+
+        if (locked) {
+            lockedLayers.add(layerName);
+        } else {
+            lockedLayers.delete(layerName);
+        }
+
+        // Wird gerade ein Objekt dieser Ebene bearbeitet: Bearbeitung
+        // beenden, damit die Eckpunkt-Griffe verschwinden.
+        const editor = window.geometryEditor;
+
+        if (
+            locked &&
+            editor &&
+            editor.isEditing() &&
+            editor.object?.tpf2?.layer === layerName
+        ) {
+            editor.stop();
+        }
 
     },
 
