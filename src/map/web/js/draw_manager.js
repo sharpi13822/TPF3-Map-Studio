@@ -178,6 +178,18 @@ class DrawManager {
         }
 
 
+        /*
+         * QtWebEngine zeichnet den Canvas nach dem Entfernen der
+         * Vorschau und dem Hinzufügen des Objekts teils nicht neu.
+         * Dann bleibt die fertige Straße / der Fluss unsichtbar.
+         */
+        if (typeof forceMapRedraw === "function") {
+
+            forceMapRedraw();
+
+        }
+
+
         if (
             window.infoPanel &&
             created
