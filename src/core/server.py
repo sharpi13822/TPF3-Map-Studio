@@ -37,6 +37,12 @@ class _QuietRequestHandler(SimpleHTTPRequestHandler):
     def log_message(self, format, *args):
         pass
 
+    def end_headers(self):
+        # Ohne Cache-Header behaelt QtWebEngine alte JS-Dateien und
+        # Aenderungen an den Skripten kommen in der App nicht an.
+        self.send_header("Cache-Control", "no-cache, must-revalidate")
+        super().end_headers()
+
 
 class _ExclusiveHTTPServer(ThreadingHTTPServer):
     """
