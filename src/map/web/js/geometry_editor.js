@@ -1245,7 +1245,10 @@ class GeometryEditor {
     // INSERT NEW VERTEX
     //====================================================
 
-    insertVertex(object = this.object, index, latlng) {
+    // refresh = false: Handles nicht neu aufbauen. Noetig waehrend ein
+    // Mittelpunkt-Handle gezogen wird, sonst wird der gezogene Marker
+    // zerstoert und die Linie folgt der Maus nicht mehr.
+    insertVertex(object = this.object, index, latlng, refresh = true) {
 
         if (!object) return;
 
@@ -1268,7 +1271,7 @@ class GeometryEditor {
 
         this.redrawObject(object);
 
-        if (object === this.object) {
+        if (refresh && object === this.object) {
 
              this.refresh();
 
@@ -1519,7 +1522,8 @@ class GeometryEditor {
 
                     edge.object,
                     vertexIndex,
-                    marker.getLatLng()
+                    marker.getLatLng(),
+                    false
 
                 );
 
@@ -1556,7 +1560,8 @@ class GeometryEditor {
 
                         this.object,
                         insertIndex,
-                        latlng
+                        latlng,
+                        false
 
                     );
 
@@ -1594,6 +1599,40 @@ class GeometryEditor {
                 );
 
             }
+
+        });
+
+        //------------------------------------------------
+        // DRAG END
+        //------------------------------------------------
+
+        marker.on("dragend", () => {
+
+            if (!inserted) {
+                return;
+            }
+
+            const changed = new Set([this.object]);
+
+            for (const item of activeSegmentVertices) {
+                changed.add(item.object);
+            }
+
+            for (const object of changed) {
+
+                bridges.adapter.polylineMoved(
+                    object.tpf2.id,
+                    object.tpf2.geometry
+                );
+
+            }
+
+            // Handles erst jetzt neu aufbauen (siehe insertVertex).
+            this.refresh();
+
+            this.topology.buildVertexIndex();
+
+            this.topology.buildEdgeIndex();
 
         });
 

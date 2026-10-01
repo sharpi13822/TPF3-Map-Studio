@@ -1019,6 +1019,12 @@ updateProperties(object, properties) {
 
         for (const layer of this.#layers.values()) {
 
+            // Externe Kachelebenen (z.B. OpenRailwayMap) haben keine
+            // Objekte und kein eachLayer().
+            if (typeof layer.leaflet?.eachLayer !== "function") {
+                continue;
+            }
+
             layer.leaflet.eachLayer(object => {
 
                 if (object.tpf2) {
