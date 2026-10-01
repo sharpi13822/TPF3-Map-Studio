@@ -1,3 +1,4 @@
+from difflib import SequenceMatcher
 from enum import Enum
 from pathlib import Path
 
@@ -8,6 +9,7 @@ from src.core.project_serializer import ProjectSerializer
 
 from src.osm.overpass_client import OverpassClient
 from src.osm.overpass_query_builder import OverpassQueryConfig
+from src.osm.objects.node import Node
 from src.osm.objects.osm_data import OSMData
 
 from src.map.layer_manager import LayerManager
@@ -480,9 +482,223 @@ class MapController(QObject):
 
             return
 
+        # Kein eigenes Objekt: vielleicht ein OSM-Way, dessen Punkte in
+        # der Karte hinzugefuegt oder geloescht wurden.
+        if self.sync_osm_way(polyline_id, points):
+            return
+
         print(
             f"Polyline nicht gefunden: {polyline_id}"
         )
+
+    @staticmethod
+    def _osm_points(geometry):
+        """
+        Loest verschachtelte Geometrie ([[ring]] usw.) bis zur Liste der
+        [lat, lon]-Paare des ersten (aeusseren) Rings auf.
+        """
+
+        points = geometry
+
+        for _ in range(6):
+
+            if not isinstance(points, list) or not points:
+                return None
+
+            first = points[0]
+
+            if (
+                isinstance(first, (list, tuple))
+                and len(first) >= 2
+                and isinstance(first[0], (int, float))
+            ):
+                return points
+
+            points = first
+
+        return None
+
+    def sync_osm_way(self, object_id, geometry) -> bool:
+        """
+        Gleicht die Node-Liste eines OSM-Ways mit der in der Karte
+        bearbeiteten Geometrie ab: neue Punkte werden zu neuen Nodes,
+        geloeschte Punkte werden aus dem Way entfernt (andere Ways, die
+        den Node nutzen, bleiben unberuehrt). Verschobene Punkte sind
+        schon ueber move_osm_vertices erledigt.
+
+        Gibt True zurueck, wenn die ID zu einem OSM-Objekt gehoert.
+        """
+
+        try:
+            way_id = int(object_id)
+        except (TypeError, ValueError):
+            return False
+
+        osm = self.project.osm
+
+        way = osm.ways.get(way_id)
+
+        if way is None:
+
+            if way_id in osm.relations:
+
+                print(
+                    f"OSM-Relation {way_id}: Punkte hinzufuegen/loeschen "
+                    f"wird noch nicht gespeichert"
+                )
+
+                return True
+
+            return False
+
+        ring = self._osm_points(geometry)
+
+        if ring is None:
+            return True
+
+        def key(lat, lon):
+            return (round(lat, 6), round(lon, 6))
+
+        # Aktuelle Punkte des Ways wie in der Karte (ohne doppelte
+        # Nachbarn und ohne Nodes, die nicht geladen sind).
+        kept = []
+
+        for position, node_id in enumerate(way.nodes):
+
+            node = osm.nodes.get(node_id)
+
+            if node is None:
+                continue
+
+            node_key = key(node.lat, node.lon)
+
+            if kept and kept[-1][2] == node_key:
+                continue
+
+            kept.append((position, node_id, node_key))
+
+        new_points = []
+
+        for point in ring:
+
+            point_key = key(point[0], point[1])
+
+            if new_points and new_points[-1][0] == point_key:
+                continue
+
+            new_points.append((point_key, point[0], point[1]))
+
+        matcher = SequenceMatcher(
+            None,
+            [item[2] for item in kept],
+            [item[0] for item in new_points],
+            autojunk=False,
+        )
+
+        deleted = set()
+
+        inserts = {}
+
+        for tag, i1, i2, j1, j2 in matcher.get_opcodes():
+
+            if tag in ("delete", "replace"):
+                deleted.update(range(i1, i2))
+
+            if tag in ("insert", "replace"):
+                inserts.setdefault(i1, []).extend(
+                    new_points[j1:j2]
+                )
+
+        if not deleted and not inserts:
+            return True
+
+        by_key = {}
+
+        for node in osm.nodes.values():
+            by_key.setdefault(key(node.lat, node.lon), node.id)
+
+        next_id = min(0, min(osm.nodes, default=0))
+
+        def node_for(point):
+
+            nonlocal next_id
+
+            point_key, lat, lon = point
+
+            if point_key in by_key:
+                return by_key[point_key]
+
+            next_id -= 1
+
+            osm.add_node(Node(id=next_id, lat=lat, lon=lon))
+
+            by_key[point_key] = next_id
+
+            return next_id
+
+        kept_index = {
+            item[0]: index for index, item in enumerate(kept)
+        }
+
+        new_nodes = []
+
+        for position, node_id in enumerate(way.nodes):
+
+            index = kept_index.get(position)
+
+            if index is None:
+                new_nodes.append(node_id)
+                continue
+
+            for point in inserts.get(index, []):
+                new_nodes.append(node_for(point))
+
+            if index not in deleted:
+                new_nodes.append(node_id)
+
+        for point in inserts.get(len(kept), []):
+            new_nodes.append(node_for(point))
+
+        was_closed = (
+            len(way.nodes) > 2 and way.nodes[0] == way.nodes[-1]
+        )
+
+        if was_closed and new_nodes and new_nodes[0] != new_nodes[-1]:
+            new_nodes.append(new_nodes[0])
+
+        removed = {
+            kept[index][1] for index in deleted
+        } - set(new_nodes)
+
+        way.nodes = new_nodes
+
+        # Geloeschte Nodes ohne Tags, die kein anderer Way/keine Relation
+        # mehr braucht, ganz entfernen.
+        if removed:
+
+            used = {
+                node_id
+                for other in osm.ways.values()
+                for node_id in other.nodes
+            }
+
+            for node_id in removed - used:
+
+                node = osm.nodes.get(node_id)
+
+                if node is not None and not node.tags:
+                    del osm.nodes[node_id]
+
+        GeometryBuilder(osm).rebuild_for_ways([way_id])
+
+        self.project.mark_dirty()
+
+        print(
+            f"OSM-Way {way_id}: {len(inserts)} Einfuegung(en), "
+            f"{len(deleted)} geloeschte(r) Punkt(e) gespeichert"
+        )
+
+        return True
 
     def update_polyline_properties(
         self,

@@ -1008,11 +1008,6 @@ class GeometryEditor {
 
             }
 
-            bridges.adapter.polylineMoved(
-                this.object.tpf2.id,
-                this.object.tpf2.geometry
-            );
-
             // OSM-Objekte (numerische ID): verschobenen Punkt an Python
             // melden, dort werden die OSM-Nodes angepasst.
             if (
@@ -1042,6 +1037,15 @@ class GeometryEditor {
                 }
 
             }
+
+            // Danach die ganze Geometrie abgleichen (neue/geloeschte
+            // Punkte). Die Node-Verschiebung muss vorher passieren,
+            // sonst saehe der Abgleich einen verschobenen Punkt als
+            // "geloescht + neu".
+            bridges.adapter.polylineMoved(
+                String(this.object.tpf2.id),
+                this.object.tpf2.geometry
+            );
 
             this.refresh();
 
@@ -1338,6 +1342,11 @@ class GeometryEditor {
 
         this.redrawObject();
 
+        bridges.adapter.polylineMoved(
+            String(this.object.tpf2.id),
+            this.object.tpf2.geometry
+        );
+
         this.refresh();
 
     }
@@ -1621,7 +1630,7 @@ class GeometryEditor {
             for (const object of changed) {
 
                 bridges.adapter.polylineMoved(
-                    object.tpf2.id,
+                    String(object.tpf2.id),
                     object.tpf2.geometry
                 );
 

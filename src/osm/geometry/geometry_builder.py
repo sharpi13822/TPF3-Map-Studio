@@ -53,6 +53,17 @@ class GeometryBuilder:
             if node_ids.intersection(way.nodes)
         }
 
+        return self.rebuild_for_ways(ways)
+
+    def rebuild_for_ways(self, way_ids):
+        """
+        Baut die Geometrie der angegebenen Ways und der Relationen, die
+        sie verwenden, neu auf. Gibt die IDs der neu aufgebauten Objekte
+        zurueck.
+        """
+
+        ways = set(way_ids)
+
         rebuilt = set()
 
         for way_id in ways:
