@@ -519,6 +519,58 @@ class MapController(QObject):
             f"{polyline_id}"
         )
 
+    def move_osm_vertices(
+        self,
+        from_lat: float,
+        from_lon: float,
+        to_lat: float,
+        to_lon: float
+    ) -> int:
+        """
+        Ein Punkt wurde in der Karte verschoben: alle OSM-Nodes an der
+        alten Position (auf 6 Nachkommastellen, wie die Kartenlogik fuer
+        geteilte Punkte) wandern an die neue Position. Dadurch bleiben
+        geteilte Punkte fuer alle Ways zusammen, und die Aenderung wird
+        mit den OSM-Daten gespeichert.
+
+        Gibt die Anzahl der verschobenen Nodes zurueck.
+        """
+
+        osm = self.project.osm
+
+        key = (round(from_lat, 6), round(from_lon, 6))
+
+        moved = [
+            node
+            for node in osm.nodes.values()
+            if (round(node.lat, 6), round(node.lon, 6)) == key
+        ]
+
+        if not moved:
+
+            print(
+                f"Kein OSM-Node an {from_lat:.6f}, {from_lon:.6f}"
+            )
+
+            return 0
+
+        for node in moved:
+
+            node.lat = to_lat
+            node.lon = to_lon
+
+        GeometryBuilder(osm).rebuild_for_nodes(
+            node.id for node in moved
+        )
+
+        self.project.mark_dirty()
+
+        print(
+            f"OSM-Punkt verschoben: {len(moved)} Node(s)"
+        )
+
+        return len(moved)
+
     def update_polyline_geometry(
         self,
         polyline_id: str,

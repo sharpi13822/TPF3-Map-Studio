@@ -927,6 +927,11 @@ class GeometryEditor {
 
             this.log("DRAGSTART");
 
+            // Ausgangsposition fuer die Meldung an Python (OSM-Nodes)
+            const startLatLng = e.target.getLatLng();
+
+            marker.dragFrom = [startLatLng.lat, startLatLng.lng];
+
             this.activeSharedVertices =
                 this.topology.getSharedVertices(
                         e.target.getLatLng()
@@ -1007,6 +1012,36 @@ class GeometryEditor {
                 this.object.tpf2.id,
                 this.object.tpf2.geometry
             );
+
+            // OSM-Objekte (numerische ID): verschobenen Punkt an Python
+            // melden, dort werden die OSM-Nodes angepasst.
+            if (
+                typeof this.object.tpf2.id === "number" &&
+                marker.dragFrom
+            ) {
+
+                const moved = this.getGeometryArray(this.object)[
+                    marker.vertexIndex
+                ];
+
+                if (
+                    moved &&
+                    (
+                        moved[0] !== marker.dragFrom[0] ||
+                        moved[1] !== marker.dragFrom[1]
+                    )
+                ) {
+
+                    bridges.adapter.osmVertexMoved(
+                        marker.dragFrom[0],
+                        marker.dragFrom[1],
+                        moved[0],
+                        moved[1]
+                    );
+
+                }
+
+            }
 
             this.refresh();
 

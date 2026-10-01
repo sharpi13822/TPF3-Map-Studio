@@ -133,6 +133,25 @@ class Bridge(QObject):
         )
 
     # ---------------------------------------------------------
+    # OSM-Punkt verschoben
+    # ---------------------------------------------------------
+
+    @Slot(float, float, float, float)
+    def osmVertexMoved(
+        self,
+        from_lat: float,
+        from_lon: float,
+        to_lat: float,
+        to_lon: float
+    ):
+        self.controller.move_osm_vertices(
+            from_lat,
+            from_lon,
+            to_lat,
+            to_lon
+        )
+
+    # ---------------------------------------------------------
     # Polyline Eigenschaften geändert
     # ---------------------------------------------------------
 

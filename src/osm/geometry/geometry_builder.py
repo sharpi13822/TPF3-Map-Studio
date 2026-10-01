@@ -38,6 +38,51 @@ class GeometryBuilder:
         self._build_ways()
         self._build_relations()
 
+    def rebuild_for_nodes(self, node_ids):
+        """
+        Baut nur die Geometrien neu auf, die von den angegebenen Nodes
+        abhaengen (Ways und Relationen, die diese Ways verwenden).
+        Gibt die IDs der neu aufgebauten Objekte zurueck.
+        """
+
+        node_ids = set(node_ids)
+
+        ways = {
+            way.id
+            for way in self.osm.ways.values()
+            if node_ids.intersection(way.nodes)
+        }
+
+        rebuilt = set()
+
+        for way_id in ways:
+
+            geometry = self._build_way(self.osm.ways[way_id])
+
+            if geometry is not None:
+
+                self.osm.set_geometry(way_id, geometry)
+
+                rebuilt.add(way_id)
+
+        for relation in self.osm.relations.values():
+
+            if not any(
+                member.type == "way" and member.ref in ways
+                for member in relation.members
+            ):
+                continue
+
+            geometry = self.polygons.build(relation)
+
+            if geometry is not None:
+
+                self.osm.set_geometry(relation.id, geometry)
+
+                rebuilt.add(relation.id)
+
+        return rebuilt
+
     # ------------------------------------------------------------------
     # Ways
     # ------------------------------------------------------------------

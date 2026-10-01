@@ -1578,6 +1578,7 @@ class BridgeAdapter {
     selectionChanged(ids) {}
     markerMoved(id, lat, lon) {}
     polylineMoved(id, points) {}
+    osmVertexMoved(fromLat, fromLon, toLat, toLon) {}
     rectangleChanged(centerLat, centerLon, widthM, heightM, rotationDeg) {}
 
     send(name, ...args) {}
@@ -1630,6 +1631,10 @@ class QtBridge extends BridgeAdapter {
 
     polylineMoved(id, points) {
         this.#bridge?.polylineMoved?.(id, points);
+    }
+
+    osmVertexMoved(fromLat, fromLon, toLat, toLon) {
+        this.#bridge?.osmVertexMoved?.(fromLat, fromLon, toLat, toLon);
     }
 
     // Rechteck-Tool: Mittelpunkt/Groesse/Drehung nach Verschieben oder
