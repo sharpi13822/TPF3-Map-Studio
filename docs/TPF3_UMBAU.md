@@ -76,6 +76,21 @@ Test mit `hoehen_schneegrenze_test.png` (12 flache Terrassen, je 50 m breit):
 - Umsetzung im Studio: `compress_heights` (src/heightmap/terrain_smoothing.py) staucht mit Knie: Die hoechste Stelle landet auf dem eingestellten Anteil (Standard-Empfehlung 45 %), der untere Teil (60 % der neuen Gipfelhoehe ueber Wasser) bleibt unveraendert, darueber wird logarithmisch gestaucht. Der Heightmap-Dialog warnt, wenn die hoechste Stelle mehr als 270 m ueber dem Wasser liegt (`WARN_HEIGHT_ABOVE_WATER_M`).
 - Noch nicht geprueft: ob die Grenzen vom Klima/Biom der Karte abhaengen (getestet nur mit Standardbiom), und die Biome-Maske `biome_einheitlich_2.png` im Rhein-Test.
 
+### Die fuenf Biome und die Biome-Maske aus OSM (im Spiel getestet, 01.10.2026)
+Einheitliche Biome-Masken (Grauwert 26/77/128/179/230) auf einer Testkarte, so sieht jedes Biom aus:
+- Biom 0 (26): helle, gruene Wiese ohne Baeume.
+- Biom 1 (77): Wiese mit Baumgruppen und einzelnen Baeumen.
+- Biom 2 (128): dunkle, bewachsene Wiese ohne Baeume.
+- Biom 3 (179): trockene Steppe, gelbbraun mit einzelnen Grasflecken.
+- Biom 4 (230): gruen-braun gemischt (Savanne). KEIN Schnee; die Legende (Biom 4 weiss) taeuschte. Schnee kommt nur von der Hoehe.
+- Nur Biom 1 hat Baeume. Dichter Wald ist mit den Biomen nicht zu erreichen; fuer die Baumdichte gibt es im Biome-Tab keine Einstellung.
+
+Biome-Maske aus OSM (`src/heightmap/biome_mask.py`, `src/gui/biome_dialog.py`, Knopf "Biome-Maske aus OSM..." im Heightmap-Dialog):
+- Rastert die geladenen OSM-Flaechen (einfache Flaechen und Multipolygone mit Loechern) in ein 8-Bit-Bild, Norden oben, gleiche Ausrichtung wie die Heightmap. Aufloesung waehlbar (16/8/4 m pro Pixel), das Spiel streckt die Maske auf die Kartengroesse.
+- Zuordnung (Vorschlag, im Dialog je Kategorie aenderbar): Wiese/Weide/Park -> 0, Wald -> 1, Moor/Sumpf/Heide -> 2, Acker/Weinberg/Obstbau -> 3, Fels/Sand/Abbau -> 3, Siedlung/Industrie/Gewerbe -> 4, alles andere und Wasser -> 0. Spaetere Kategorien ueberdecken fruehere (Reihenfolge in `CATEGORIES`).
+- Test am Mittelrhein (Koblenz-Bingen, 1:5): Lage und Ausrichtung stimmen. Die Rheinschleife passt zwischen Studio und Spiel, zwei grosse Ackerflaechen liegen an denselben Stellen (ockerfarben im Spiel). Keine Spiegelung, kein Versatz erkennbar.
+- Noch nicht geprueft: ob die Siedlungs-Zuordnung zu Biom 4 sinnvoll aussieht und die Wahl fuer Fels/Sand.
+
 ### Ordner (Userdata)
 - Steam/Windows: `C:\Program Files (x86)\Steam\userdata\<user-number>\3493540\local`
 - GOG/Epic/Windows: `C:\Users\<username>\AppData\Roaming\Transport Fever 3`
@@ -97,7 +112,7 @@ return {
 }
 end
 ```
-Koordinaten x/y in Metern (Ursprung vermutlich Kartenmitte: ungeprüft).
+Koordinaten x/y in Metern. Ursprung = KARTENMITTE, x nach Osten, y nach Norden (im Spiel getestet 01.10.2026 mit `tpf3_test_ursprung.lua`: T0 (0/0) in der Mitte, T2 (y +5000) oben, T3 (y -5000) unten, T1 (x +1000) rechts von T0). Das Spiel nimmt die Datei mit den Feldern aus dem Beispiel an und zählt die Städte. Einwohner (getestet 01.10.2026, flache Testkarte, nur eine Zahl verändert): Die MITTLERE Zahl von `sizeFactors` skaliert die Anfangs-Einwohner. Faktor 1 -> 97-99, 3 -> 298, 5 -> 500, 10 -> 999, 30 -> 2892, 100 -> nur 4476 (Obergrenze, nicht 10000). Die erste und dritte Zahl (je 3 getestet) ändern die Einwohner nicht. Im Studio: Faktor = Maßstab (Standard 0,03) × Wurzel(OSM-Einwohner), begrenzt auf 0,2 bis 30 (alles einstellbar): Koblenz ca. 10 (~1000 Einwohner), Bingen ca. 4,8, Dörfer mit 300 Einwohnern ca. 0,5, mit 100 ca. 0,3. Im Spiel getestet (01.10.2026, Rhein-Karte): Koblenz 979, Bingen 478, Waldalgesheim 189 Einwohner, wie berechnet. Der Städte-Dialog hat Haken je Ort, exportiert wird nur die Auswahl. Faktoren unter 1 gehen (getestet 01.10.2026, `tpf3_test_klein.lua`): 0,2 -> 19, 0,5 -> 50, 0,8 -> 79, 1 -> 98 Einwohner, also etwa 98 je Faktor. Kleinster Faktor im Studio: 0,2 (darunter ungetestet). Offen: was die erste und dritte Zahl von `sizeFactors` und `landUse2CargoNeedsCategories` bewirken (im Studio Standardwerte 1.0 und Beispiel-Frachtbedürfnisse).
 
 ### Biome
 - Export aus einer generierten Karte mit `Biomes Data` liefert Masken-Bilder; Import aus dem Ordner `biomes`.
@@ -108,7 +123,7 @@ Koordinaten x/y in Metern (Ursprung vermutlich Kartenmitte: ungeprüft).
 2. Ob der externe OSM-Importer (`main.exe`) TPF3 unterstützt oder ersetzt werden muss.
 3. Ob das vorhandene `TPF2Exporter` / `TPF2LuaWriter` für TPF3 taugt.
 4. Namen und Ordnerlayout der Biome-Masken (an echtem Export aus dem Spiel ablesen).
-5. Koordinatenursprung in `towns_industries` (an echtem Export ablesen).
+5. (erledigt) Koordinatenursprung in `towns_industries`: Kartenmitte, x Ost, y Nord (siehe oben).
 6. (erledigt) Deutsche Namen der Kartengrößen: siehe oben.
 7. Farb-/Graustufen-Codierung der drei Biome-Masken (Biome, Berge, Flüsse): an einem Export aus dem Spiel ablesen.
 8. Verhalten der Flüsse-Maske im Spiel (Gefälle möglich?) durch Testimport klären, bevor die Gewässer-Anpassung
@@ -136,15 +151,19 @@ water_terrain_blend.py, tpf3_paths.py). Offen bleibt der Test im Spiel.
 
 ### Phase 3: Export für das Spiel
 - [ ] Ausgabe direkt in den Userdata-Ordner (`heightmaps`, `towns_industries`), Pfad automatisch suchen (Steam-App-ID 3493540) oder einmal abfragen.
-- [ ] `towns_industries`-Lua aus OSM-Orten erzeugen (Format oben).
-- [ ] Biome-Masken aus OSM-Landnutzung erzeugen (erst Beispielexport aus dem Spiel ansehen).
+- [x] `towns_industries`-Lua aus OSM-Orten erzeugen (Städte): `src/heightmap/towns_export.py`, `src/gui/towns_dialog.py`, Knopf "Städte aus OSM..." im Heightmap-Dialog. Mit echten OSM-Orten am Mittelrhein im Spiel getestet (01.10.2026, 80 Orte gefunden, Import funktioniert). Industrien fehlen (Dateinamen der Industrien aus dem Spiel nötig). Die Overpass-Abfrage lädt die Orte mit (`node["place"~"^(city|town|village|hamlet)$"]`).
+- [x] Biome-Masken aus OSM-Landnutzung erzeugen (siehe oben, getestet am Mittelrhein).
 - [ ] Straßen/Gleise/Gebäude: erst nach Klärung von "Offen" 1 bis 3.
 
 ### Phase 4: Studio-Fehler und Aufräumen
-- [ ] Layer-Dock links (`layer_dock.py`, `layer_panel.py`, `layer_row.py`) an den Startzustand "Ebenen aus" angleichen.
-- [ ] `layer_control.js`: "Alle"/"Keine" nur auf Checkboxen anwenden, nicht auf Radio-Knöpfe.
-- [ ] `layer_row.py`: doppeltes `__init__` entfernen.
+- [x] Layer-Dock links (`layer_dock.py`, `layer_panel.py`, `layer_row.py`) an den Startzustand "Ebenen aus" angleichen.
+- [x] `layer_control.js`: "Alle"/"Keine" nur auf Checkboxen anwenden, nicht auf Radio-Knöpfe. (Im Code schon so; die Knöpfe schalten nur Eisenbahnkarte und Maß-Gitter, bewusst so gelassen.)
+- [x] `layer_row.py`: doppeltes `__init__` entfernen. (Im aktuellen Stand nur ein `__init__`.)
 - [ ] Optional: Waldflächen am Auswahlrand beschneiden.
+- [x] Schloss im Layer-Dock sperrt Auswahl und Bearbeitung in der Karte (`window.py`, `map.js`: `setLayerLocked`). Getestet.
+- [x] Zeichnen (Straße, Fluss, Gebäude): die passende Ebene wird automatisch eingeschaltet. Getestet (01.10.2026).
+- [x] Verschobene, neue und gelöschte Punkte an OSM-Wegen werden gespeichert. Getestet (01.10.2026).
+- [x] Hilfetexte: Schloss und Zeichnen erklärt, TPF2 -> TPF3 in Punkt 7 der Hilfe.
 
 ## Arbeitsregeln
 - Nur EINE Kopie des Projekts. Änderungen immer per Git-Branch (`tpf3`) und Commit.
