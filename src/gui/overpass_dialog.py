@@ -32,6 +32,8 @@ CATEGORY_LABELS = (
     ("vegetation", "Vegetation (Wald, Baumreihen)"),
     ("water", "Gewässer"),
     ("places", "Orte (Städte, Dörfer)"),
+    ("biome_areas", "Siedlung, Heide, Moor, Fels (für Biome)"),
+    ("industry", "Industrie-Objekte (Sägewerk, Ziegelei, ...)"),
 )
 
 
@@ -49,7 +51,7 @@ class OverpassQueryDialog(QDialog):
         self.controller = controller
 
         self.setWindowTitle("Overpass-Abfrage")
-        self.setMinimumSize(560, 620)
+        self.setMinimumSize(560, 700)
 
         layout = QVBoxLayout(self)
 

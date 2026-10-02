@@ -18,7 +18,11 @@ from PySide6.QtWidgets import (
 from PySide6.QtGui import QKeySequence, QPixmap, QShortcut
 from PySide6.QtCore import Qt
 
+from src.gui.biome_dialog import BiomeMaskDialog
 from src.gui.heightmap_guide import HeightmapGuideDialog
+from src.gui.industries_dialog import IndustriesDialog
+from src.heightmap.industries_export import Terrain
+from src.gui.towns_dialog import TownsDialog
 from src.gui.map_size_presets import find_by_pixels
 from src.heightmap.heightmap_exporter import (
     build_heightmap_array,
@@ -56,13 +60,6 @@ DEFAULT_TRANSITION_M = 100.0
 # Wasserspiegel liegen (Baeche und Bergseen), werden bei der Terrain-
 # Anpassung nicht abgesenkt - sonst entstehen tiefe Schluchten.
 DEFAULT_BLEND_MAX_RISE_M = 12.0
-
-# Gemessen im Spiel (Terrassen-Tests, 01.10.2026): Das Spiel faerbt das
-# Gelaende nach der Hoehe UEBER DEM WASSERSPIEGEL. Fels beginnt zwischen
-# ca. 325 und 350 m, Schnee zwischen ca. 375 und 425 m. Im Rhein-Test war bei
-# 258 m ueber Wasser alles gruen, bei 287 m gab es noch einzelne weisse
-# Flaechen. Ab dieser Hoehe warnt der Dialog.
-WARN_HEIGHT_ABOVE_WATER_M = 270.0
 
 # Beim Gefaelle-Ausgleich zaehlen nur Gewaesser bis zu dieser Hoehe ueber dem
 # gewaehlten Wasserspiegel als Bezug. Der Rhein hat im Mittelrhein-Abschnitt
@@ -282,12 +279,10 @@ class HeightmapDialog(QDialog):
         self.compress_input.setMinimumWidth(110)
         self.compress_input.setKeyboardTracking(False)
         self.compress_input.setToolTip(
-            "Die höchste Stelle landet auf diesem Anteil ihrer Höhe über dem "
-            "Wasserspiegel. 100 % = unverändert. Der untere Teil des "
-            "Geländes bleibt unverändert (Talhänge behalten ihre Steilheit), "
-            "erst darüber wird weich gestaucht. Hilft gegen weiße und graue "
-            "Flächen auf Hochflächen: Das Spiel färbt nach der Höhe über "
-            "dem Wasser."
+            "Staucht alle Höhen über dem Wasserspiegel auf diesen Anteil. "
+            "100 % = unverändert. Hilft, wenn Hochflächen im Spiel über die "
+            "Schneegrenze ragen (weiße Flächen). Die Hänge werden dabei "
+            "flacher."
         )
         self.compress_input.valueChanged.connect(
             self._update_preview
@@ -585,6 +580,35 @@ class HeightmapDialog(QDialog):
         )
         button_row.addWidget(self.export_button)
 
+        # Biome-Maske aus der geladenen OSM-Landnutzung (eigener Dialog).
+        self.biome_button = QPushButton("Biome-Maske aus OSM...")
+        self.biome_button.setToolTip(
+            "Erzeugt aus der geladenen OSM-Landnutzung eine Maske für den "
+            "Biome-Tab im Karteneditor. Braucht geladene OSM-Daten."
+        )
+        self.biome_button.clicked.connect(self._open_biome_dialog)
+        button_row.addWidget(self.biome_button)
+
+        # Staedte aus OSM-Orten (eigener Dialog, Datei fuer towns_industries).
+        self.towns_button = QPushButton("Städte aus OSM...")
+        self.towns_button.setToolTip(
+            "Erzeugt aus den geladenen OSM-Orten eine Städte-Datei für den "
+            "Ordner towns_industries. Braucht geladene OSM-Daten."
+        )
+        self.towns_button.clicked.connect(self._open_towns_dialog)
+        button_row.addWidget(self.towns_button)
+
+        # Industrien aus OSM-Objekten (eigener Dialog, Datei fuer
+        # towns_industries).
+        self.industries_button = QPushButton("Industrien aus OSM...")
+        self.industries_button.setToolTip(
+            "Erzeugt aus geladenen OSM-Objekten (Höfe, Steinbrüche, "
+            "Sägewerke, ...) eine Industrien-Datei für den Ordner "
+            "towns_industries. Braucht geladene OSM-Daten."
+        )
+        self.industries_button.clicked.connect(self._open_industries_dialog)
+        button_row.addWidget(self.industries_button)
+
         close_button = QPushButton("Schließen")
         close_button.clicked.connect(self.reject)
         button_row.addWidget(close_button)
@@ -596,6 +620,77 @@ class HeightmapDialog(QDialog):
     def _open_guide(self):
 
         HeightmapGuideDialog(self).exec()
+
+    def _open_biome_dialog(self):
+
+        has_osm_data = (
+            self.osm is not None
+            and (self.osm.node_count > 0 or self.osm.way_count > 0)
+        )
+
+        if not has_osm_data:
+            QMessageBox.information(
+                self,
+                "Biome-Maske",
+                "Keine OSM-Daten geladen. Zuerst Werkzeuge → OSM laden "
+                "ausführen und die Ebenen Landnutzung/Vegetation laden.",
+            )
+            return
+
+        BiomeMaskDialog(self, self.selection, self.osm).exec()
+
+    def _open_towns_dialog(self):
+
+        has_osm_data = (
+            self.osm is not None
+            and (self.osm.node_count > 0 or self.osm.way_count > 0)
+        )
+
+        if not has_osm_data:
+            QMessageBox.information(
+                self,
+                "Städte aus OSM",
+                "Keine OSM-Daten geladen. Zuerst Werkzeuge → OSM laden "
+                "ausführen.",
+            )
+            return
+
+        TownsDialog(self, self.selection, self.osm).exec()
+
+    def _open_industries_dialog(self):
+
+        has_osm_data = (
+            self.osm is not None
+            and (self.osm.node_count > 0 or self.osm.way_count > 0)
+        )
+
+        if not has_osm_data:
+            QMessageBox.information(
+                self,
+                "Industrien aus OSM",
+                "Keine OSM-Daten geladen. Zuerst Werkzeuge → OSM laden "
+                "ausführen.",
+            )
+            return
+
+        # Hoehenraster (wie exportiert) und Wassermaske, damit keine
+        # Industrien auf Haengen oder am Wasser landen. Ohne geladene
+        # Hoehendaten bleibt die Pruefung aus.
+        terrain = None
+
+        if self.heightmap_array is not None:
+
+            try:
+                terrain = Terrain(
+                    self._effective_heightmap(),
+                    self._get_water_mask(),
+                    self.selection.width_m,
+                    self.selection.height_m,
+                )
+            except Exception:
+                terrain = None
+
+        IndustriesDialog(self, self.selection, self.osm, terrain).exec()
 
     # ---------------------------------------------------------
     # Download
@@ -993,9 +1088,12 @@ class HeightmapDialog(QDialog):
             self.water_blend_checkbox,
         )
 
+        # "Höhen stauchen" gehört bewusst NICHT dazu: Wie stark ein Gelände
+        # gestaucht werden muss, hängt von der Karte ab (Schneegrenze), nicht
+        # von der Voreinstellung. Eine Änderung dort lässt die Voreinstellung
+        # (z. B. "Empfohlen") stehen.
         spins = (
             self.smooth_sigma_input,
-            self.compress_input,
             self.flatten_sigma_input,
             self.slope_strength_input,
             self.slope_smoothing_input,
@@ -1064,7 +1162,11 @@ class HeightmapDialog(QDialog):
             # Standardwerte, damit eine Voreinstellung reproduzierbar ist
             self.smooth_sigma_input.setValue(DEFAULT_SMOOTHING_SIGMA_M)
             self.flatten_sigma_input.setValue(DEFAULT_FLATTEN_SIGMA_M)
-            self.compress_input.setValue(100.0)
+            # "Original" stellt auch die Stauchung zurück (1:1). Bei
+            # "Empfohlen" bleibt der gewählte Stauchwert erhalten.
+            if index == 1:
+                self.compress_input.setValue(100.0)
+
             self.enforce_transition_input.setValue(
                 DEFAULT_ENFORCE_TRANSITION_M
             )
@@ -1561,18 +1663,6 @@ class HeightmapDialog(QDialog):
                 f"Maximalhöhe {range_max:.0f}, "
                 f"Wasserhöhe {water:.0f}",
             ]
-
-        above_water = range_max - water
-
-        if above_water > WARN_HEIGHT_ABOVE_WATER_M:
-
-            lines.append(
-                f"Achtung: Die höchste Stelle liegt {above_water:.0f} m über "
-                f"dem Wasser. Im Spiel gibt es ab etwa 325-350 m Fels und ab "
-                f"etwa 375-425 m Schnee (graue/weiße Flächen). Getestet: bei "
-                f"258 m keine Flecken, bei 287 m einzelne weiße Flecken. "
-                f"Abhilfe: \"Höhen stauchen auf\" verkleinern."
-            )
 
         size_hint = self._game_size_hint()
 

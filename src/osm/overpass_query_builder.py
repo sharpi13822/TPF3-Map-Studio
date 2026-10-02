@@ -26,6 +26,32 @@ LANDUSE_VALUES = (
 WATER_VALUES = "lake|pond|reservoir|basin"
 PLACE_VALUES = "city|town|village|hamlet"
 
+# Zusaetzliche Flaechen fuer die Biome-Maske aus OSM (Siedlung, Heide, Moor,
+# Fels, Sand). Nur geschlossene Flaechen werden in der Maske verwendet.
+BIOME_LANDUSE_VALUES = (
+    "residential|industrial|commercial|retail|quarry|brownfield|"
+    "construction|village_green|recreation_ground|greenfield|allotments|"
+    "marsh"
+)
+BIOME_NATURAL_VALUES = (
+    "heath|scrub|wetland|grassland|fell|bare_rock|scree|sand|shingle|beach"
+)
+BIOME_LEISURE_VALUES = "pitch|golf_course"
+
+# Objekte fuer "Industrien aus OSM" (Saegewerk, Ziegelei, Raffinerie,
+# Oelplattform). Hoefe (landuse=farmyard) kommen ueber "Flaechennutzung",
+# Steinbrueche ueber die Biome-Flaechen, Waelder ueber "Vegetation".
+INDUSTRY_INDUSTRIAL_VALUES = (
+    "sawmill|brickworks|oil|refinery|steel|steelmaking|steel_mill|"
+    "metal_production|machine_shop|machinery|tool|automotive|brewery|glass|"
+    "glassworks|chemical|chemicals|textile|furniture|food|food_production|"
+    "food_processing|mine|mining|quarry"
+)
+INDUSTRY_CRAFT_VALUES = "sawmill|brickmaker|brewery"
+INDUSTRY_MAN_MADE_VALUES = (
+    "offshore_platform|petroleum_well|works|mineshaft"
+)
+
 
 @dataclass
 class OverpassQueryConfig:
@@ -45,10 +71,14 @@ class OverpassQueryConfig:
     landuse: bool = True
     vegetation: bool = True
     water: bool = True
-    # Neu, standardmaessig AUS: war in der bisherigen fest verdrahteten
-    # Abfrage nicht enthalten - Default so gewaehlt, dass bestehendes
-    # Verhalten ohne Zutun unveraendert bleibt.
-    places: bool = False
+    # Orte (Staedte, Doerfer): jetzt standardmaessig AN, damit der Export
+    # "Staedte aus OSM" ohne Handarbeit Orte findet.
+    places: bool = True
+    # Siedlungs-, Heide-, Moor- und Felsflaechen fuer die Biome-Maske aus OSM.
+    # Standardmaessig AN, macht den OSM-Download aber groesser.
+    biome_areas: bool = True
+    # Objekte fuer die Industrien-Erzeugung aus OSM (klein, wenige Treffer).
+    industry: bool = True
 
     def to_dict(self) -> dict:
         return asdict(self)
@@ -148,6 +178,39 @@ def build_query(
     if config.vegetation:
         lines.append(f'  relation["natural"="wood"]({bbox});')
         lines.append(f'  relation["landuse"="forest"]({bbox});')
+
+    if config.biome_areas:
+        lines.append(
+            f'  way["landuse"~"^({BIOME_LANDUSE_VALUES})$"]({bbox});'
+        )
+        lines.append(
+            f'  way["natural"~"^({BIOME_NATURAL_VALUES})$"]({bbox});'
+        )
+        lines.append(
+            f'  way["leisure"~"^({BIOME_LEISURE_VALUES})$"]({bbox});'
+        )
+        lines.append(
+            f'  relation["type"="multipolygon"]'
+            f'["landuse"~"^({BIOME_LANDUSE_VALUES})$"]({bbox});'
+        )
+        lines.append(
+            f'  relation["type"="multipolygon"]'
+            f'["natural"~"^({BIOME_NATURAL_VALUES})$"]({bbox});'
+        )
+
+    if config.industry:
+        for kind in ("node", "way"):
+            lines.append(
+                f'  {kind}["industrial"~"^({INDUSTRY_INDUSTRIAL_VALUES})$"]'
+                f'({bbox});'
+            )
+            lines.append(
+                f'  {kind}["craft"~"^({INDUSTRY_CRAFT_VALUES})$"]({bbox});'
+            )
+            lines.append(
+                f'  {kind}["man_made"~"^({INDUSTRY_MAN_MADE_VALUES})$"]'
+                f'({bbox});'
+            )
 
     if config.places:
         lines.append(f'  node["place"~"^({PLACE_VALUES})$"]({bbox});')
