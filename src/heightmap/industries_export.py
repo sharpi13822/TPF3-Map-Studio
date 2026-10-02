@@ -288,6 +288,7 @@ def collect_industries(
     max_relief_m: float = 15.0,
     relief_radius_m: float = 150.0,
     water_clear_m: float = 150.0,
+    edge_margin_m: float = 500.0,
 ) -> list[Industry]:
     """
     Sucht passende OSM-Objekte (Knoten und Wege) im Auswahlrechteck. Eine
@@ -308,7 +309,10 @@ def collect_industries(
 
     def consider(tags, x, y, area_ha, name_fallback):
 
-        if abs(x) > half_w or abs(y) > half_h:
+        # Abstand zum Kartenrand: Felder, Hecken und Gruben einer Industrie
+        # reichen mehrere hundert Meter ueber ihre Mitte hinaus und wuerden
+        # sonst ueber den Kartenrand ins Leere ragen.
+        if abs(x) > half_w - edge_margin_m or abs(y) > half_h - edge_margin_m:
             return
 
         for key in rules_matching(tags):

@@ -139,6 +139,19 @@ class IndustriesDialog(QDialog):
         self.water_spin.valueChanged.connect(self._refresh)
         layout.addLayout(self._row("Abstand zu Wasser:", self.water_spin))
 
+        self.edge_spin = QSpinBox()
+        self.edge_spin.setRange(0, 3000)
+        self.edge_spin.setSingleStep(100)
+        self.edge_spin.setValue(500)
+        self.edge_spin.setSuffix(" m")
+        self.edge_spin.setMinimumWidth(130)
+        self.edge_spin.setToolTip(
+            "Mindestabstand zum Kartenrand. Felder und Hecken einer "
+            "Industrie ragen sonst über den Rand hinaus."
+        )
+        self.edge_spin.valueChanged.connect(self._refresh)
+        layout.addLayout(self._row("Abstand zum Kartenrand:", self.edge_spin))
+
         if self.terrain is None:
             note = QLabel(
                 "Hinweis: Es sind keine Höhendaten geladen. Hang- und "
@@ -214,6 +227,7 @@ class IndustriesDialog(QDialog):
             terrain=self.terrain,
             max_relief_m=self.relief_spin.value(),
             water_clear_m=self.water_spin.value(),
+            edge_margin_m=self.edge_spin.value(),
         )
 
         self.list_widget.blockSignals(True)
