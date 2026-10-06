@@ -52,11 +52,11 @@ RULES: tuple[IndustryRule, ...] = (
     IndustryRule("forest", "Forst (große Waldflächen)", False, False, True),
     IndustryRule("saw_mill", "Sägewerk", False, True, False),
     IndustryRule("bricks_works", "Ziegelei", False, True, False),
-    IndustryRule("clay_pit", "Lehmgrube (quarry + resource=clay)", False, False, False),
-    IndustryRule("quarry", "Steinbruch (landuse=quarry)", False, False, False),
-    IndustryRule("sand_pit", "Sandgrube (quarry + sand/gravel)", False, False, False),
-    IndustryRule("coal_mine", "Kohlemine (resource=coal)", False, False, False),
-    IndustryRule("iron_ore_mine", "Eisenerzmine (resource=iron_ore)", False, False, False),
+    IndustryRule("clay_pit", "Lehmgrube (quarry + resource=clay)", False, True, False),
+    IndustryRule("quarry", "Steinbruch (landuse=quarry)", False, True, False),
+    IndustryRule("sand_pit", "Sandgrube (quarry + sand/gravel)", False, True, False),
+    IndustryRule("coal_mine", "Kohlemine (resource=coal)", False, True, False),
+    IndustryRule("iron_ore_mine", "Eisenerzmine (resource=iron_ore)", False, True, False),
     IndustryRule("oil_well", "Ölquelle (man_made=petroleum_well)", False, True, False),
     IndustryRule("oil_platform", "Ölplattform (offshore_platform)", True, True, False),
     IndustryRule("oil_refinery", "Raffinerie", False, True, False),
@@ -73,6 +73,11 @@ RULES: tuple[IndustryRule, ...] = (
 )
 
 RULE_KEYS = tuple(rule.key for rule in RULES)
+
+# Gruben und Minen: Das Spiel schneidet sie als grosse Grube in den Hang. Sie
+# liegen in OSM meist an Haengen, darum gilt fuer sie eine gelockerte
+# Neigungsgrenze (max_relief_pit_m).
+PIT_KEYS = ("clay_pit", "quarry", "sand_pit", "coal_mine", "iron_ore_mine")
 
 # OSM-Wert -> Industrie. Vorschlag, die genauen OSM-Tags der Fabriken sind
 # uneinheitlich; treffen kann es nur, was in OSM so eingetragen ist.
@@ -289,6 +294,7 @@ def collect_industries(
     relief_radius_m: float = 150.0,
     water_clear_m: float = 150.0,
     edge_margin_m: float = 500.0,
+    max_relief_pit_m: float = 40.0,
 ) -> list[Industry]:
     """
     Sucht passende OSM-Objekte (Knoten und Wege) im Auswahlrechteck. Eine
@@ -329,10 +335,11 @@ def collect_industries(
             # Spiel die Industrie in den Hang, siehe Steinbrueche am Rhein).
             if terrain is not None and not rule.on_water:
 
+                limit = max_relief_pit_m if key in PIT_KEYS else max_relief_m
+
                 if (
-                    max_relief_m > 0
-                    and terrain.relief_at(x, y, relief_radius_m)
-                    > max_relief_m
+                    limit > 0
+                    and terrain.relief_at(x, y, relief_radius_m) > limit
                 ):
                     continue
 

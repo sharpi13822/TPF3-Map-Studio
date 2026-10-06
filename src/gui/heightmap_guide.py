@@ -40,9 +40,17 @@ und „Trassen und Siedlungen einebnen“ nicht.</li>
 <h4>Höhendaten holen (in diesem Dialog)</h4>
 <ol start="4">
 <li>Optional <b>Schnellvorschau</b> (grob, sofort da, nicht exportierbar).</li>
-<li><b>Höhendaten herunterladen</b> und warten, bis oben „Geladen: … Pixel“ steht. Beim
-ersten Mal lädt das Studio Kacheln aus dem Copernicus-Höhenmodell, danach geht es
-schneller.</li>
+<li>Oben unter <b>Höhenquelle</b> wählen: <b>Copernicus</b> (weltweit, 30 m, schnell) oder für
+Karten in Deutschland <b>DGM1 Deutschland</b> (1-m-Geländemodell der Bundesländer, genauer an
+Hängen und Böschungen). Dann <b>Höhendaten herunterladen</b> und warten, bis oben „Geladen: …
+Pixel“ steht. Beim ersten Mal lädt das Studio die Kacheln, danach geht es schneller.
+<br>Bei DGM1 kommen die Kacheln über den Webdienst hoehendaten.de, höchstens etwa 20 Kacheln
+pro Minute: eine große Karte braucht etwa eine halbe Stunde. Das Fenster zeigt den Fortschritt
+und lässt sich abbrechen, bereits geladene Kacheln werden beim nächsten Mal übersprungen. Wer
+die Kacheln selbst bei einem Landesportal heruntergeladen hat, wählt <b>DGM1 aus eigenen
+GeoTIFF-Kacheln</b> und den Ordner (die Kacheln müssen auf dem 1-km-Raster liegen). Wo DGM1-Daten
+fehlen, ergänzt das Studio aus Copernicus. Die Schnellvorschau nutzt immer Copernicus.
+<i>DGM1 ist im Spiel noch nicht getestet.</i></li>
 </ol>
 
 <h4>Einstellungen</h4>
@@ -165,6 +173,10 @@ Wasserhöhe 0</b> importieren (diese Werte gelten nur für die Testdatei).</li>
 <li>Höhen: Copernicus DEM GLO-30, © DLR e.V. 2010–2014 und © Airbus Defence and Space
 GmbH 2014–2018, bereitgestellt im Rahmen von COPERNICUS durch die Europäische Union und
 ESA.</li>
+<li>Höhen bei Quelle DGM1: © GeoBasis-DE / Landesvermessung des jeweiligen Bundeslandes
+(zum Beispiel © GeoBasis-DE / LVermGeoRP), Datenlizenz Deutschland – Namensnennung –
+Version 2.0 beziehungsweise CC BY 4.0, je nach Land. Der genaue Vermerk steht nach dem Laden
+im Heightmap-Dialog unter der Höhenquelle. Bereitgestellt über hoehendaten.de.</li>
 <li>Karten- und Gewässerdaten: © OpenStreetMap-Mitwirkende.</li>
 <li>Relief-Hintergrund im Studio: AWS Terrain Tiles (Mapzen/Tilezen).</li>
 </ul>

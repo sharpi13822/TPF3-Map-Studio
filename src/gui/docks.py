@@ -59,9 +59,24 @@ Prüfen von Strecken. Das <i>Maß-Gitter</i>
 hilft beim Abschätzen von Abständen und Größen.</p>
 
 <p><b>5. Eigenes zeichnen</b><br>
-Mit <i>Zeichnen</i> (Straße, Fluss, Gebäude) legst du eigene Objekte
-an: Punkte auf der Karte anklicken, dann <i>Fertig</i>.
-<i>JSON Export</i> und <i>JSON Import</i> speichern und laden die
+Mit <i>Zeichnen</i> legst du eigene Objekte an:</p>
+<ul>
+<li>Zuerst auf <i>Straße</i>, <i>Fluss</i> oder <i>Gebäude</i> klicken.
+Der Knopf bestimmt, was du zeichnest.</li>
+<li>Dann die Punkte nacheinander auf der Karte anklicken. Eine rote
+Linie zeigt den Verlauf.</li>
+<li>Mit <i>Fertig</i> (oder einem Doppelklick) wird das Objekt
+übernommen. Eine Straße und ein Fluss brauchen mindestens 2 Punkte,
+ein Gebäude mindestens 3. Ein Gebäude schließt sich von selbst.</li>
+<li>Nach <i>Fertig</i> ist das Zeichnen beendet. Für das nächste Objekt
+wieder zuerst den Knopf (<i>Straße</i>, <i>Fluss</i> oder
+<i>Gebäude</i>) anklicken.</li>
+<li>Das Objekt liegt in der passenden Ebene (Straßen, Flüsse oder
+Gebäude). Ist deren Haken im Layer-Panel aus, siehst du es nicht.</li>
+<li>Ein Klick auf das Objekt zeigt seine Eckpunkte. Die Punkte lassen
+sich ziehen.</li>
+</ul>
+<p><i>JSON Export</i> und <i>JSON Import</i> speichern und laden die
 Objekte der Karte als Datei.</p>
 
 <p><b>6. Werkzeuge</b><br>

@@ -78,6 +78,17 @@ class IndustriesDialog(QDialog):
             self.rule_boxes[rule.key] = box
             rules_grid.addWidget(box, index // 2, index % 2)
 
+        types_row = QHBoxLayout()
+        layout.addLayout(types_row)
+
+        all_types = QPushButton("Alle Arten an")
+        all_types.clicked.connect(lambda: self._set_all_types(True))
+        types_row.addWidget(all_types)
+
+        no_types = QPushButton("Alle Arten aus")
+        no_types.clicked.connect(lambda: self._set_all_types(False))
+        types_row.addWidget(no_types)
+
         self.forest_spin = QDoubleSpinBox()
         self.forest_spin.setRange(10.0, 100000.0)
         self.forest_spin.setDecimals(0)
@@ -127,6 +138,22 @@ class IndustriesDialog(QDialog):
             self._row("Höchster Höhenunterschied (150 m):", self.relief_spin)
         )
 
+        self.pit_relief_spin = QSpinBox()
+        self.pit_relief_spin.setRange(0, 300)
+        self.pit_relief_spin.setValue(40)
+        self.pit_relief_spin.setSuffix(" m")
+        self.pit_relief_spin.setMinimumWidth(130)
+        self.pit_relief_spin.setToolTip(
+            "Wie \"Höchster Höhenunterschied\", aber für Gruben und Minen "
+            "(Stein, Lehm, Sand, Kohle, Eisenerz). Sie liegen in OSM meist "
+            "am Hang, das Spiel schneidet sie als große Grube hinein. "
+            "0 = nicht prüfen."
+        )
+        self.pit_relief_spin.valueChanged.connect(self._refresh)
+        layout.addLayout(
+            self._row("Gruben: höchster Höhenunterschied:", self.pit_relief_spin)
+        )
+
         self.water_spin = QSpinBox()
         self.water_spin.setRange(0, 1000)
         self.water_spin.setSingleStep(50)
@@ -161,6 +188,7 @@ class IndustriesDialog(QDialog):
             note.setWordWrap(True)
             layout.addWidget(note)
             self.relief_spin.setEnabled(False)
+            self.pit_relief_spin.setEnabled(False)
             self.water_spin.setEnabled(False)
 
         self.list_widget = QListWidget()
@@ -197,6 +225,15 @@ class IndustriesDialog(QDialog):
 
     # ---------------------------------------------------------
 
+    def _set_all_types(self, checked: bool):
+
+        for box in self.rule_boxes.values():
+            box.blockSignals(True)
+            box.setChecked(checked)
+            box.blockSignals(False)
+
+        self._refresh()
+
     @staticmethod
     def _row(label: str, widget) -> QHBoxLayout:
 
@@ -228,6 +265,7 @@ class IndustriesDialog(QDialog):
             max_relief_m=self.relief_spin.value(),
             water_clear_m=self.water_spin.value(),
             edge_margin_m=self.edge_spin.value(),
+            max_relief_pit_m=self.pit_relief_spin.value(),
         )
 
         self.list_widget.blockSignals(True)

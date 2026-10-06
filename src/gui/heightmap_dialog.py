@@ -23,9 +23,16 @@ from src.gui.heightmap_guide import HeightmapGuideDialog
 from src.gui.industries_dialog import IndustriesDialog
 from src.heightmap.industries_export import Terrain
 from src.gui.towns_dialog import TownsDialog
+from src.gui.network_dialog import NetworkDialog
+from src.gui.stations_action import save_stations_dialog
 from src.gui.map_size_presets import find_by_pixels
+from src.gui.dgm1_fetch_dialog import Dgm1FetchDialog
 from src.heightmap.heightmap_exporter import (
+    SOURCE_COPERNICUS,
+    SOURCE_DGM1_DE,
+    SOURCE_DGM1_FOLDER,
     build_heightmap_array,
+    build_heightmap_array_ex,
     build_heightmap_array_preview,
     export_heightmap_png,
     pixel_size_for_selection,
@@ -52,6 +59,10 @@ from src.heightmap.water_slope_compensation import (
 )
 
 DEFAULT_CACHE_DIR = Path.home() / ".tpf2_map_studio" / "dem_cache"
+DEFAULT_DGM1_CACHE_DIR = Path.home() / ".tpf2_map_studio" / "dgm1_cache"
+# Grober Umriss Deutschlands (Breite von/bis, Laenge von/bis): nur dafuer, die
+# DGM1-Auswahl nur bei Karten in Deutschland anzubieten.
+GERMANY_BOUNDS = (47.2, 55.1, 5.8, 15.1)
 # Das Copernicus-Hoehenmodell hat nur etwa 30 m pro Pixel: eine Uebergangs-
 # breite von 30 m ist genau ein Pixel und erzeugt steile Waende am Ufer.
 DEFAULT_TRANSITION_M = 100.0
@@ -73,6 +84,21 @@ DEFAULT_SLOPE_MAX_REF_M = 30.0
 DEFAULT_ENFORCE_TRANSITION_M = 60.0
 # Trassen/Siedlungen einebnen: Breite der Glaettung (Sigma)
 DEFAULT_FLATTEN_SIGMA_M = 60.0
+
+# Der Knopf "Straßen und Gleise..." (Mod, der im Spiel Straßen und Gleise baut) ist vorerst ausgeblendet:
+# Der Mod wird nicht weiterverfolgt. Auf True setzen, um ihn wieder einzublenden.
+SHOW_ROADS_AND_TRACKS_BUTTON = False
+
+# Grenzen der beiden Weichzeichner-Felder (in m). Das Raster hat 4 m je Pixel: Unter etwa 4 m
+# bewirkt ein Gauss-Weichzeichner praktisch nichts mehr, "aus" geht ueber den Haken.
+SMOOTH_SIGMA_RANGE_M = (1.0, 500.0)
+FLATTEN_SIGMA_RANGE_M = (1.0, 1000.0)
+
+# "Empfohlen" haengt von der Hoehenquelle ab. Copernicus (30 m, rauschig) braucht Glaetten und
+# die Standardwerte. Das DGM1 (1 m) ist schon genau: Glaetten veraendert dort 36 % der Karte
+# (ohne 10 %) und bringt nichts; Gleise und Strassen liegen ohne Glaetten naeher am Original.
+DGM1_RECOMMENDED_FLATTEN_SIGMA_M = 10.0
+DGM1_RECOMMENDED_ENFORCE_TRANSITION_M = 10.0
 
 DEFAULT_ENFORCE_DEPTH_M = 8.0     # Tiefe in der Flussmitte (Fahrrinne)
 DEFAULT_ENFORCE_EDGE_M = 2.0      # Tiefe direkt am Ufer
@@ -99,6 +125,8 @@ class HeightmapDialog(QDialog):
         self.project = project
         self.osm = osm
         self.heightmap_array = None
+        self._build_info = None
+        self._dgm1_folder = None
         self.suggestion = None
         self._water_mask = None
         self._reference_mask = None
@@ -123,8 +151,46 @@ class HeightmapDialog(QDialog):
         )
         layout.addWidget(self.status_label)
 
+        source_row = QHBoxLayout()
+        source_row.addWidget(QLabel("Höhenquelle:"))
+
+        self.source_combo = QComboBox()
+        self.source_combo.addItems([
+            "Copernicus (weltweit, 30 m)",
+            "DGM1 Deutschland (1 m, über hoehendaten.de)",
+            "DGM1 aus eigenen GeoTIFF-Kacheln (Ordner)",
+        ])
+        self.source_combo.setToolTip(
+            "Copernicus: weltweit, aber nur 30 m fein und mit Baumkronen. "
+            "DGM1 Deutschland: 1-m-Geländemodell der Bundesländer, die Kacheln "
+            "werden über den Webdienst hoehendaten.de geladen (etwa 20 Kacheln "
+            "pro Minute, danach liegen sie im Zwischenspeicher). Eigene Kacheln: "
+            "GeoTIFF-Dateien (1-km-Raster), die du selbst bei einem Landesportal "
+            "heruntergeladen hast."
+        )
+        self.source_combo.currentIndexChanged.connect(
+            self._on_source_changed
+        )
+        source_row.addWidget(self.source_combo, 1)
+
+        layout.addLayout(source_row)
+
+        self.source_label = QLabel("")
+        self.source_label.setWordWrap(True)
+        self.source_label.setTextInteractionFlags(
+            Qt.TextSelectableByMouse
+        )
+        self.source_label.setVisible(False)
+        layout.addWidget(self.source_label)
+
+        self._update_source_availability()
+
         self.quick_preview_button = QPushButton(
             "Schnellvorschau (niedrige Auflösung, vor dem echten Download)"
+        )
+        self.quick_preview_button.setToolTip(
+            "Die Schnellvorschau nutzt immer Copernicus (schnell, weltweit), "
+            "auch wenn unten eine DGM1-Quelle gewählt ist."
         )
         self.quick_preview_button.clicked.connect(
             self._quick_preview
@@ -155,10 +221,12 @@ class HeightmapDialog(QDialog):
         self.preset_combo.setEnabled(False)
         self.preset_combo.setToolTip(
             "Original: alle Optionen aus, die echten Höhen. Empfohlen: "
-            "Gelände glätten, Trassen und Siedlungen einebnen und Wasser "
-            "nur dort, wo OpenStreetMap Wasser hat, jeweils mit den "
-            "Standardwerten. Optionen, die OSM-Daten brauchen, bleiben "
-            "ohne geladene OSM-Daten aus."
+            "hängt von der Höhenquelle ab. Copernicus: Gelände glätten, "
+            "Trassen und Siedlungen einebnen und Wasser nur dort, wo "
+            "OpenStreetMap Wasser hat, mit den Standardwerten. DGM1: "
+            "Glätten aus (das Modell ist schon genau), Einebnen 10 m, "
+            "Wasser nach OSM mit Böschung 10 m. Optionen, die OSM-Daten "
+            "brauchen, bleiben ohne geladene OSM-Daten aus."
         )
         self.preset_combo.currentIndexChanged.connect(
             self._on_preset_changed
@@ -253,7 +321,7 @@ class HeightmapDialog(QDialog):
         smooth_row = QHBoxLayout()
         smooth_row.addWidget(QLabel("Glättung:"))
         self.smooth_sigma_input = QDoubleSpinBox()
-        self.smooth_sigma_input.setRange(3.0, 200.0)
+        self.smooth_sigma_input.setRange(*SMOOTH_SIGMA_RANGE_M)
         self.smooth_sigma_input.setDecimals(0)
         self.smooth_sigma_input.setSuffix(" m")
         self.smooth_sigma_input.setValue(DEFAULT_SMOOTHING_SIGMA_M)
@@ -307,7 +375,7 @@ class HeightmapDialog(QDialog):
         flatten_row = QHBoxLayout()
         flatten_row.addWidget(QLabel("Glättung:"))
         self.flatten_sigma_input = QDoubleSpinBox()
-        self.flatten_sigma_input.setRange(10.0, 300.0)
+        self.flatten_sigma_input.setRange(*FLATTEN_SIGMA_RANGE_M)
         self.flatten_sigma_input.setDecimals(0)
         self.flatten_sigma_input.setSuffix(" m")
         self.flatten_sigma_input.setValue(DEFAULT_FLATTEN_SIGMA_M)
@@ -609,6 +677,30 @@ class HeightmapDialog(QDialog):
         self.industries_button.clicked.connect(self._open_industries_dialog)
         button_row.addWidget(self.industries_button)
 
+        # Bahnhoefe aus OSM (Name, Lage, Bahnsteige, Gebaeude): schreibt eine
+        # .json und eine .csv, baut nichts im Spiel.
+        self.stations_button = QPushButton("Bahnhöfe aus OSM...")
+        self.stations_button.setToolTip(
+            "Liest Bahnhöfe, Haltepunkte, Bahnsteige, Bahnhofsgebäude und "
+            "Haltepositionen aus den geladenen OSM-Daten und speichert sie als "
+            ".json (alles) und .csv (eine Zeile je Bahnhof). Braucht geladene "
+            "OSM-Daten."
+        )
+        self.stations_button.clicked.connect(self._open_stations_dialog)
+        button_row.addWidget(self.stations_button)
+
+        # Strassen und Gleise fuer den Spiel-Mod (eigener Dialog, schreibt
+        # den Mod in den Ordner mods). Vorerst ausgeblendet.
+        self.network_button = QPushButton("Straßen und Gleise...")
+        self.network_button.setToolTip(
+            "Erzeugt aus den geladenen OSM-Wegen einen Mod, der im Spiel "
+            "Straßen, Gleise, Brücken und Tunnel baut. Braucht geladene "
+            "OSM-Daten."
+        )
+        self.network_button.clicked.connect(self._open_network_dialog)
+        button_row.addWidget(self.network_button)
+        self.network_button.setVisible(SHOW_ROADS_AND_TRACKS_BUTTON)
+
         close_button = QPushButton("Schließen")
         close_button.clicked.connect(self.reject)
         button_row.addWidget(close_button)
@@ -657,6 +749,42 @@ class HeightmapDialog(QDialog):
 
         TownsDialog(self, self.selection, self.osm).exec()
 
+    def _open_stations_dialog(self):
+
+        has_osm_data = (
+            self.osm is not None
+            and (self.osm.node_count > 0 or self.osm.way_count > 0)
+        )
+
+        if not has_osm_data:
+            QMessageBox.information(
+                self,
+                "Bahnhöfe aus OSM",
+                "Keine OSM-Daten geladen. Zuerst Werkzeuge → OSM laden "
+                "ausführen und die Ebene Eisenbahn laden.",
+            )
+            return
+
+        save_stations_dialog(self, self.selection, self.osm)
+
+    def _open_network_dialog(self):
+
+        has_osm_data = (
+            self.osm is not None
+            and (self.osm.node_count > 0 or self.osm.way_count > 0)
+        )
+
+        if not has_osm_data:
+            QMessageBox.information(
+                self,
+                "Straßen und Gleise",
+                "Keine OSM-Daten geladen. Zuerst Werkzeuge → OSM laden "
+                "ausführen und die Ebenen Straßen und Eisenbahn laden.",
+            )
+            return
+
+        NetworkDialog(self, self.selection, self.osm).exec()
+
     def _open_industries_dialog(self):
 
         has_osm_data = (
@@ -696,6 +824,133 @@ class HeightmapDialog(QDialog):
     # Download
     # ---------------------------------------------------------
 
+    def _current_source(self) -> str:
+        return (
+            SOURCE_COPERNICUS,
+            SOURCE_DGM1_DE,
+            SOURCE_DGM1_FOLDER,
+        )[self.source_combo.currentIndex()]
+
+    def _update_source_availability(self):
+        """DGM1 Deutschland nur anbieten, wenn der Kartenmittelpunkt in Deutschland liegt."""
+
+        lat, lon = self.selection.center
+        lat_min, lat_max, lon_min, lon_max = GERMANY_BOUNDS
+
+        in_germany = lat_min <= lat <= lat_max and lon_min <= lon <= lon_max
+
+        item = self.source_combo.model().item(1)
+
+        if item is not None:
+            item.setEnabled(in_germany)
+
+        if not in_germany and self.source_combo.currentIndex() == 1:
+            self.source_combo.setCurrentIndex(0)
+
+    def _on_source_changed(self, index: int):
+
+        if index != 2:
+            return
+
+        folder = QFileDialog.getExistingDirectory(
+            self,
+            "Ordner mit DGM1-GeoTIFF-Kacheln wählen",
+            str(self._dgm1_folder or Path.home()),
+        )
+
+        if not folder:
+            # Abbruch: zurueck zur vorherigen Quelle
+            self.source_combo.blockSignals(True)
+            self.source_combo.setCurrentIndex(
+                2 if self._dgm1_folder else 0
+            )
+            self.source_combo.blockSignals(False)
+            return
+
+        self._dgm1_folder = Path(folder)
+
+    def _build_heightmap_for_source(self):
+        """Baut das Hoehenraster aus der gewaehlten Quelle (bei DGM1 Deutschland
+        erst die fehlenden Kacheln laden)."""
+
+        source = self._current_source()
+
+        if source == SOURCE_DGM1_DE:
+
+            fetch_dialog = Dgm1FetchDialog(
+                self,
+                self.selection,
+                DEFAULT_DGM1_CACHE_DIR,
+            )
+
+            if not fetch_dialog.run():
+                raise RuntimeError(
+                    fetch_dialog.error or "Abgebrochen."
+                )
+
+            self.status_label.setText("Berechne Höhenraster...")
+            self.repaint()
+
+        array, info = build_heightmap_array_ex(
+            self.selection,
+            DEFAULT_CACHE_DIR,
+            source,
+            dgm1_cache_dir=DEFAULT_DGM1_CACHE_DIR,
+            dgm1_folder=self._dgm1_folder,
+        )
+
+        self._build_info = info
+
+        return array
+
+    def _source_status_suffix(self) -> str:
+
+        info = self._build_info
+
+        if info is None or info.source == SOURCE_COPERNICUS:
+            return ""
+
+        text = " (DGM1"
+
+        if info.fallback_fraction > 0.0005:
+            text += (
+                f", {info.fallback_fraction * 100:.1f} % der Fläche "
+                f"aus Copernicus ergänzt"
+            )
+
+        return text + ")"
+
+    def _show_source_info(self):
+        """Quellenvermerk und Hinweise zur Hoehenquelle unter dem Statustext."""
+
+        info = self._build_info
+
+        if info is None or info.source == SOURCE_COPERNICUS:
+            self.source_label.setVisible(False)
+            return
+
+        lines = []
+
+        if info.attributions:
+            lines.append("Quelle: " + " | ".join(info.attributions))
+        else:
+            lines.append("Quelle: DGM1 der Landesvermessung (Quellenvermerk des Landes beachten)")
+
+        if info.missing_tiles > 0:
+            lines.append(
+                f"{info.missing_tiles} Kacheln ohne DGM1-Daten im Ausschnitt "
+                f"(dort Copernicus)."
+            )
+
+        if info.fallback_fraction > 0.02:
+            lines.append(
+                "Achtung: Ein größerer Teil der Fläche stammt aus Copernicus. "
+                "An den Nahtstellen kann es kleine Höhenstufen geben."
+            )
+
+        self.source_label.setText("\n".join(lines))
+        self.source_label.setVisible(True)
+
     def _download(self):
 
         self.status_label.setText(
@@ -707,10 +962,7 @@ class HeightmapDialog(QDialog):
         self.repaint()
 
         try:
-            self.heightmap_array = build_heightmap_array(
-                self.selection,
-                DEFAULT_CACHE_DIR,
-            )
+            self.heightmap_array = self._build_heightmap_for_source()
         except Exception as exc:
             self.status_label.setText(
                 f"Fehlgeschlagen: {exc}"
@@ -848,7 +1100,9 @@ class HeightmapDialog(QDialog):
         self.status_label.setText(
             f"Geladen: {self.heightmap_array.shape[1]} x "
             f"{self.heightmap_array.shape[0]} Pixel"
+            + self._source_status_suffix()
         )
+        self._show_source_info()
 
         self.export_button.setEnabled(True)
         self.download_button.setEnabled(True)
@@ -1138,12 +1392,17 @@ class HeightmapDialog(QDialog):
         if self.heightmap_array is None:
             return
 
+        # Quelle des GELADENEN Rasters (nicht der Auswahl in der Liste, die danach
+        # geaendert worden sein kann)
+        info = getattr(self, "_build_info", None)
+        source = info.source if info is not None else self._current_source()
+        dgm1 = source in (SOURCE_DGM1_DE, SOURCE_DGM1_FOLDER)
+
         wanted_on = {
             1: (),
             2: (
-                self.smooth_checkbox,
-                self.flatten_checkbox,
-                self.enforce_checkbox,
+                (() if dgm1 else (self.smooth_checkbox,))
+                + (self.flatten_checkbox, self.enforce_checkbox)
             ),
         }[index]
 
@@ -1161,14 +1420,20 @@ class HeightmapDialog(QDialog):
 
             # Standardwerte, damit eine Voreinstellung reproduzierbar ist
             self.smooth_sigma_input.setValue(DEFAULT_SMOOTHING_SIGMA_M)
-            self.flatten_sigma_input.setValue(DEFAULT_FLATTEN_SIGMA_M)
+            self.flatten_sigma_input.setValue(
+                DGM1_RECOMMENDED_FLATTEN_SIGMA_M
+                if (dgm1 and index == 2)
+                else DEFAULT_FLATTEN_SIGMA_M
+            )
             # "Original" stellt auch die Stauchung zurück (1:1). Bei
             # "Empfohlen" bleibt der gewählte Stauchwert erhalten.
             if index == 1:
                 self.compress_input.setValue(100.0)
 
             self.enforce_transition_input.setValue(
-                DEFAULT_ENFORCE_TRANSITION_M
+                DGM1_RECOMMENDED_ENFORCE_TRANSITION_M
+                if (dgm1 and index == 2)
+                else DEFAULT_ENFORCE_TRANSITION_M
             )
             self.enforce_edge_input.setValue(DEFAULT_ENFORCE_EDGE_M)
             self.enforce_depth_input.setValue(DEFAULT_ENFORCE_DEPTH_M)
