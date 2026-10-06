@@ -45,6 +45,8 @@ Gärtnereien.</li>
 <li><b>Wasser:</b> Seen, Teiche und breite Flüsse als Fläche.</li>
 <li><b>Wasserwege:</b> Bäche und Flüsse als Linie.</li>
 <li><b>Gebäude:</b> alle Gebäudeumrisse.</li>
+<li><b>Bahnhöfe:</b> Bahnhöfe und Haltepunkte mit Namen, aus den
+geladenen OSM-Daten. Die Namen erscheinen beim Hineinzoomen.</li>
 </ul>
 <p>Bei großen Gebieten kann die Karte langsam werden, wenn alles
 gleichzeitig sichtbar ist. Dann blendest du einzelne Ebenen aus.</p>
@@ -85,10 +87,11 @@ Marker setzen, zwei Ecken für eine Auswahl festlegen oder mit dem
 Messwerkzeug Koordinaten und Entfernungen anzeigen.</p>
 
 <p><b>7. Speichern und weiterverarbeiten</b><br>
-Speichere dein Projekt mit <i>Datei &rarr; Speichern</i>. Für den
-Import in Transport Fever 3 gibt es unter <i>Werkzeuge</i> den
-OSM-Export, die Heightmap, die Vorab-Prüfung und den Mod-Checker.
-Die Schritte dazu stehen unter <i>Hilfe &rarr; Import-Anleitung</i>.</p>
+Speichere dein Projekt mit <i>Datei &rarr; Speichern</i>. Für
+Transport Fever 3 gibt es unter <i>Werkzeuge</i> die Heightmap. Im
+Heightmap-Dialog erzeugst du Höhenmodell, Biome, Städte, Industrien
+und eine Liste der Bahnhöfe. Die Schritte dazu stehen in der
+Anleitung des Heightmap-Dialogs (F1).</p>
 """
 
 

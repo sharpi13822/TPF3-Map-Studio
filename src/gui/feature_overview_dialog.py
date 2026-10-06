@@ -50,20 +50,15 @@ FEATURE_GROUPS = (
             ),
             (
                 "Overpass-Abfrage...",
-                "Ersetzt die früher fest verdrahtete Overpass-Abfrage durch "
-                "Checkboxen (Gleise, Straßen, Tram ja/nein, Gebäude, Parks, "
-                "Flächennutzung, Vegetation, Gewässer, Orte). Zeigt eine "
-                "Live-Vorschau der resultierenden Abfrage und erlaubt "
-                "wiederverwendbare Vorlagen. Mit allen Standard-Häkchen "
-                "entspricht das Ergebnis exakt der alten Abfrage.",
-            ),
-            (
-                "OSM als .osm exportieren...",
-                "Schreibt die aktuell geladenen OSM-Daten als Standard-OSM-"
-                "XML-Datei (inkl. note/meta/bounds-Elementen und den "
-                "Standard-Attributen version/timestamp/changeset/uid/user, "
-                "die der Converter-Parser erwartet) - Eingabeformat für "
-                "den Converter-Teil des OSM-TPF2-Importers.",
+                "Stellt per Checkboxen ein, was aus OpenStreetMap geladen "
+                "wird: Gleistypen (Straßenbahn ein/aus), Straßentypen, "
+                "Gebäude, Parks und Gärten, Flächennutzung, Vegetation, "
+                "Gewässer, Orte, Siedlung/Heide/Moor/Fels (für die Biome) "
+                "und Industrie-Objekte. Bahnhöfe und Haltepunkte werden "
+                "immer mitgeladen. Zeigt eine Live-Vorschau der "
+                "resultierenden Abfrage und erlaubt wiederverwendbare "
+                "Vorlagen. Nach einer Änderung muss OSM neu geladen "
+                "werden.",
             ),
             (
                 "Converter-Befehl anzeigen...",
@@ -83,15 +78,10 @@ FEATURE_GROUPS = (
                 "Orte pro km²) werden nur angezeigt, nicht bewertet.",
             ),
             (
-                "Mod-Checker...",
-                "Gleicht installierte Mods (Steam-Workshop-Ordner + "
-                "lokaler mod-Ordner) gegen die offizielle Mod-Liste des "
-                "OSM-TPF2-Importers ab, gruppiert nach Kategorie mit "
-                "Checkboxen für genutzte Funktionen. Warnt vor bekannten "
-                "Absturz-Mods und doppelt installiertem Importer.",
-            ),
-            (
                 "Heightmap herunterladen",
+                "Erzeugt die Heightmap für den gewählten Ausschnitt. "
+                "Höhenquelle ist das DGM1 für Deutschland (1 m Auflösung, "
+                "über hoehendaten.de; die Quellenangabe steht im Dialog). "
                 "Zusätzlich zum bisherigen Ablauf: Button 'Schnellvorschau' "
                 "vor dem eigentlichen Download (gleiche Kacheln, aber nur "
                 "~300px statt voller Auflösung - bei großen Bändern das "
@@ -111,16 +101,74 @@ FEATURE_GROUPS = (
         ),
     ),
     (
-        "Hilfe-Menü",
+        "Heightmap-Dialog (Werkzeuge, Heightmap herunterladen)",
         (
             (
-                "Import-Anleitung...",
-                "Die kompletten 5 Schritte (0-4) des OSM-TPF2-Importers "
-                "mit exakten Befehlen aus der offiziellen Dokumentation, "
-                "je mit Kopieren-Button. Für Schritt 3 zusätzlich alle 14 "
-                "Bau-Optionen per Checkbox, die generierte Lua-Tabelle "
-                "wird live aktualisiert.",
+                "Wasser und Gelände",
+                "Die Wasserhöhe lässt sich aus den OSM-Gewässern "
+                "vorschlagen. 'Wasser nur dort, wo OpenStreetMap Wasser "
+                "hat' formt Flussbetten mit Böschung und Tiefe. 'Gefälle "
+                "ausgleichen' gleicht das Gefälle großer Flüsse aus, weil "
+                "das Spiel nur eine Wasserhöhe kennt. Dazu kommen Glätten, "
+                "Höhen stauchen und das Einebnen von Trassen und "
+                "Siedlungen. Die Anleitung öffnet mit F1.",
             ),
+            (
+                "Im TPF3-Import eintragen",
+                "Zeigt unten im Dialog Mindesthöhe, Maximalhöhe, "
+                "Wasserhöhe und das Kartenformat, die beim Import der "
+                "Heightmap im Editor von Transport Fever 3 eingetragen "
+                "werden.",
+            ),
+            (
+                "Biome-Maske aus OSM...",
+                "Erzeugt aus der geladenen OSM-Landnutzung eine "
+                "Biome-Maske (Kategorie 'Siedlung, Heide, Moor, Fels').",
+            ),
+            (
+                "Städte aus OSM...",
+                "Schreibt die Orte aus OSM als Datei für den Städte-Import "
+                "im Editor. Die Größe lässt sich per Faktor anpassen, die "
+                "Auswahl erfolgt je Ort.",
+            ),
+            (
+                "Industrien aus OSM...",
+                "Sucht Industrie-Objekte wie Sägewerke oder Ziegeleien in "
+                "OSM und schreibt eine Datei für den Industrie-Import im "
+                "Editor. Dabei werden Hang, Wasser und Kartenrand geprüft.",
+            ),
+            (
+                "Bahnhöfe aus OSM...",
+                "Liest Bahnhöfe und Haltepunkte aus den geladenen OSM-Daten "
+                "(mit Bahnsteigen, Haltepositionen und Gebäuden; "
+                "aufgegebene, im Bau befindliche und Betriebsbahnhöfe sind "
+                "gekennzeichnet) und schreibt bahnhoefe.json und "
+                "bahnhoefe.csv mit Koordinaten in Metern ab Kartenmitte. "
+                "Im Spiel wird nichts gebaut, die Dateien dienen als "
+                "Nachschlagewerk. Aneinanderstoßende Bahnsteig-Wege gelten "
+                "als ein Bahnsteig, bei Bahnsteigflächen zählt die Länge "
+                "statt des Umfangs.",
+            ),
+        ),
+    ),
+    (
+        "Karte und Ebenen",
+        (
+            (
+                "Ebene Bahnhöfe",
+                "Nach 'OSM laden' erscheinen die Bahnhöfe als Kreise mit "
+                "Namen auf der Karte. Blau ist ein Bahnhof, grün ein "
+                "Haltepunkt, rot aufgegeben, orange im Bau, lila ein "
+                "Betriebsbahnhof und grau ein zweifelhafter Eintrag "
+                "(zum Beispiel Bergbahn). Die Namen erscheinen ab einer "
+                "bestimmten Zoomstufe. Im Layer-Dock lässt sich die Ebene "
+                "ein- und ausschalten.",
+            ),
+        ),
+    ),
+    (
+        "Hilfe-Menü",
+        (
             (
                 "Funktionsübersicht (dieses Fenster)",
                 "Diese Liste - fasst alle in gemeinsamer Arbeit "

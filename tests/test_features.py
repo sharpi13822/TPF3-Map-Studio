@@ -16,7 +16,7 @@ class FeaturesTest(unittest.TestCase):
     def test_window_guards_menu_entries(self):
         text = (ROOT / "src" / "window.py").read_text(encoding="utf-8")
         self.assertIn("from src.features import VACUUMTUBE_IMPORTER", text)
-        self.assertEqual(text.count("if VACUUMTUBE_IMPORTER:"), 4)
+        self.assertEqual(text.count("if VACUUMTUBE_IMPORTER:"), 5)
 
     def test_short_segment_menu_entry_guarded(self):
         text = (ROOT / "src" / "window.py").read_text(encoding="utf-8")
@@ -35,6 +35,19 @@ class FeaturesTest(unittest.TestCase):
         failed = text.index("def _on_osm_failed")
         self.assertIn("self._auto_show_stations(osm)", text[loaded:failed])
         self.assertIn("from src.heightmap.station_export import collect_stations", text)
+
+    def test_import_guide_menu_guarded(self):
+        text = (ROOT / "src" / "window.py").read_text(encoding="utf-8")
+        guard = text.index("if VACUUMTUBE_IMPORTER:", text.index('help_menu = menu.addMenu("Hilfe")'))
+        self.assertLess(guard, text.index('"Import-Anleitung..."'))
+        self.assertLess(text.index('"Import-Anleitung..."'), text.index('"Funktionsübersicht..."'))
+
+    def test_dock_help_has_no_hidden_features(self):
+        text = (ROOT / "src" / "gui" / "docks.py").read_text(encoding="utf-8")
+        self.assertNotIn("Import-Anleitung", text)
+        self.assertNotIn("Mod-Checker", text)
+        self.assertNotIn("OSM-Export", text)
+        self.assertIn("<b>Bahnhöfe:</b>", text)
 
     def test_short_segment_export_button_guarded(self):
         text = (ROOT / "src" / "gui" / "short_segment_dialog.py").read_text(encoding="utf-8")
