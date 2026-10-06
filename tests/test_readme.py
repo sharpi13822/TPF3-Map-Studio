@@ -40,6 +40,19 @@ class ReadmeTest(unittest.TestCase):
         self.assertIn("https://github.com/sharpi13822/TPF3-Map-Studio/discussions", self.readme)
         self.assertIn("https://paypal.me/PEttelt", self.readme)
 
+    def test_requirements_are_named_in_notices(self):
+        notices = (ROOT / "THIRD_PARTY_NOTICES.md").read_text(encoding="utf-8").lower()
+        req = (ROOT / "requirements.txt").read_text(encoding="utf-8")
+        for line in req.splitlines():
+            name = re.split(r"[=<>!~ ]", line.strip(), maxsplit=1)[0].lower()
+            if name:
+                self.assertIn(name, notices, f"nicht in THIRD_PARTY_NOTICES.md: {name}")
+
+    def test_relief_source_is_named(self):
+        notices = (ROOT / "THIRD_PARTY_NOTICES.md").read_text(encoding="utf-8")
+        self.assertIn("github.com/tilezen/joerd/blob/master/docs/attribution.md", notices)
+        self.assertIn("elevation-tiles-prod", notices)
+
 
 if __name__ == "__main__":
     unittest.main()

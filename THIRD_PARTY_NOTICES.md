@@ -33,18 +33,23 @@ Die Hintergrundkarten werden beim Anzeigen aus dem Internet geladen und nicht mi
 | OpenStreetMap-Kacheln (`tile.openstreetmap.org`) | Straßenkarte | © OpenStreetMap-Mitwirkende. Es gilt die [Tile Usage Policy](https://operations.osmfoundation.org/policies/tiles/) der OpenStreetMap Foundation. Für intensive Nutzung ist ein eigener Kachelserver vorgesehen. |
 | Esri World Imagery | Satellitenbild | Tiles © Esri, Source: Esri, Maxar, Earthstar Geographics, CNES/Airbus DS, USDA FSA, USGS, Aerogrid, IGN, IGP und die GIS User Community. Es gelten die Nutzungsbedingungen von Esri. |
 | OpenRailwayMap | Eisenbahnkarte als Überlagerung | Daten © OpenStreetMap-Mitwirkende, Stil CC-BY-SA 2.0 OpenRailwayMap, <https://www.openrailwaymap.org/>. Es gelten die Nutzungsbedingungen von OpenRailwayMap. |
-| Schattenrelief | Zuschaltbares Relief über der Karte | Die Quellenangabe wird in der Karte angezeigt. |
+| Schattenrelief | Zuschaltbares Relief über der Karte | Wird im Browser aus den „Terrain Tiles“ (Terrarium-Format, `elevation-tiles-prod` auf Amazon S3, Projekt Tilezen/Joerd) berechnet. Die Daten stammen aus mehreren Quellen, die Namensnennung steht unter <https://github.com/tilezen/joerd/blob/master/docs/attribution.md> und in der Karte unten rechts. |
 
 ## Bibliotheken
+
+Die Versionen stehen in `requirements.txt`. Jedes Paket bringt seine eigenen Lizenzdateien mit.
 
 | Bibliothek | Lizenz | Verwendung |
 | --- | --- | --- |
 | [Leaflet](https://leafletjs.com/) | BSD 2-Clause | Kartendarstellung |
-| [PySide6 / Qt for Python](https://doc.qt.io/qtforpython/) | LGPL-3.0 (Qt for Python ist auch unter GPL-3.0 und kommerziell erhältlich) | Oberfläche |
+| [PySide6 / Qt for Python](https://doc.qt.io/qtforpython/) (mit Shiboken) | LGPL-3.0 (Qt for Python ist auch unter GPL-3.0 und kommerziell erhältlich) | Oberfläche |
+| [requests](https://requests.readthedocs.io/) | Apache-2.0 | Downloads von OSM- und Höhendaten |
 | [NumPy](https://numpy.org/) | BSD 3-Clause | Berechnung der Höhendaten |
+| [SciPy](https://scipy.org/) | BSD 3-Clause | Berechnung der Höhendaten, Glättung |
+| [Pillow](https://python-pillow.org/) | MIT-CMU (HPND) | Bildverarbeitung |
 | [PyInstaller](https://pyinstaller.org/) | GPL-2.0 mit Ausnahme, die gebaute Programme nicht an die GPL bindet | nur zum Bauen der `.exe` |
 
-Weitere Python-Pakete stehen in `requirements.txt` und unterliegen ihren eigenen Lizenzen.
+`requests` bringt weitere Pakete mit, darunter urllib3 (MIT), certifi (MPL-2.0), charset-normalizer (MIT) und idna (BSD 3-Clause). Auch NumPy und SciPy enthalten mitgelieferte Bibliotheken unter eigenen Lizenzen, die in den Paketen liegen.
 
 Die fertige `.exe` enthält Qt in Form von Bibliotheken. Die LGPL erlaubt das, sie verlangt aber, dass Qt austauschbar bleibt. Der Ordner mit der `.exe` enthält die Qt-Dateien als einzelne Bibliotheken. Wer Qt ersetzen möchte, kann das Studio außerdem jederzeit aus dem Quellcode starten.
 
