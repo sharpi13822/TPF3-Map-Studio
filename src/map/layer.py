@@ -26,6 +26,8 @@ class Layer(Enum):
 
     VEGETATION = "Vegetation"
 
+    STATIONS = "Bahnhöfe"
+
     @property
     def label(self):
         return self.value

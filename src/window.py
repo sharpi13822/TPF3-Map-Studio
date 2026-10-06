@@ -19,6 +19,8 @@ from PySide6.QtWidgets import (
 )
 
 from src.features import VACUUMTUBE_IMPORTER
+from src.map.layer import Layer
+from src.heightmap.station_markers import station_marker_data
 from src.gui.actions import AppActions
 from src.gui.toolbar import MainToolbar
 from src.gui.rectangle_dialog import RectangleToolDialog
@@ -1059,6 +1061,28 @@ class MainWindow(QMainWindow):
     def _run_js(self, code: str):
 
         self.map_widget.page().runJavaScript(code)
+
+    def show_stations_on_map(self, data):
+        """
+        Zeigt die Bahnhoefe aus dem Bahnhofsexport als Marker mit Namen auf
+        der Karte (Ebene "Bahnhoefe") und schaltet die Ebene sichtbar.
+        """
+
+        items = station_marker_data(data)
+
+        self._run_js(
+            f"window.MapApi.showStations({json.dumps(items)});"
+        )
+
+        controller = self.map_widget.controller
+
+        controller.set_layer_visible(Layer.STATIONS, True)
+
+        controller.layer_state_changed.emit()
+
+        self.statusBar().showMessage(
+            f"{len(items)} Bahnhöfe auf der Karte (Ebene Bahnhöfe)"
+        )
 
     def _send_layer_opacity(self, layer):
 

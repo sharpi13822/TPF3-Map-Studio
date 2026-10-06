@@ -1786,6 +1786,7 @@ class CommandDispatcher {
 
         layers.register("selection");
         layers.register("measure");
+        layers.register("stations");
 
 
         // ---------------------------------------------------------
@@ -2473,6 +2474,85 @@ engine.on("marker.move", event => {
  * Public API
  * ========================================================================== */
 
+/* ============================================================================
+ * Bahnhoefe (Ebene "stations"): Kreise mit Namensschild aus dem Bahnhofsexport
+ * ========================================================================== */
+
+function stationColor(item) {
+
+    if (item.doubtful) {
+        return "#9e9e9e";
+    }
+
+    switch (item.status) {
+        case "aufgegeben":
+            return "#8b1a1a";
+        case "im_bau":
+            return "#f39c12";
+        case "betriebsbahnhof":
+            return "#8e44ad";
+    }
+
+    switch (item.kind) {
+        case "halt":
+            return "#2e9e4f";
+        case "tram_stop":
+            return "#00acc1";
+        default:
+            return "#1565c0";
+    }
+
+}
+
+// Namensschilder der Bahnhoefe erst ab dieser Zoomstufe; darunter nur die Kreise.
+const STATION_LABEL_MIN_ZOOM = 12;
+
+let stationStyleAdded = false;
+let stationZoomHooked = false;
+
+function updateStationLabels() {
+
+    const map = engine.leaflet;
+
+    map.getContainer().classList.toggle(
+        "tpf-labels-hidden",
+        map.getZoom() < STATION_LABEL_MIN_ZOOM
+    );
+
+}
+
+function ensureStationStyle() {
+
+    if (stationStyleAdded) {
+        return;
+    }
+
+    const style = document.createElement("style");
+
+    style.textContent = `
+        .tpf-station-label {
+            font: 600 11px sans-serif;
+            padding: 1px 4px;
+            border: 1px solid #555;
+            border-radius: 3px;
+            background: rgba(255, 255, 255, 0.88);
+            color: #111;
+            box-shadow: none;
+        }
+        .tpf-station-label::before {
+            display: none;
+        }
+        .tpf-labels-hidden .tpf-station-label {
+            display: none;
+        }
+    `;
+
+    document.head.appendChild(style);
+
+    stationStyleAdded = true;
+
+}
+
 window.MapApi = {
 
      ready: true,
@@ -2851,6 +2931,85 @@ window.MapApi = {
             }
 
         });
+
+    },
+
+    /* ------------------------------------------------------------------------
+     * Bahnhoefe
+     * ----------------------------------------------------------------------*/
+
+    showStations(items = []) {
+
+        const layer = layers.get("stations");
+
+        if (!layer) {
+            console.warn("showStations: Ebene 'stations' fehlt");
+            return 0;
+        }
+
+        ensureStationStyle();
+
+        if (!stationZoomHooked) {
+            engine.leaflet.on("zoomend", updateStationLabels);
+            stationZoomHooked = true;
+        }
+
+        updateStationLabels();
+
+        layer.clear();
+
+        let count = 0;
+
+        for (const item of items) {
+
+            if (!Number.isFinite(item.lat) || !Number.isFinite(item.lon)) {
+                continue;
+            }
+
+            const marker = L.circleMarker(
+                [item.lat, item.lon],
+                {
+                    radius: item.kind === "station" ? 7 : 5,
+                    color: "#ffffff",
+                    weight: 2,
+                    opacity: 1,
+                    fillColor: stationColor(item),
+                    fillOpacity: 0.95
+                }
+            );
+
+            marker.originalStyle = {
+                opacity: 1,
+                fillOpacity: 0.95
+            };
+
+            const label = document.createElement("span");
+
+            label.textContent = item.label || "";
+
+            marker.bindTooltip(label, {
+                permanent: true,
+                direction: "right",
+                offset: [8, 0],
+                className: "tpf-station-label"
+            });
+
+            layer.add("station:" + item.id, marker);
+
+            count += 1;
+
+        }
+
+        applyLayerOpacity("stations");
+        scheduleLayerOrder();
+
+        return count;
+
+    },
+
+    clearStations() {
+
+        layers.get("stations")?.clear();
 
     },
 

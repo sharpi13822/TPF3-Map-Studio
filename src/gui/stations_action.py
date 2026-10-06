@@ -16,6 +16,26 @@ from src.heightmap.station_export import collect_stations, summary, write_statio
 TITLE = "Bahnhöfe aus OSM"
 
 
+def _show_on_map(parent, data) -> None:
+    """
+    Zeigt die Bahnhoefe auf der Studio-Karte, wenn ein Hauptfenster mit show_stations_on_map()
+    erreichbar ist. Ein Fehler hier darf das Speichern nie verhindern.
+    """
+
+    try:
+        widget = parent
+        for _ in range(10):
+            if widget is None:
+                return
+            show = getattr(widget, "show_stations_on_map", None)
+            if callable(show):
+                show(data)
+                return
+            widget = widget.parent() if callable(getattr(widget, "parent", None)) else None
+    except Exception as error:  # noqa: BLE001
+        print(f"Bahnhöfe konnten nicht auf der Karte angezeigt werden: {error}")
+
+
 def save_stations_dialog(parent, selection, osm) -> bool:
     """
     Liest die Bahnhoefe, laesst den Speicherort waehlen und schreibt .json und .csv.
@@ -38,6 +58,8 @@ def save_stations_dialog(parent, selection, osm) -> bool:
             "building=train_station) möglicherweise nicht mit.",
         )
         return False
+
+    _show_on_map(parent, data)
 
     chosen, _selected_filter = QFileDialog.getSaveFileName(
         parent,
