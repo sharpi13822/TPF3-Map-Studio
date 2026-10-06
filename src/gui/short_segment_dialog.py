@@ -22,6 +22,7 @@ from src.osm.short_edge_simplifier import (
     simplify_short_segments,
 )
 from src.export.osm_xml_exporter import export_osm_xml
+from src.features import VACUUMTUBE_IMPORTER
 
 
 LINK_TYPE_LABELS = (
@@ -117,11 +118,14 @@ class ShortSegmentDialog(QDialog):
         self.tree.setHeaderLabels(["Weg-ID", "Typ", "Länge"])
         layout.addWidget(self.tree)
 
-        export_button = QPushButton(
-            "Vereinfacht als .osm exportieren..."
-        )
-        export_button.clicked.connect(self._export_simplified)
-        layout.addWidget(export_button)
+        # Der .osm-Export gehoert zum Importer von VacuumTube (src/features.py).
+        if VACUUMTUBE_IMPORTER:
+
+            export_button = QPushButton(
+                "Vereinfacht als .osm exportieren..."
+            )
+            export_button.clicked.connect(self._export_simplified)
+            layout.addWidget(export_button)
 
         # -------------------------------------------------
         # Schließen

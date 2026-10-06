@@ -18,6 +18,20 @@ class FeaturesTest(unittest.TestCase):
         self.assertIn("from src.features import VACUUMTUBE_IMPORTER", text)
         self.assertEqual(text.count("if VACUUMTUBE_IMPORTER:"), 3)
 
+    def test_short_segment_export_button_guarded(self):
+        text = (ROOT / "src" / "gui" / "short_segment_dialog.py").read_text(encoding="utf-8")
+        self.assertIn("from src.features import VACUUMTUBE_IMPORTER", text)
+        self.assertEqual(text.count("if VACUUMTUBE_IMPORTER:"), 1)
+        self.assertLess(
+            text.index("if VACUUMTUBE_IMPORTER:"),
+            text.index("Vereinfacht als .osm exportieren"),
+        )
+
+    def test_short_segment_dialog_compiles(self):
+        py_compile.compile(
+            str(ROOT / "src" / "gui" / "short_segment_dialog.py"), doraise=True
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
