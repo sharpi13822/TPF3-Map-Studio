@@ -97,6 +97,63 @@ def _polyline_length(points: list) -> float:
     return sum(math.hypot(b[0] - a[0], b[1] - a[1]) for a, b in zip(points, points[1:]))
 
 
+def _convex_hull(points: list) -> list:
+    pts = sorted({(round(p[0], 6), round(p[1], 6)) for p in points})
+
+    if len(pts) <= 2:
+        return pts
+
+    def cross(o, a, b):
+        return (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0])
+
+    lower: list = []
+    for p in pts:
+        while len(lower) >= 2 and cross(lower[-2], lower[-1], p) <= 0:
+            lower.pop()
+        lower.append(p)
+
+    upper: list = []
+    for p in reversed(pts):
+        while len(upper) >= 2 and cross(upper[-2], upper[-1], p) <= 0:
+            upper.pop()
+        upper.append(p)
+
+    return lower[:-1] + upper[:-1]
+
+
+def _polygon_extent(points: list) -> tuple[float, float]:
+    """
+    (lange Seite, kurze Seite) des kleinsten umschliessenden Rechtecks einer Flaeche in Metern.
+
+    Bahnsteige sind in OSM oft als geschlossene Flaeche gezeichnet; der Umfang waere doppelt so lang wie
+    der Bahnsteig. Fuer ein Rechteck ist das Ergebnis exakt, bei unregelmaessigen Flaechen eine gute Naeherung.
+    """
+
+    hull = _convex_hull(points)
+
+    if len(hull) < 3:
+        return (_polyline_length(points) / 2.0, 0.0)
+
+    best = None
+
+    for i, (x1, y1) in enumerate(hull):
+        x2, y2 = hull[(i + 1) % len(hull)]
+        norm = math.hypot(x2 - x1, y2 - y1)
+
+        if norm == 0:
+            continue
+
+        ux, uy = (x2 - x1) / norm, (y2 - y1) / norm
+        us = [(x - x1) * ux + (y - y1) * uy for x, y in hull]
+        vs = [-(x - x1) * uy + (y - y1) * ux for x, y in hull]
+        width, height = max(us) - min(us), max(vs) - min(vs)
+
+        if best is None or width * height < best[0]:
+            best = (width * height, max(width, height), min(width, height))
+
+    return (best[1], best[2]) if best else (_polyline_length(points) / 2.0, 0.0)
+
+
 def _area_and_centroid(points: list) -> tuple[float, tuple[float, float]]:
     """Flaeche (Schuhband) und Schwerpunkt eines Polygons; bei Entartung der Mittelpunkt der Punkte."""
 
@@ -119,6 +176,88 @@ def _area_and_centroid(points: list) -> tuple[float, tuple[float, float]]:
         return 0.0, (sum(p[0] for p in pts) / len(pts), sum(p[1] for p in pts) / len(pts))
 
     return abs(twice) / 2.0, (cx / (3.0 * twice), cy / (3.0 * twice))
+
+
+# Bahnsteige sind in OSM oft in mehrere Wege zerteilt (Beispiel Filsen: je Gleis drei Stuecke, die
+# aneinanderstossen). Wege gleicher ref, deren Enden sich beruehren, zaehlen als EIN Bahnsteig.
+PLATFORM_JOIN_M = 0.5
+
+
+def merge_platform_ways(platforms: list[dict], join_m: float = PLATFORM_JOIN_M) -> list[dict]:
+    """
+    Fasst aneinanderstossende Bahnsteig-Wege mit gleicher, nicht leerer ref zu einem Bahnsteig zusammen.
+
+    Nur type == "platform" mit OSM-Weg. Kanten (platform_edge), Punkte und Bahnsteige ohne ref bleiben
+    unberuehrt. Der zusammengefasste Eintrag behaelt alle OSM-Wege in "osm_ways", die Laenge ist die Summe;
+    die Gesamtlaenge aller Bahnsteige aendert sich also nicht. Die Reihenfolge der Liste bleibt erhalten.
+    """
+
+    def near(a, b):
+        return math.hypot(a[0] - b[0], a[1] - b[1]) <= join_m
+
+    def eligible(item):
+        return (
+            item.get("type") == "platform"
+            and item.get("osm_way") is not None
+            and len(item.get("points", [])) >= 2
+            and (item.get("ref") or "").strip() != ""
+            and not item.get("closed")
+        )
+
+    groups: dict[str, list[tuple[int, dict]]] = {}
+    positioned: list[tuple[int, dict]] = []
+
+    for index, item in enumerate(platforms):
+        if eligible(item):
+            groups.setdefault(item["ref"].strip(), []).append((index, item))
+        else:
+            positioned.append((index, item))
+
+    for members in groups.values():
+        remaining = list(members)
+
+        while remaining:
+            first_index, first = remaining.pop(0)
+            points = list(first["points"])
+            ways = [first["osm_way"]]
+            length = first["length_m"]
+            position = first_index
+
+            changed = True
+            while changed:
+                changed = False
+                for k, (other_index, other) in enumerate(remaining):
+                    op = other["points"]
+                    if near(points[-1], op[0]):
+                        points = points + list(op[1:])
+                    elif near(points[-1], op[-1]):
+                        points = points + list(op[-2::-1])
+                    elif near(points[0], op[-1]):
+                        points = list(op[:-1]) + points
+                    elif near(points[0], op[0]):
+                        points = list(op[:0:-1]) + points
+                    else:
+                        continue
+                    ways.append(other["osm_way"])
+                    length += other["length_m"]
+                    position = min(position, other_index)
+                    remaining.pop(k)
+                    changed = True
+                    break
+
+            if len(ways) == 1:
+                positioned.append((first_index, first))
+                continue
+
+            merged = dict(first)
+            merged["osm_ways"] = ways
+            merged["points"] = points
+            merged["length_m"] = round(length, 1)
+            positioned.append((position, merged))
+
+    positioned.sort(key=lambda pair: pair[0])
+
+    return [item for _index, item in positioned]
 
 
 def collect_stations(osm, selection, radius_m: float = 250.0, platform_radius_m: float = 400.0) -> dict:
@@ -237,13 +376,23 @@ def collect_stations(osm, selection, radius_m: float = 250.0, platform_radius_m:
 
         if is_platform:
             if any(inside(p) for p in pts):
+                length_m = round(_polyline_length(pts), 1)
+                extra = {}
+
+                # Geschlossene Bahnsteigflaeche: Laenge ist die lange Seite, nicht der Umfang.
+                if closed and railway != "platform_edge" and len(pts) >= 4:
+                    long_side, short_side = _polygon_extent(pts)
+                    extra = {"perimeter_m": length_m, "width_m": round(short_side, 1), "closed": True}
+                    length_m = round(long_side, 1)
+
                 platforms.append({
                     "osm_way": way.id,
                     "type": "edge" if railway == "platform_edge" else "platform",
                     "ref": tags.get("ref", "") or tags.get("local_ref", ""),
                     "points": pts,
-                    "length_m": round(_polyline_length(pts), 1),
+                    "length_m": length_m,
                     "tags": _pick(tags),
+                    **extra,
                 })
 
         if is_building and closed:
@@ -354,6 +503,8 @@ def collect_stations(osm, selection, radius_m: float = 250.0, platform_radius_m:
         pts = item["points"]
         return (sum(q[0] for q in pts) / len(pts), sum(q[1] for q in pts) / len(pts))
 
+    platforms = merge_platform_ways(platforms)
+
     attach(platforms, "platforms", middle, platform_radius_m)
     attach(buildings, "buildings", lambda b: (b["x"], b["y"]), radius_m)
     attach(stops, "stop_positions", lambda s: (s["x"], s["y"]), radius_m)
@@ -365,6 +516,10 @@ def collect_stations(osm, selection, radius_m: float = 250.0, platform_radius_m:
         # Kein Bahnhof im Sinn der Bahn: Bergbahn, Mini-Eisenbahn, Touristikbahn oder weder Halteposition
         # noch Bahnsteig (Sommerrodelbahn, Aufzug)
         station["platform_edge_count"] = len([p for p in station["platforms"] if p["type"] == "edge"])
+        station["platform_osm_ways"] = sum(
+            len(p.get("osm_ways") or [p.get("osm_way")])
+            for p in station["platforms"] if p["type"] != "edge" and (p.get("osm_way") or p.get("osm_ways"))
+        )
         station["doubtful"] = bool(
             station["tags"].get("station") in ("funicular", "miniature", "monorail")
             or station["tags"].get("usage") == "tourism"
