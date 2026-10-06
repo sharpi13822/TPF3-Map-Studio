@@ -74,7 +74,7 @@ class StationMarkersTest(unittest.TestCase):
 
     def test_window_has_hook(self):
         text = (ROOT / "src" / "window.py").read_text(encoding="utf-8")
-        self.assertIn("def show_stations_on_map(self, data):", text)
+        self.assertIn("def show_stations_on_map(self, data, announce=True):", text)
         self.assertIn("Layer.STATIONS", text)
 
 

@@ -16,7 +16,25 @@ class FeaturesTest(unittest.TestCase):
     def test_window_guards_menu_entries(self):
         text = (ROOT / "src" / "window.py").read_text(encoding="utf-8")
         self.assertIn("from src.features import VACUUMTUBE_IMPORTER", text)
-        self.assertEqual(text.count("if VACUUMTUBE_IMPORTER:"), 3)
+        self.assertEqual(text.count("if VACUUMTUBE_IMPORTER:"), 4)
+
+    def test_short_segment_menu_entry_guarded(self):
+        text = (ROOT / "src" / "window.py").read_text(encoding="utf-8")
+        guard = text.index("if VACUUMTUBE_IMPORTER:", text.index("tools_menu = menu.addMenu"))
+        entries = [
+            text.index(name)
+            for name in ('"OSM als .osm exportieren..."', '"Converter-Befehl anzeigen..."',
+                         '"Kurze Verbindungssegmente..."', '"Mod-Checker..."')
+        ]
+        for position in entries:
+            self.assertLess(guard, position)
+
+    def test_stations_collected_after_osm_load(self):
+        text = (ROOT / "src" / "window.py").read_text(encoding="utf-8")
+        loaded = text.index("def _on_osm_loaded")
+        failed = text.index("def _on_osm_failed")
+        self.assertIn("self._auto_show_stations(osm)", text[loaded:failed])
+        self.assertIn("from src.heightmap.station_export import collect_stations", text)
 
     def test_short_segment_export_button_guarded(self):
         text = (ROOT / "src" / "gui" / "short_segment_dialog.py").read_text(encoding="utf-8")

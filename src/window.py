@@ -21,6 +21,7 @@ from PySide6.QtWidgets import (
 from src.features import VACUUMTUBE_IMPORTER
 from src.map.layer import Layer
 from src.heightmap.station_markers import station_marker_data
+from src.heightmap.station_export import collect_stations
 from src.gui.actions import AppActions
 from src.gui.toolbar import MainToolbar
 from src.gui.rectangle_dialog import RectangleToolDialog
@@ -645,13 +646,14 @@ class MainWindow(QMainWindow):
                 self._open_converter_command
             )
 
-        short_segment_action = tools_menu.addAction(
-            "Kurze Verbindungssegmente..."
-        )
+        if VACUUMTUBE_IMPORTER:
+            short_segment_action = tools_menu.addAction(
+                "Kurze Verbindungssegmente..."
+            )
 
-        short_segment_action.triggered.connect(
-            self._open_short_segment_dialog
-        )
+            short_segment_action.triggered.connect(
+                self._open_short_segment_dialog
+            )
 
         self.osm_action.triggered.connect(
             self._download_osm
@@ -823,6 +825,37 @@ class MainWindow(QMainWindow):
         )
 
         self._update_window_title()
+
+        self._auto_show_stations(osm)
+
+    def _auto_show_stations(self, osm):
+        """
+        Sammelt nach dem OSM-Laden die Bahnhoefe und zeigt sie auf der Karte
+        (Ebene "Bahnhoefe"). Ein Fehler hier darf das Laden nie stoeren.
+        """
+
+        try:
+
+            selection = self.map_widget.controller.project.selection
+
+            if selection is None:
+                return
+
+            data = collect_stations(osm, selection)
+
+            if not data["stations"]:
+                return
+
+            self.show_stations_on_map(data, announce=False)
+
+            self.statusBar().showMessage(
+                f"{self.statusBar().currentMessage()}, "
+                f"{len(data['stations'])} Bahnhöfe"
+            )
+
+        except Exception as error:  # noqa: BLE001
+
+            print(f"Bahnhöfe konnten nicht gesammelt werden: {error}")
 
     def _on_osm_failed(self, message: str):
 
@@ -1062,7 +1095,7 @@ class MainWindow(QMainWindow):
 
         self.map_widget.page().runJavaScript(code)
 
-    def show_stations_on_map(self, data):
+    def show_stations_on_map(self, data, announce=True):
         """
         Zeigt die Bahnhoefe aus dem Bahnhofsexport als Marker mit Namen auf
         der Karte (Ebene "Bahnhoefe") und schaltet die Ebene sichtbar.
@@ -1080,9 +1113,11 @@ class MainWindow(QMainWindow):
 
         controller.layer_state_changed.emit()
 
-        self.statusBar().showMessage(
-            f"{len(items)} Bahnhöfe auf der Karte (Ebene Bahnhöfe)"
-        )
+        if announce:
+
+            self.statusBar().showMessage(
+                f"{len(items)} Bahnhöfe auf der Karte (Ebene Bahnhöfe)"
+            )
 
     def _send_layer_opacity(self, layer):
 
