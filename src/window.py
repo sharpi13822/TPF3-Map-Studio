@@ -18,6 +18,7 @@ from PySide6.QtWidgets import (
 
 )
 
+from src.features import VACUUMTUBE_IMPORTER
 from src.gui.actions import AppActions
 from src.gui.toolbar import MainToolbar
 from src.gui.rectangle_dialog import RectangleToolDialog
@@ -624,21 +625,23 @@ class MainWindow(QMainWindow):
             self._open_overpass_dialog
         )
 
-        export_osm_action = tools_menu.addAction(
-            "OSM als .osm exportieren..."
-        )
+        if VACUUMTUBE_IMPORTER:
+            export_osm_action = tools_menu.addAction(
+                "OSM als .osm exportieren..."
+            )
 
-        export_osm_action.triggered.connect(
-            self._export_osm_xml
-        )
+            export_osm_action.triggered.connect(
+                self._export_osm_xml
+            )
 
-        converter_command_action = tools_menu.addAction(
-            "Converter-Befehl anzeigen..."
-        )
+        if VACUUMTUBE_IMPORTER:
+            converter_command_action = tools_menu.addAction(
+                "Converter-Befehl anzeigen..."
+            )
 
-        converter_command_action.triggered.connect(
-            self._open_converter_command
-        )
+            converter_command_action.triggered.connect(
+                self._open_converter_command
+            )
 
         short_segment_action = tools_menu.addAction(
             "Kurze Verbindungssegmente..."
@@ -672,13 +675,14 @@ class MainWindow(QMainWindow):
             self._open_heightmap_tool
         )
 
-        mod_checker_action = tools_menu.addAction(
-            "Mod-Checker..."
-        )
+        if VACUUMTUBE_IMPORTER:
+            mod_checker_action = tools_menu.addAction(
+                "Mod-Checker..."
+            )
 
-        mod_checker_action.triggered.connect(
-            self._open_mod_checker
-        )
+            mod_checker_action.triggered.connect(
+                self._open_mod_checker
+            )
 
         preflight_action = tools_menu.addAction(
             "Vorab-Prüfung..."
