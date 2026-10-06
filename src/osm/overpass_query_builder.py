@@ -52,6 +52,23 @@ INDUSTRY_MAN_MADE_VALUES = (
     "offshore_platform|petroleum_well|works|mineshaft"
 )
 
+# Objekte fuer "Bahnhoefe aus OSM" (Bahnhoefe, Haltepunkte, Bahnsteige,
+# Bahnhofsgebaeude, Haltepositionen). Die Bahnhofspunkte (railway=station/halt)
+# sind in OSM meist einzelne Knoten ohne Weg und kamen bisher nicht mit.
+STATION_RAILWAY_VALUES = "station|halt|stop|tram_stop"
+STATION_WAY_RAILWAY_VALUES = "station|halt|platform|platform_edge"
+STATION_BUILDING_VALUES = "train_station|transportation"
+STATION_MODES = ("train", "light_rail", "subway", "tram")
+# Betriebsbahnhoefe, stillgelegte und im Bau befindliche Bahnhoefe (OSM-Lebenszyklus-Tags), zum Beispiel
+# Ruedesheim 2026: railway=service_station + disused:public_transport=station.
+STATION_LIFECYCLE_LINES = (
+    'node["railway"="service_station"]',
+    'node["disused:railway"~"^(station|halt)$"]',
+    'node["disused:public_transport"="station"]',
+    'node["construction:railway"~"^(station|halt)$"]',
+    'node["railway"="construction"]["construction"~"^(station|halt)$"]',
+)
+
 
 @dataclass
 class OverpassQueryConfig:
@@ -79,6 +96,10 @@ class OverpassQueryConfig:
     biome_areas: bool = True
     # Objekte fuer die Industrien-Erzeugung aus OSM (klein, wenige Treffer).
     industry: bool = True
+    # Bahnhoefe, Haltepunkte, Bahnsteige und Bahnhofsgebaeude fuer
+    # "Bahnhoefe aus OSM" (wenige zusaetzliche Objekte, auch wenn
+    # railways/buildings ausgeschaltet sind).
+    stations: bool = True
 
     def to_dict(self) -> dict:
         return asdict(self)
@@ -210,6 +231,29 @@ def build_query(
             lines.append(
                 f'  {kind}["man_made"~"^({INDUSTRY_MAN_MADE_VALUES})$"]'
                 f'({bbox});'
+            )
+
+    if config.stations:
+        lines.append(
+            f'  node["railway"~"^({STATION_RAILWAY_VALUES})$"]({bbox});'
+        )
+        lines.append(f'  node["railway"="platform"]({bbox});')
+        lines.append(
+            f'  way["railway"~"^({STATION_WAY_RAILWAY_VALUES})$"]({bbox});'
+        )
+        lines.append(
+            f'  way["building"~"^({STATION_BUILDING_VALUES})$"]({bbox});'
+        )
+        for pattern in STATION_LIFECYCLE_LINES:
+            lines.append(f'  {pattern}({bbox});')
+        for mode in STATION_MODES:
+            lines.append(
+                f'  node["public_transport"~"^(station|stop_position)$"]'
+                f'["{mode}"="yes"]({bbox});'
+            )
+            lines.append(
+                f'  way["public_transport"~"^(station|platform)$"]'
+                f'["{mode}"="yes"]({bbox});'
             )
 
     if config.places:
