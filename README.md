@@ -9,49 +9,17 @@ Ein freies Werkzeug für Windows, das echte Kartendaten für den Bau realer Kart
 
 > Inoffizielles Werkzeug. Es steht in keiner Verbindung zu Urban Games oder dem Herausgeber von Transport Fever.
 
-## Inhalt
+## Download und Start
 
-- [Funktionen](#funktionen)
-- [So arbeitest du](#so-arbeitest-du)
-- [Download](#download-empfohlen-für-die-meisten-nutzer)
-- [Selbst bauen: von Python bis zur .exe](#selbst-bauen-von-python-bis-zur-exe)
-- [Daten und Quellenangaben](#daten-und-quellenangaben)
-- [Fragen, Probleme und Kontakt](#fragen-probleme-und-kontakt)
-- [Unterstützung](#unterstützung)
-- [Lizenz](#lizenz)
+**[Download für Windows: neueste Version](https://github.com/sharpi13822/TPF3-Map-Studio/releases/latest)**
 
-## Funktionen
+Keine Python-Installation nötig. So startest du das Programm:
 
-- **Kartenausschnitt** per Rechteck-Tool festlegen (Mittelpunkt, Größe, Drehwinkel) und im Format des Spiels (z. B. Größenwahnsinnig 1:5) planen
-- **OSM-Daten laden** mit konfigurierbarer Overpass-Abfrage (Checkboxen und Vorlagen statt Freitext)
-- **Heightmap** aus dem DGM1 (Deutschland, 1 m), aus swissALTI3D (Schweiz und Liechtenstein, 2 m), aus Copernicus (weltweit, 30 m, mit Baumkronen) oder aus eigenen GeoTIFF-Kacheln. Mit Schnellvorschau (immer Copernicus), Wasserhöhen-Vorschlag, Flüssen nach OSM, Gefälle-Ausgleich, Einebnen von Trassen und Siedlungen, Glätten und Stauchen. Der Dialog nennt die Werte, die beim Import im Spiel einzutragen sind. Die Heightmap wird als 16-Bit-PNG gespeichert
-- **Biome-Maske, Städte und Industrien** aus OSM, als Dateien für den Import im Editor
-- **Bahnhöfe** als Marker mit Namen auf der Karte und als Liste (`bahnhoefe.json` und `bahnhoefe.csv`) mit Bahnsteigen, Haltepositionen und Status (aufgegeben, im Bau). Im Spiel wird dadurch nichts gebaut, die Liste dient als Nachschlagewerk
-- **Karte:** OpenStreetMap, wahlweise mit Schattenrelief, dazu zuschaltbar die Eisenbahnkarte (OpenRailwayMap) und ein Maß-Gitter. Ebenen lassen sich ein- und ausblenden, sperren, in der Deckkraft und in der Reihenfolge ändern
-- Eigene Straßen, Flüsse und Gebäude zeichnen, JSON-Export und -Import der Objekte
-- Koordinaten-Messwerkzeug, Vorab-Prüfung der geladenen Daten, Projekte speichern und Projekt-Dashboard
+1. Auf der [Release-Seite](https://github.com/sharpi13822/TPF3-Map-Studio/releases/latest) unter **Assets** die Datei `TPF3-Map-Studio-v…-win64.zip` herunterladen
+2. Die ZIP-Datei **komplett entpacken**, zum Beispiel auf den Desktop. Nicht aus der ZIP-Datei heraus starten und nicht nur die `.exe` herauskopieren, das Programm braucht den Ordner `_internal` daneben
+3. Im entpackten Ordner **`TPF3-Map-Studio.exe`** doppelklicken. Sie liegt gleich oben, neben `START-HIER.txt`, `LICENSE` und dem Ordner `_internal`
 
-Funktionen für den OSM-TPF2-Importer von Vacuum-Tube (OSM-Export als `.osm`, Mod-Checker, Import-Anleitung, Prüfung kurzer Verbindungssegmente) sind in dieser Version ausgeblendet. Der Code bleibt im Projekt und lässt sich über den Schalter `VACUUMTUBE_IMPORTER` in `src/features.py` wieder einblenden.
-
-Eine vollständige Beschreibung aller Funktionen steht im Studio unter **Hilfe → Funktionsübersicht**.
-
-## So arbeitest du
-
-1. Mit dem Marker-Werkzeug die Kartenmitte setzen, dann **Werkzeuge → Rechteck-Tool**: Kartengröße und Drehwinkel wählen
-2. **Werkzeuge → OSM laden**. Was geladen wird, stellst du unter **Werkzeuge → Overpass-Abfrage** ein
-3. **Werkzeuge → Heightmap herunterladen**: Höhenquelle wählen, Einstellungen prüfen, Höhendaten laden und exportieren. Unten im Dialog stehen Mindesthöhe, Maximalhöhe, Wasserhöhe und Kartenformat für den Import
-4. Im selben Dialog optional **Biome-Maske**, **Städte**, **Industrien** und **Bahnhöfe** aus OSM erzeugen
-5. Im Editor von Transport Fever 3 die Dateien importieren und die Zahlen aus Schritt 3 eintragen
-
-Die Anleitung im Heightmap-Dialog öffnest du mit F1.
-
-## Download (empfohlen für die meisten Nutzer)
-
-Keine Python-Installation nötig, einfach die fertige Version herunterladen:
-
-1. Auf der [Releases-Seite](../../releases) die neueste Version öffnen
-2. Die `.zip`-Datei herunterladen und **komplett** an einen beliebigen Ort entpacken (z. B. auf den Desktop). Nicht nur die `.exe` einzeln herauskopieren, das Programm braucht die Begleitdateien im selben Ordner
-3. In dem entpackten Ordner `TPF3-Map-Studio.exe` doppelklicken
+Danach geht es weiter mit [So arbeitest du](#so-arbeitest-du).
 
 ### Windows warnt beim ersten Start, das ist normal
 
@@ -68,6 +36,61 @@ Das erscheint nur beim ersten Start. Falls dein Virenscanner die Datei zusätzli
 - Internetverbindung (für den OSM- und Höhendaten-Download)
 - Ca. 520 MB freier Speicherplatz für das entpackte Programm
 - Für große Karten mit dem DGM1 mehrere GB freier Arbeitsspeicher, die Höhendaten werden dabei im Speicher verarbeitet
+
+## Inhalt
+
+- [Download und Start](#download-und-start)
+- [Beispiel: Bern im Spiel](#beispiel-bern-im-spiel)
+- [Funktionen](#funktionen)
+- [So arbeitest du](#so-arbeitest-du)
+- [Selbst bauen: von Python bis zur .exe](#selbst-bauen-von-python-bis-zur-exe)
+- [Daten und Quellenangaben](#daten-und-quellenangaben)
+- [Fragen, Probleme und Kontakt](#fragen-probleme-und-kontakt)
+- [Unterstützung](#unterstützung)
+- [Lizenz](#lizenz)
+
+## Beispiel: Bern im Spiel
+
+<p align="center">
+  <img src="docs/images/beispiel-bern.jpg" alt="Bern in Transport Fever 3, gebaut mit dem Studio" width="100%">
+</p>
+<p align="center"><sub>Ansicht in Transport Fever 3: Gelände aus swissALTI3D, Gewässer, Orte und Biome aus OpenStreetMap, erzeugt mit dem Studio. Quellen: © swisstopo (Bundesamt für Landestopografie swisstopo), © OpenStreetMap-Mitwirkende.</sub></p>
+
+## Funktionen
+
+- **Kartenausschnitt** per Rechteck-Tool festlegen (Mittelpunkt, Größe, Drehwinkel) und im Format des Spiels (z. B. Größenwahnsinnig 1:5) planen
+- **OSM-Daten laden** mit konfigurierbarer Overpass-Abfrage (Checkboxen und Vorlagen statt Freitext)
+- **Heightmap** aus dem DGM1 (Deutschland, 1 m), aus swissALTI3D (Schweiz und Liechtenstein, 2 m), aus Copernicus (weltweit, 30 m, mit Baumkronen) oder aus eigenen GeoTIFF-Kacheln. Mit Schnellvorschau (immer Copernicus), Wasserhöhen-Vorschlag, Flüssen nach OSM, Gefälle-Ausgleich, Einebnen von Trassen und Siedlungen, Glätten und Stauchen. Der Dialog nennt die Werte, die beim Import im Spiel einzutragen sind. Die Heightmap wird als 16-Bit-PNG gespeichert
+- **Biome-Maske, Städte und Industrien** aus OSM, als Dateien für den Import im Editor
+- **Bahnhöfe** als Marker mit Namen auf der Karte und als Liste (`bahnhoefe.json` und `bahnhoefe.csv`) mit Bahnsteigen, Haltepositionen und Status (aufgegeben, im Bau). Im Spiel wird dadurch nichts gebaut, die Liste dient als Nachschlagewerk
+- **Karte:** OpenStreetMap, wahlweise mit Schattenrelief, dazu zuschaltbar die Eisenbahnkarte (OpenRailwayMap) und ein Maß-Gitter. Ebenen lassen sich ein- und ausblenden, sperren, in der Deckkraft und in der Reihenfolge ändern
+- Eigene Straßen, Flüsse und Gebäude zeichnen, JSON-Export und -Import der Objekte
+- Koordinaten-Messwerkzeug, Vorab-Prüfung der geladenen Daten, Projekte speichern und Projekt-Dashboard
+
+### Höhenquellen im Überblick
+
+| Quelle | Gebiet | Auflösung | Woher | Hinweis |
+| --- | --- | --- | --- | --- |
+| Copernicus DEM (GLO-30) | weltweit | 30 m | Copernicus (AWS Open Data) | enthält Baumkronen, Standard der Schnellvorschau |
+| DGM1 Deutschland | Deutschland | 1 m | hoehendaten.de (Landesvermessung) | etwa 20 Kacheln pro Minute, große Karten brauchen eine halbe Stunde |
+| swissALTI3D | Schweiz und Liechtenstein | 2 m | data.geo.admin.ch (swisstopo) | nur bei Karten dort wählbar, Quellenangabe ist Pflicht |
+| Eigene Kacheln | Deutschland | je nach Datei | selbst bei einem Landesportal geladen | GeoTIFF auf dem 1-km-Raster (UTM) |
+
+Wo Daten einer Quelle fehlen, ergänzt das Studio aus Copernicus. Die Höhenquelle wählst du im Heightmap-Dialog.
+
+Funktionen für den OSM-TPF2-Importer von Vacuum-Tube (OSM-Export als `.osm`, Mod-Checker, Import-Anleitung, Prüfung kurzer Verbindungssegmente) sind in dieser Version ausgeblendet. Der Code bleibt im Projekt und lässt sich über den Schalter `VACUUMTUBE_IMPORTER` in `src/features.py` wieder einblenden.
+
+Eine vollständige Beschreibung aller Funktionen steht im Studio unter **Hilfe → Funktionsübersicht**.
+
+## So arbeitest du
+
+1. Mit dem Marker-Werkzeug die Kartenmitte setzen, dann **Werkzeuge → Rechteck-Tool**: Kartengröße und Drehwinkel wählen
+2. **Werkzeuge → OSM laden**. Was geladen wird, stellst du unter **Werkzeuge → Overpass-Abfrage** ein
+3. **Werkzeuge → Heightmap herunterladen**: Höhenquelle wählen, Einstellungen prüfen, Höhendaten laden und exportieren. Unten im Dialog stehen Mindesthöhe, Maximalhöhe, Wasserhöhe und Kartenformat für den Import
+4. Im selben Dialog optional **Biome-Maske**, **Städte**, **Industrien** und **Bahnhöfe** aus OSM erzeugen
+5. Im Editor von Transport Fever 3 die Dateien importieren und die Zahlen aus Schritt 3 eintragen
+
+Die Anleitung im Heightmap-Dialog öffnest du mit F1.
 
 ## Selbst bauen: von Python bis zur .exe
 
@@ -142,13 +165,29 @@ dist\TPF3-Map-Studio\TPF3-Map-Studio.exe
 ```
 Zum Weitergeben packst du den **ganzen Ordner** `dist\TPF3-Map-Studio` in eine ZIP-Datei. Die `.exe` allein läuft nicht, sie braucht den Ordner `_internal` daneben.
 
-### 8. Prüfen
+### 8. Alles in einem Schritt (optional)
+
+Das Skript `tools\make_release.ps1` baut die `.exe`, prüft, dass die Symbole im Paket liegen, legt `START-HIER.txt`, `LICENSE` und `THIRD_PARTY_NOTICES.md` neben die `.exe` und packt den ganzen Ordner in eine ZIP-Datei samt Prüfsumme. Mit vorhandener `.venv` im Projektordner:
+```
+powershell -ExecutionPolicy Bypass -File tools\make_release.ps1 -Version 0.1.0
+```
+Die ZIP heißt dann `TPF3-Map-Studio-v0.1.0-win64.zip`. Sie gehört nicht ins Git-Repository, sondern als Datei an ein Release auf GitHub (siehe unten).
+
+### 9. Prüfen
 
 - `TPF3-Map-Studio.exe` doppelklicken. Beim ersten Start warnt Windows (siehe oben).
 - Ob die Symbole mitgekommen sind, zeigt dieser Befehl. Er sollte zwei Treffer ausgeben:
   ```
   Get-ChildItem dist\TPF3-Map-Studio -Recurse -Filter "strassen_hell.png" | Select-Object FullName
   ```
+
+### 10. Als Release auf GitHub veröffentlichen (für Projektbetreuer)
+
+1. Auf GitHub **Releases → Draft a new release**
+2. Einen neuen Tag anlegen, zum Beispiel `v0.1.0` (auf `master`)
+3. Die ZIP-Datei bei **Assets** anhängen, die Prüfsumme aus `…sha256.txt` in die Beschreibung schreiben und veröffentlichen
+
+Der Link „Download für Windows" oben im README führt danach automatisch zur neuesten Version.
 
 ### Wenn etwas nicht klappt
 

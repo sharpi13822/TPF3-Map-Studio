@@ -56,7 +56,7 @@ fehlen, ergänzt das Studio aus Copernicus. Die Schnellvorschau nutzt immer Cope
 dort liegt. Die Kacheln kommen von data.geo.admin.ch, ein Fenster zeigt den Fortschritt und lässt
 sich abbrechen, geladene Kacheln liegen im Zwischenspeicher. Wo Daten fehlen, ergänzt das Studio aus
 Copernicus. Die Voreinstellung „Empfohlen“ behandelt swissALTI3D wie DGM1.
-<i>swissALTI3D ist im Spiel noch nicht getestet.</i></li>
+<i>swissALTI3D ist bei Bern im Spiel getestet.</i></li>
 </ol>
 
 <h4>Einstellungen</h4>
@@ -86,10 +86,12 @@ am Ufer 2 m, Tiefe in der Mitte 8 m (Fahrrinne), Ufer über Wasser 2 m, nur Gew�
 15 m über Wasserspiegel (höher gelegene Bäche und Bergseen bleiben unverändert). Die Option
 „Terrain sanft ans Wasserniveau anpassen“ schaltet sich dabei ab, beide zusammen gehen
 nicht.</li>
-<li><b>Höhen stauchen</b> gegen weiße und graue Flächen auf den Höhen. Das Spiel färbt nach der
-Höhe über dem Wasser (Fels ab etwa 325-350 m, Schnee ab etwa 375-425 m). Die höchste Stelle landet auf
-diesem Anteil, der untere Teil des Geländes bleibt unverändert. Beim Rhein hat 45 % funktioniert.
-Standard 100 % = unverändert.</li>
+<li><b>Höhen stauchen</b> gegen weiße und graue Flächen auf den Höhen. Das Spiel färbt nach der Höhe der
+importierten Werte (Fels ab etwa 325-350 m, Schnee ab etwa 375-425 m). Mit dem Haken „Werte auf Wasserhöhe
+0 beziehen“ (Schritt 13) ist das die Höhe über dem Wasser, ohne ihn zählt die Höhe über Meer. Die höchste
+Stelle landet auf dem eingestellten Anteil, der untere Teil des Geländes bleibt unverändert. Beim Rhein hat
+45 % funktioniert, bei Bern etwa 75 % (mit dem Haken). Standard 100 % = unverändert. Der Dialog zeigt unten
+einen Hinweis, wenn das Gelände zu hoch liegt.</li>
 <li><b>Gefälle ausgleichen</b> für lange Flüsse mit starkem Gefälle (zum Beispiel der Rhein von
 Koblenz bis Bingen, rund 18 m). Es legt Flüsse und Seen auf eine gemeinsame Ebene und verschiebt
 dabei alle Höhen: Die Zahlen für das Spiel ändern sich stark, die absoluten Höhen über NN stimmen
@@ -136,7 +138,8 @@ Studio-Text, <b>Assets behalten: Nein</b>.</li>
 erzeugen: im Heightmap-Dialog <b>Biome-Maske aus OSM…</b> (braucht geladene OSM-Daten). Die Datei
 muss im Ordner <tt>biomes</tt> liegen, damit der Biome-Reiter sie findet. Eine einheitliche Maske
 reicht zum Test
-(Graustufe 77 = Biom 1, 128 = Biom 2, 179 = Biom 3, jeweils eine Datei im Ordner
+(Graustufe 77 = Biom 1, 128 = Biom 2, 179 = Biom 3, fertige Testmasken <tt>biome_einheitlich_1.png</tt> bis
+<tt>_3.png</tt> liegen im Projektordner unter <tt>docs\\testbilder</tt>, jeweils eine Datei im Ordner
 <tt>biomes</tt>). Bei <b>Biome</b> die Datei wählen, <b>Berge</b> und <b>Flüsse</b> leer
 lassen, <b>Anwenden</b>. Im Test erzeugt die Flüsse-Maske keinen Fluss, und die Berge-Maske
 entfernt keine weißen Flächen.</li>
@@ -176,6 +179,10 @@ geprüft.</i></td></tr>
 (Mittelrhein) ist ein Teil natürlich.</td></tr>
 <tr><td>Treppenstufen an den Hängen</td><td><b>Gelände glätten</b>, 15 m, bei Bedarf
 30 m.</td></tr>
+<tr><td>Das ganze Gelände ist weiß oder grau (zum Beispiel in der Schweiz, im Mittelland oder in den
+Alpen)</td><td>Das Gelände liegt ganz über der Schneegrenze des Spiels, weil die Höhen über Meer eingetragen
+werden (Bern: 488 bis 936 m). Haken <b>„Werte auf Wasserhöhe 0 beziehen“</b> setzen, <b>Höhen stauchen</b>
+(bei Bern etwa 75 %), neue Zahlen unten ablesen, neu exportieren und mit den neuen Zahlen importieren.</td></tr>
 <tr><td>Weiße Flächen auf den Höhen</td><td>Schneegrenze im Spiel. Schneegrenzen-Test
 machen, dann <b>Höhen stauchen</b>.</td></tr>
 <tr><td>Graue Felsstreifen an Hängen</td><td>Ab einer Neigung färbt das Spiel Fels. Hänge mit
@@ -192,7 +199,7 @@ oder umbenannt. Dialog neu öffnen und die Datei neu wählen.</td></tr>
 
 <h4>Schneegrenzen-Test (einmalig)</h4>
 <ol>
-<li>Die Testdatei <tt>hoehen_schneegrenze_test.png</tt> (zwölf Terrassen von 25 m bis 575 m in
+<li>Die Testdatei <tt>hoehen_schneegrenze_test.png</tt> (im Projektordner unter <tt>docs\\testbilder</tt>, zwölf Terrassen von 25 m bis 575 m in
 50-m-Stufen, unten am niedrigsten) nach <tt>heightmaps</tt> kopieren.</li>
 <li>Im Spiel die Kartengröße mit Format 1:5 wählen und mit <b>Mindesthöhe 0, Maximalhöhe 600,
 Wasserhöhe 0</b> importieren (diese Werte gelten nur für die Testdatei).</li>

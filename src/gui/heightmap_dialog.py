@@ -38,6 +38,7 @@ from src.heightmap.heightmap_exporter import (
     export_heightmap_png,
     pixel_size_for_selection,
 )
+from src.heightmap.height_hints import height_hint
 from src.heightmap.lv95 import SWISS_BOUNDS
 from src.heightmap.swissalti3d_dem import SwissFetchJob
 from src.heightmap.tpf3_paths import find_tpf3_heightmaps_folder
@@ -1986,6 +1987,16 @@ class HeightmapDialog(QDialog):
 
         if size_hint:
             lines.append(f"Kartengröße und -format im Spiel: {size_hint}")
+
+        hint = height_hint(
+            range_min,
+            range_max,
+            water,
+            self.relative_values_checkbox.isChecked(),
+        )
+
+        if hint:
+            lines.append(hint)
 
         return "\n".join(lines)
 

@@ -11,3 +11,8 @@ projects/*.tpf2ms
 *.osm
 build/
 dist/
+
+*.zip
+dist/
+build/
+update_tmp/

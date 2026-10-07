@@ -172,5 +172,53 @@ class SwissSourceDocumentedTest(unittest.TestCase):
         self.assertIn("MIT License", _read("LICENSE"))
 
 
+class ReadmeStartTest(unittest.TestCase):
+
+    def test_download_comes_first_and_names_the_exe(self):
+        readme = _read("README.md")
+        self.assertLess(readme.index("## Download und Start"), readme.index("## Funktionen"))
+        start = readme[readme.index("## Download und Start"):readme.index("## Inhalt")]
+        self.assertIn("https://github.com/sharpi13822/TPF3-Map-Studio/releases/latest", start)
+        for needle in ("komplett entpacken", "TPF3-Map-Studio.exe", "_internal", "START-HIER.txt", "Windows hat Ihren PC geschützt"):
+            self.assertIn(needle, start, needle)
+
+    def test_no_duplicate_step_numbers(self):
+        import re
+        steps = re.findall(r"^### (\d+)\. ", _read("README.md"), flags=re.M)
+        self.assertEqual(steps, sorted(set(steps), key=int))
+
+
+class ExampleImageTest(unittest.TestCase):
+
+    def test_example_image_and_caption(self):
+        from PIL import Image
+
+        path = ROOT / "docs" / "images" / "beispiel-bern.jpg"
+        self.assertTrue(path.exists())
+        self.assertLess(path.stat().st_size, 2_000_000)
+        with Image.open(path) as image:
+            self.assertGreaterEqual(image.width, 1200)
+        readme = _read("README.md")
+        self.assertIn("docs/images/beispiel-bern.jpg", readme)
+        caption = readme[readme.index("## Beispiel: Bern im Spiel"):readme.index("## Funktionen")]
+        self.assertIn("swisstopo", caption)
+        self.assertIn("OpenStreetMap", caption)
+
+
+class TestImagesTest(unittest.TestCase):
+
+    def test_guide_points_to_the_test_images(self):
+        guide = _assigned(_read("src", "gui", "heightmap_guide.py"), "GUIDE_HTML")
+        self.assertIn("docs\\testbilder", guide)
+        self.assertIn("hoehen_schneegrenze_test.png", guide)
+
+    @unittest.skipUnless((ROOT / "docs" / "testbilder").exists(), "docs/testbilder noch nicht angelegt")
+    def test_named_test_images_exist(self):
+        folder = ROOT / "docs" / "testbilder"
+        for name in ("hoehen_schneegrenze_test.png", "biome_einheitlich_1.png", "biome_einheitlich_2.png",
+                     "biome_einheitlich_3.png"):
+            self.assertTrue((folder / name).exists(), name)
+
+
 if __name__ == "__main__":
     unittest.main()

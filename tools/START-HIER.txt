@@ -1,0 +1,39 @@
+﻿TPF3 Map Studio - START HIER
+============================
+
+So startest du das Programm:
+
+1. Das Archiv (ZIP) KOMPLETT entpacken, zum Beispiel auf den Desktop.
+   Nicht aus der ZIP-Datei heraus starten.
+2. Im entpackten Ordner TPF3-Map-Studio.exe doppelklicken.
+   Den Ordner "_internal" daneben bitte nicht loeschen oder verschieben,
+   das Programm braucht ihn.
+
+Windows warnt beim ersten Start ("Windows hat Ihren PC geschuetzt"):
+   -> "Weitere Informationen" klicken
+   -> "Trotzdem ausfuehren" klicken
+Das erscheint nur beim ersten Start. Die Datei ist nicht digital signiert.
+Meldet dein Virenscanner die Datei, ist das ein bekannter Fehlalarm bei
+PyInstaller-Programmen.
+
+Erste Schritte im Studio:
+   1. Marker setzen (Kartenmitte), dann Werkzeuge -> Rechteck-Tool
+   2. Werkzeuge -> OSM laden
+   3. Werkzeuge -> Heightmap herunterladen (Hoehenquelle waehlen)
+   4. Optional Biome, Staedte, Industrien und Bahnhoefe aus OSM erzeugen
+   Eine Anleitung oeffnet im Heightmap-Dialog mit F1, alle Funktionen stehen
+   unter Hilfe -> Funktionsuebersicht.
+
+Hoehenquellen: Deutschland DGM1, Schweiz und Liechtenstein swissALTI3D,
+weltweit Copernicus.
+
+Quellenangaben: Wer eine mit dem Studio erzeugte Karte veroeffentlicht, nennt
+die Quellen der Daten (OpenStreetMap-Mitwirkende, je nach Gebiet DGM1 der
+Bundeslaender, swisstopo oder Copernicus). Der Heightmap-Dialog zeigt die
+Angabe an, Einzelheiten stehen in THIRD_PARTY_NOTICES.md.
+
+Fragen, Fehler, Ideen:
+   https://github.com/sharpi13822/TPF3-Map-Studio/issues
+   https://github.com/sharpi13822/TPF3-Map-Studio/discussions
+
+Lizenz: MIT (Datei LICENSE). Inoffizielles Werkzeug, nicht von Urban Games.
