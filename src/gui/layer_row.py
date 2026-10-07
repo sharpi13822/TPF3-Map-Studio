@@ -1,4 +1,5 @@
-from PySide6.QtCore import Qt
+from PySide6.QtCore import QSize, Qt
+from PySide6.QtGui import QPixmap
 from PySide6.QtWidgets import (
     QWidget,
     QHBoxLayout,
@@ -9,18 +10,24 @@ from PySide6.QtWidgets import (
     QMenu,
 )
 
+from src.gui.icon_set import icon, icon_path
 
-ICON_MAP = {
-    "Straßen":      "🛣️",
-    "Bahn":         "🚆",
-    "Gebäude":      "🏘️",
-    "Wasser":       "💧",
-    "Gewässer":     "💦",
-    "Flüsse":       "🏞️",
-    "Parks":        "🌳",
-    "Landnutzung":  "🌾",
-    "Vegetation":   "🌲",
+
+# Layer-Name -> Symbol aus src/gui/icons
+ICON_NAMES = {
+    "Straßen": "strassen",
+    "Bahn": "bahn",
+    "Gebäude": "gebaeude",
+    "Wasser": "wasser",
+    "Gewässer": "wasser",
+    "Flüsse": "fluesse",
+    "Parks": "parks",
+    "Landnutzung": "landnutzung",
+    "Vegetation": "vegetation",
+    "Bahnhöfe": "bahnhoefe",
 }
+
+ICON_SIZE = 18
 
 
 class LayerRowWidget(QWidget):
@@ -85,15 +92,19 @@ class LayerRowWidget(QWidget):
 
         locked = manager.is_locked(layer)
 
-        self.lock = QPushButton(
-            "🔒" if locked else "🔓"
-        )
+        self.lock = QPushButton()
 
         self.lock.setCheckable(True)
 
         self.lock.setChecked(locked)
 
         self.lock.setFixedWidth(34)
+
+        self.lock.setIconSize(QSize(16, 16))
+
+        self.lock.setToolTip("Ebene sperren: keine Auswahl und Bearbeitung in der Karte")
+
+        self._update_lock_icon(locked)
 
         self.lock.toggled.connect(
             self._lock_changed
@@ -103,16 +114,26 @@ class LayerRowWidget(QWidget):
         # Name
         # ---------------------------------------------------------
 
-        icon = ICON_MAP.get(
-            text,
-            "📄"
-        )
+        self.icon_label = QLabel()
 
-        self.label = QLabel(
-            f"{icon} {text}"
-        )
+        self.icon_label.setFixedSize(ICON_SIZE + 2, ICON_SIZE + 2)
 
-        self.label.setMinimumWidth(140)
+        icon_name = ICON_NAMES.get(text)
+
+        if icon_name:
+            pixmap = QPixmap(str(icon_path(icon_name, "_hell")))
+            self.icon_label.setPixmap(
+                pixmap.scaled(
+                    ICON_SIZE,
+                    ICON_SIZE,
+                    Qt.KeepAspectRatio,
+                    Qt.SmoothTransformation,
+                )
+            )
+
+        self.label = QLabel(text)
+
+        self.label.setMinimumWidth(120)
 
         # ---------------------------------------------------------
         # Opacity
@@ -143,7 +164,13 @@ class LayerRowWidget(QWidget):
         # Reihenfolge
         # ---------------------------------------------------------
 
-        self.up_button = QPushButton("⬆")
+        self.up_button = QPushButton()
+
+        self.up_button.setIcon(icon("pfeil_hoch"))
+
+        self.up_button.setIconSize(QSize(14, 14))
+
+        self.up_button.setToolTip("Ebene nach oben (vor die anderen)")
 
         self.up_button.setFixedWidth(28)
 
@@ -151,7 +178,13 @@ class LayerRowWidget(QWidget):
             self._move_up
         )
 
-        self.down_button = QPushButton("⬇")
+        self.down_button = QPushButton()
+
+        self.down_button.setIcon(icon("pfeil_runter"))
+
+        self.down_button.setIconSize(QSize(14, 14))
+
+        self.down_button.setToolTip("Ebene nach unten (hinter die anderen)")
 
         self.down_button.setFixedWidth(28)
 
@@ -165,11 +198,19 @@ class LayerRowWidget(QWidget):
 
         layout.addWidget(self.visible)
         layout.addWidget(self.lock)
+        layout.addWidget(self.icon_label)
         layout.addWidget(self.label)
         layout.addStretch()
         layout.addWidget(self.slider)
         layout.addWidget(self.up_button)
         layout.addWidget(self.down_button)
+
+    def _update_lock_icon(self, locked):
+        """Zeigt das geschlossene oder offene Schloss."""
+
+        self.lock.setIcon(
+            icon("schloss_zu" if locked else "schloss_offen")
+        )
 
     # ---------------------------------------------------------
     # Zustand aus dem LayerManager uebernehmen
@@ -195,7 +236,7 @@ class LayerRowWidget(QWidget):
 
         self.lock.setChecked(locked)
 
-        self.lock.setText("🔒" if locked else "🔓")
+        self._update_lock_icon(locked)
 
         self.slider.setValue(
             int(round(manager.opacity(self.layer) * 100))
@@ -226,9 +267,7 @@ class LayerRowWidget(QWidget):
             checked
         )
 
-        self.lock.setText(
-            "🔒" if checked else "🔓"
-        )
+        self._update_lock_icon(checked)
 
     # ---------------------------------------------------------
     # Opacity

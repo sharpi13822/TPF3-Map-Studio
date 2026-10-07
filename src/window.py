@@ -2,9 +2,10 @@ import json
 import traceback
 from pathlib import Path
 
-from PySide6.QtCore import Qt, QThread, Signal
+from PySide6.QtCore import Qt, QThread, QSize, QTimer, Signal
 from PySide6.QtGui import QAction, QActionGroup, QKeySequence, QShortcut
 from PySide6.QtWidgets import (
+    QApplication,
     QFileDialog,
     QLabel,
     QMainWindow,
@@ -13,6 +14,7 @@ from PySide6.QtWidgets import (
     QListWidgetItem,
     QMenu,
     QInputDialog,
+    QToolBar,
     QVBoxLayout,
     QWidget,
 
@@ -23,6 +25,8 @@ from src.map.layer import Layer
 from src.heightmap.station_markers import station_marker_data
 from src.heightmap.station_export import collect_stations
 from src.gui.actions import AppActions
+from src.gui.icon_set import icon, icon_name_for
+from src.gui.theme import apply_theme
 from src.gui.toolbar import MainToolbar
 from src.gui.rectangle_dialog import RectangleToolDialog
 from src.gui.heightmap_dialog import HeightmapDialog
@@ -120,6 +124,10 @@ class MainWindow(QMainWindow):
 
     def __init__(self):
         super().__init__()
+
+        # Farben und Stil fuer das ganze Studio (src/gui/theme.py); die Symbole folgen, sobald das Fenster steht.
+        apply_theme(QApplication.instance())
+        QTimer.singleShot(0, self._apply_action_icons)
 
         self.resize(1600, 900)
 
@@ -1234,6 +1242,32 @@ class MainWindow(QMainWindow):
         self.actions.selection_tool.triggered.connect(
             lambda: self._set_tool(Tool.SELECTION)
         )
+
+    def _apply_action_icons(self):
+        """Setzt die Symbole aus src/gui/icons an Menues und Werkzeugleiste. Ein Fehler hier stoert den Start nicht."""
+
+        try:
+            for attribute, name in (
+                ("marker_tool", "marker"),
+                ("selection_tool", "auswahl"),
+                ("measure_tool", "messen"),
+            ):
+                action = getattr(self.actions, attribute, None)
+
+                if action is not None:
+                    action.setIcon(icon(name, checkable=True))
+
+            for action in self.findChildren(QAction):
+                name = icon_name_for(action.text(), action.toolTip())
+
+                if name:
+                    action.setIcon(icon(name, checkable=action.isCheckable()))
+
+            for toolbar in self.findChildren(QToolBar):
+                toolbar.setIconSize(QSize(22, 22))
+
+        except Exception as error:  # noqa: BLE001
+            print(f"Symbole konnten nicht gesetzt werden: {error}")
 
     def _set_tool(self, tool):
 

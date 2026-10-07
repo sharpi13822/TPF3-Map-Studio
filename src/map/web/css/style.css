@@ -8,6 +8,16 @@ body,
 }
 
 /* --------------------------------------------------
+   Farben des Studios (wie src/gui/theme.py)
+   Flaeche #141e26, Knopf #1a262e, Rahmen #2a3a46,
+   Akzent #15b9f9, aktiv #0a81c2, Text #d5dee5
+-------------------------------------------------- */
+
+body {
+    background-color: #11191e;
+}
+
+/* --------------------------------------------------
    Layer Control
 -------------------------------------------------- */
 
@@ -17,48 +27,145 @@ body,
     right: 10px;
     z-index: 1000;
 
-    background: rgba(255,255,255,0.95);
+    background: #141e26;
+    color: #d5dee5;
 
-    padding: 8px;
+    border: 1px solid #2a3a46;
+    border-radius: 10px;
 
-    border-radius: 6px;
+    padding: 14px 16px;
 
-    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    min-width: 250px;
 
-    min-width: 130px;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.55);
 
-    font-family: Arial, sans-serif;
+    font-family: "Segoe UI", Arial, sans-serif;
+    font-size: 13px;
+}
 
+.layer-title,
+#layer-control h4 {
+    color: #15b9f9;
     font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    margin: 14px 0 7px;
 }
 
 .layer-title {
-    font-size: 13px;
-    font-weight: bold;
-    margin-bottom: 6px;
+    margin-top: 0;
 }
 
 .layer-buttons {
     display: flex;
-    gap: 4px;
-    margin-bottom: 6px;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 4px;
 }
 
-.layer-buttons button {
+#layer-control button {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+
+    background: #1a262e;
+    color: #d5dee5;
+
+    border: 1px solid #2a3a46;
+    border-radius: 7px;
+
+    padding: 6px 11px;
+
+    font-family: inherit;
+    font-size: 12px;
+
     cursor: pointer;
-    font-size: 11px;
-    padding: 2px 6px;
 }
 
-#layer-control h4 {
-    margin: 6px 0 3px;
-    font-size: 11px;
+#layer-control button:hover {
+    background: #22313c;
+    border-color: #15b9f9;
+}
+
+#layer-control button:active,
+#layer-control button.active {
+    background: #0a81c2;
+    border-color: #15b9f9;
+    color: #ffffff;
+}
+
+#layer-control button.primary {
+    background: #0a81c2;
+    border-color: #15b9f9;
+    color: #ffffff;
+}
+
+#layer-control button.primary:hover {
+    background: #0f93d9;
+}
+
+.btn-icon {
+    width: 16px;
+    height: 16px;
 }
 
 #layer-control label {
-    display: block;
-    margin-bottom: 3px;
-    font-size: 11px;
+    display: flex;
+    align-items: center;
+
+    margin: 7px 0;
+
+    color: #d5dee5;
+    font-size: 13px;
+
+    cursor: pointer;
+}
+
+.lbl-icon {
+    width: 18px;
+    height: 18px;
+    margin-right: 8px;
+}
+
+#layer-control input[type="radio"],
+#layer-control input[type="checkbox"] {
+    -webkit-appearance: none;
+    appearance: none;
+
+    width: 16px;
+    height: 16px;
+
+    margin: 0 9px 0 0;
+
+    flex: none;
+
+    background: #1a262e;
+    border: 1.5px solid #3d5565;
+
+    cursor: pointer;
+}
+
+#layer-control input[type="radio"] {
+    border-radius: 50%;
+}
+
+#layer-control input[type="checkbox"] {
+    border-radius: 4px;
+}
+
+#layer-control input[type="radio"]:checked {
+    border-color: #15b9f9;
+    background: radial-gradient(circle, #15b9f9 0, #15b9f9 4px, #1a262e 5px);
+}
+
+#layer-control input[type="checkbox"]:checked {
+    border-color: #15b9f9;
+    background-color: #0a81c2;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><path d='M3.5 8.5 6.6 11.6 12.5 4.8' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: 12px 12px;
 }
 
 /* --------------------------------------------------
@@ -74,22 +181,26 @@ body,
 
     width: 260px;
 
-    background: rgba(255,255,255,0.97);
+    background: #141e26;
+    color: #d5dee5;
+
+    border: 1px solid #2a3a46;
 
     padding: 16px;
 
     border-radius: 10px;
 
-    box-shadow: 0 3px 12px rgba(0,0,0,0.35);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.55);
 
     z-index: 2000;
 
-    font-family: Arial, sans-serif;
+    font-family: "Segoe UI", Arial, sans-serif;
 
     font-size: 14px;
 }
 
 .info-title {
+    color: #15b9f9;
     font-size: 18px;
     font-weight: bold;
     margin-bottom: 12px;
@@ -107,7 +218,27 @@ body,
 .property-row b {
     display: inline-block;
     width: 120px;
-    color: #333;
+    color: #8ea1af;
+}
+
+#info-panel button {
+    background: #1a262e;
+    color: #d5dee5;
+
+    border: 1px solid #2a3a46;
+    border-radius: 7px;
+
+    padding: 5px 12px;
+
+    font-family: inherit;
+    font-size: 12px;
+
+    cursor: pointer;
+}
+
+#info-panel button:hover {
+    background: #22313c;
+    border-color: #15b9f9;
 }
 
 /* --------------------------------------------------

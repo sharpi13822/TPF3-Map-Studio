@@ -3,66 +3,11 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>TPF2 Map Studio</title>
+    <title>TPF3 Map Studio</title>
 
     <link rel="stylesheet" href="leaflet/leaflet.css">
-    <link rel="stylesheet" href="css/style.css?v=2">
-    
-    <style>
-        /* Dunkelblaues Studio-Interface */
-        body {
-            background-color: #0b0f17 !important;
-        }
+    <link rel="stylesheet" href="css/style.css?v=3">
 
-        #layer-control {
-            background-color: #0d1117 !important; 
-            border: 1px solid #2d3748 !important;   
-            border-radius: 8px !important;
-            color: #ffffff !important;             
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5) !important;
-            padding: 15px !important;
-        }
-
-        /* Titel des Menüs */
-        .layer-title, #layer-control h4, #layer-control b {
-            color: #4da3ff !important; 
-            font-family: sans-serif;
-            text-transform: uppercase;
-            font-size: 13px;
-            letter-spacing: 0.5px;
-        }
-
-        /* Buttons im Studio-Style */
-        #layer-control button {
-            background-color: #1a2333 !important;
-            border: 1px solid #2d3748 !important;
-            color: #e2e8f0 !important;
-            border-radius: 4px;
-            padding: 5px 10px;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        #layer-control button:hover {
-            background-color: #007fff !important; 
-            color: #ffffff !important;
-            border-color: #007fff !important;
-        }
-
-        /* Radio-Buttons und Checkboxen beschriften */
-        #layer-control label {
-            display: block;
-            margin: 8px 0;
-            color: #cbd5e1 !important;
-            font-family: sans-serif;
-            font-size: 13px;
-            cursor: pointer;
-        }
-
-        .layer-list-item input[type="checkbox"] {
-            accent-color: #007fff; 
-        }
-    </style>
 </head>
 
 <body>
@@ -74,98 +19,98 @@
 
     <div id="layer-control">
 
-    <div class="layer-title">
-        Layer
-    </div>
+        <div class="layer-title">Layer</div>
 
+        <div class="layer-buttons">
 
-    <div class="layer-buttons">
+            <button id="layers-on" title="Alle Ebenen im Panel einschalten">
+                Alle
+            </button>
 
-        <button id="layers-on" title="Alle Ebenen im Panel einschalten">
-            Alle
-        </button>
+            <button id="layers-off" title="Alle Ebenen im Panel ausschalten">
+                Keine
+            </button>
 
-        <button id="layers-off" title="Alle Ebenen im Panel ausschalten">
-            Keine
-        </button>
+            <button id="export-json" title="Speichert die Objekte der Karte als JSON-Datei">
+                <img class="btn-icon" src="icons/ui/json_export_hell.png" alt="">
+                JSON Export
+            </button>
 
-        <button id="export-json" title="Speichert die Objekte der Karte als JSON-Datei">
-           JSON Export
-        </button>
+            <button id="import-json" title="Lädt eine gespeicherte JSON-Datei auf die Karte">
+                <img class="btn-icon" src="icons/ui/json_import_hell.png" alt="">
+                JSON Import
+            </button>
 
-        <div id="draw-tools">
-
-        <b>Zeichnen</b>
-
-        <br>
-
-        <button id="draw-road" title="Eigene Straße zeichnen: Punkte auf der Karte anklicken, dann Fertig">
-             Straße
-        </button>
-
-        <button id="draw-river" title="Eigenen Fluss zeichnen: Punkte auf der Karte anklicken, dann Fertig">
-             Fluss
-        </button>
-
-        <button id="draw-building" title="Eigenes Gebäude zeichnen: Punkte auf der Karte anklicken, dann Fertig">
-             Gebäude
-        </button>
-
-        <button id="draw-finish" title="Zeichnen beenden und das Objekt übernehmen">
-             Fertig
-        </button>
+            <input
+                type="file"
+                id="json-file"
+                accept=".json"
+                style="display:none"
+            >
 
         </div>
-        
-        <button id="import-json" title="Lädt eine gespeicherte JSON-Datei auf die Karte">
-           JSON Import
-        </button>
 
-        <input
-            type="file"
-            id="json-file"
-            accept=".json"
-            style="display:none"
-        >
+        <h4>Zeichnen</h4>
+
+        <div id="draw-tools" class="layer-buttons">
+
+            <button id="draw-road" title="Eigene Straße zeichnen: Punkte auf der Karte anklicken, dann Fertig">
+                <img class="btn-icon" src="icons/ui/strassen_hell.png" alt="">
+                Straße
+            </button>
+
+            <button id="draw-river" title="Eigenen Fluss zeichnen: Punkte auf der Karte anklicken, dann Fertig">
+                <img class="btn-icon" src="icons/ui/fluesse_hell.png" alt="">
+                Fluss
+            </button>
+
+            <button id="draw-building" title="Eigenes Gebäude zeichnen: Punkte auf der Karte anklicken, dann Fertig">
+                <img class="btn-icon" src="icons/ui/gebaeude_hell.png" alt="">
+                Gebäude
+            </button>
+
+            <button id="draw-finish" class="primary" title="Zeichnen beenden und das Objekt übernehmen">
+                <img class="btn-icon" src="icons/ui/haken_weiss.png" alt="">
+                Fertig
+            </button>
+
+        </div>
+
+        <h4>Kartenquelle</h4>
+
+        <label title="Normale Straßenkarte als Hintergrund">
+            <input type="radio" name="base-layer" value="osm" checked>
+            OpenStreetMap
+        </label>
+
+        <label title="Luftbilder als Hintergrund, praktisch zum Erkennen von Feldern, Wäldern und Gelände">
+            <input type="radio" name="base-layer" value="satellite">
+            Satellit (Esri)
+        </label>
+
+        <label title="Satellitenbild mit Schattenrelief: zeigt Täler, Hänge und Bergkämme, hilft beim Wählen des Ausschnitts">
+            <input type="radio" name="base-layer" value="satellite_relief">
+            Satellit + Relief
+        </label>
+
+        <label title="Straßenkarte mit Schattenrelief">
+            <input type="radio" name="base-layer" value="osm_relief">
+            Karte + Relief
+        </label>
+
+        <label title="Legt die OpenRailwayMap über die Karte: Gleise, Bahnhöfe und Signale">
+            <input type="checkbox" data-layer="openrailwaymap">
+            <img class="lbl-icon" src="icons/ui/bahn_hell.png" alt="">
+            Eisenbahnkarte (ORM)
+        </label>
+
+        <label title="Blendet ein Gitter über die Karte ein, mit dem sich Abstände und Größen abschätzen lassen">
+            <input type="checkbox" data-layer="measurement-grid">
+            <img class="lbl-icon" src="icons/ui/messen_hell.png" alt="">
+            Maß-Gitter
+        </label>
 
     </div>
-
-
-    <h4>Kartenquelle</h4>
-
-    <label title="Normale Straßenkarte als Hintergrund">
-        <input type="radio" name="base-layer" value="osm" checked>
-        OpenStreetMap
-    </label>
-
-    <label title="Luftbilder als Hintergrund, praktisch zum Erkennen von Feldern, Wäldern und Gelände">
-        <input type="radio" name="base-layer" value="satellite">
-        Satellit (Esri)
-    </label>
-
-    <label title="Satellitenbild mit Schattenrelief: zeigt Täler, Hänge und Bergkämme, hilft beim Wählen des Ausschnitts">
-        <input type="radio" name="base-layer" value="satellite_relief">
-        Satellit + Relief
-    </label>
-
-    <label title="Straßenkarte mit Schattenrelief">
-        <input type="radio" name="base-layer" value="osm_relief">
-        Karte + Relief
-    </label>
-
-    <label title="Legt die OpenRailwayMap über die Karte: Gleise, Bahnhöfe und Signale">
-        <input type="checkbox" data-layer="openrailwaymap">
-        Eisenbahnkarte (ORM)
-    </label>
-
-    <label title="Blendet ein Gitter über die Karte ein, mit dem sich Abstände und Größen abschätzen lassen">
-        <input type="checkbox" data-layer="measurement-grid">
-        Maß-Gitter
-    </label>
-
-
-
-</div>
 
     <!-- Qt WebChannel -->
     <script src="qrc:///qtwebchannel/qwebchannel.js"></script> 
