@@ -1,6 +1,6 @@
 /*
 ===========================================================
-TPF2 MAP STUDIO
+TPF3 MAP STUDIO
 GeometryEditor V2.4
 -----------------------------------------------------------
 Author : ChatGPT + <dein Projekt>
