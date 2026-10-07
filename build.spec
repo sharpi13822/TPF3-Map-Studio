@@ -27,6 +27,8 @@ block_cipher = None
 datas = [
     ("src/map/web", "src/map/web"),
     ("src/icons", "src/icons"),
+    # Symbole und Bedienelemente des Studio-Designs (src/gui/icon_set.py, src/gui/theme.py)
+    ("src/gui/icons", "src/gui/icons"),
 ]
 
 # PySide6s eigene QtWebEngine-Ressourcen (icudtl.dat, resources.pak,
