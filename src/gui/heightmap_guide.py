@@ -50,7 +50,13 @@ und lässt sich abbrechen, bereits geladene Kacheln werden beim nächsten Mal ü
 die Kacheln selbst bei einem Landesportal heruntergeladen hat, wählt <b>DGM1 aus eigenen
 GeoTIFF-Kacheln</b> und den Ordner (die Kacheln müssen auf dem 1-km-Raster liegen). Wo DGM1-Daten
 fehlen, ergänzt das Studio aus Copernicus. Die Schnellvorschau nutzt immer Copernicus.
-<i>DGM1 ist im Spiel noch nicht getestet.</i></li>
+<i>DGM1 ist am Rhein (Bingen bis Koblenz, Größenwahnsinnig 1:5) im Spiel getestet.</i>
+<br>Für Karten in der <b>Schweiz</b> oder in Liechtenstein gibt es <b>swissALTI3D Schweiz</b>
+(Geländemodell von swisstopo mit 2 m Auflösung). Die Auswahl erscheint nur, wenn der Kartenmittelpunkt
+dort liegt. Die Kacheln kommen von data.geo.admin.ch, ein Fenster zeigt den Fortschritt und lässt
+sich abbrechen, geladene Kacheln liegen im Zwischenspeicher. Wo Daten fehlen, ergänzt das Studio aus
+Copernicus. Die Voreinstellung „Empfohlen“ behandelt swissALTI3D wie DGM1.
+<i>swissALTI3D ist im Spiel noch nicht getestet.</i></li>
 </ol>
 
 <h4>Einstellungen</h4>
@@ -69,12 +75,13 @@ Bei Flüssen mit Gefälle (zum Beispiel Rhein) ist das ein Kompromiss. Der Knopf
 tiefstem und höchstem Punkt des Hauptflusses und passt die Grenze „Nur Gewässer bis“
 an (braucht OSM-Daten).</li>
 <li><b>Gelände glätten</b> anhaken, Standard 15 m. Entfernt die Treppenstufen an den Hängen
-(das Höhenmodell hat nur 30 m pro Pixel, das Spiel 4 m).</li>
-<li><b>Trassen und Siedlungen einebnen</b> anhaken, Standard 60 m. Bahnstrecken, größere
+(das Höhenmodell hat nur 30 m pro Pixel, das Spiel 4 m). Bei DGM1 ist Glätten meist nicht
+nötig, das Modell ist schon genau, die Voreinstellung „Empfohlen“ lässt es dort aus.</li>
+<li><b>Trassen und Siedlungen einebnen</b> anhaken, Standard 60 m (bei „Empfohlen“ mit DGM1: 10 m). Bahnstrecken, größere
 Straßen und Gebäude werden abgeflacht, damit im Spiel weniger Rampen nötig sind. Braucht
 OSM-Daten. <i>Ob es beim Bauen spürbar hilft, ist noch nicht im Spiel geprüft.</i></li>
 <li><b>Wasser nur dort, wo OpenStreetMap Wasser hat</b> anhaken (empfohlen). Verhindert
-überflutete Auen und Tümpel. Standardwerte: Böschung 60 m (breiter = flacheres Ufer), Tiefe
+überflutete Auen und Tümpel. Standardwerte: Böschung 60 m (bei „Empfohlen“ mit DGM1: 10 m; breiter = flacheres Ufer), Tiefe
 am Ufer 2 m, Tiefe in der Mitte 8 m (Fahrrinne), Ufer über Wasser 2 m, nur Gewässer bis
 15 m über Wasserspiegel (höher gelegene Bäche und Bergseen bleiben unverändert). Die Option
 „Terrain sanft ans Wasserniveau anpassen“ schaltet sich dabei ab, beide zusammen gehen
@@ -83,8 +90,12 @@ nicht.</li>
 Höhe über dem Wasser (Fels ab etwa 325-350 m, Schnee ab etwa 375-425 m). Die höchste Stelle landet auf
 diesem Anteil, der untere Teil des Geländes bleibt unverändert. Beim Rhein hat 45 % funktioniert.
 Standard 100 % = unverändert.</li>
-<li><b>Gefälle ausgleichen</b> nur bei Bedarf und mit Vorsicht: Es verschiebt alle Höhen.
-Bezug 30 m, Glättung 1000 m. Die Zahlen für das Spiel ändern sich dabei stark.</li>
+<li><b>Gefälle ausgleichen</b> für lange Flüsse mit starkem Gefälle (zum Beispiel der Rhein von
+Koblenz bis Bingen, rund 18 m). Es legt Flüsse und Seen auf eine gemeinsame Ebene und verschiebt
+dabei alle Höhen: Die Zahlen für das Spiel ändern sich stark, die absoluten Höhen über NN stimmen
+danach nicht mehr. Standard: Stärke 100 %, Glättung 400 m, Bezug: Gewässer bis 30 m über dem
+Wasserspiegel. Im Test am Rhein (Bingen bis Koblenz, DGM1, Größenwahnsinnig 1:5, Wasserhöhe 70 m)
+waren im Spiel beide Enden des Flusses gefüllt.</li>
 </ol>
 
 <h4>Kontrolle und Export</h4>
@@ -121,11 +132,30 @@ Studio-Text, <b>Assets behalten: Nein</b>.</li>
 
 <h4>Optional: Bäume (Reiter Biome)</h4>
 <ol start="21">
-<li>Die Biome-Maske bestimmt die Baumverteilung. Eine einheitliche Maske reicht zum Test
+<li>Die Biome-Maske bestimmt die Baumverteilung. Das Studio kann sie aus der OSM-Landnutzung
+erzeugen: im Heightmap-Dialog <b>Biome-Maske aus OSM…</b> (braucht geladene OSM-Daten). Die Datei
+muss im Ordner <tt>biomes</tt> liegen, damit der Biome-Reiter sie findet. Eine einheitliche Maske
+reicht zum Test
 (Graustufe 77 = Biom 1, 128 = Biom 2, 179 = Biom 3, jeweils eine Datei im Ordner
 <tt>biomes</tt>). Bei <b>Biome</b> die Datei wählen, <b>Berge</b> und <b>Flüsse</b> leer
 lassen, <b>Anwenden</b>. Im Test erzeugt die Flüsse-Maske keinen Fluss, und die Berge-Maske
 entfernt keine weißen Flächen.</li>
+</ol>
+
+<h4>Optional: Städte und Industrien</h4>
+<ol start="22">
+<li>Im Heightmap-Dialog <b>Städte aus OSM…</b> und <b>Industrien aus OSM…</b> (brauchen geladene
+OSM-Daten). Sie erzeugen Dateien für den Ordner <tt>towns_industries</tt>, die der Editor von
+TPF3 importieren kann. Bei den Städten stellst du die Größe per Faktor und die Auswahl je Ort ein.
+Bei den Industrien werden Hang, Wasser und Kartenrand geprüft.</li>
+</ol>
+
+<h4>Optional: Bahnhöfe als Nachschlagewerk</h4>
+<ol start="23">
+<li><b>Bahnhöfe aus OSM…</b> speichert <tt>bahnhoefe.json</tt> (alles) und <tt>bahnhoefe.csv</tt>
+(eine Zeile je Bahnhof) mit Bahnsteigen, Haltepositionen und Status. Die Koordinaten sind Meter ab
+Kartenmitte. Im Spiel wird dadurch nichts gebaut und der Editor importiert die Dateien nicht. Sie
+helfen beim eigenen Bauen. Nach <b>OSM laden</b> zeigt die Karte die Bahnhöfe auch als Marker.</li>
 </ol>
 
 <h3>Teil C: Wenn etwas nicht stimmt</h3>
@@ -136,7 +166,8 @@ und flutet die Aue. <b>Wasser nur dort, wo OpenStreetMap Wasser hat</b> anhaken.
 <tr><td>Der Fluss fällt stellenweise trocken</td><td>Wasserhöhe im Studio etwas erhöhen, die
 Zahlen für das Spiel neu ablesen.</td></tr>
 <tr><td>Der Fluss bleibt im oberen Teil trocken (starkes Gefälle, zum Beispiel Koblenz–Bingen
-mit rund 18 m)</td><td>Bei „Wasser nur dort, wo OpenStreetMap Wasser hat“ die Grenze
+mit rund 18 m)</td><td>Zuerst <b>Gefälle ausgleichen</b> anhaken (Schritt 11), das hat am Rhein geholfen. Alternativ
+bei „Wasser nur dort, wo OpenStreetMap Wasser hat“ die Grenze
 <b>„Nur Gewässer bis … m über Wasserspiegel“</b> auf 25 bis 30 m erhöhen. Zusätzlich die
 Wasserhöhe in die Mitte zwischen tiefstem und höchstem Flussabschnitt legen (dort etwa
 68 m), dann werden beide Enden um etwa gleich viel korrigiert. <i>Im Spiel noch nicht
@@ -177,6 +208,8 @@ ESA.</li>
 (zum Beispiel © GeoBasis-DE / LVermGeoRP), Datenlizenz Deutschland – Namensnennung –
 Version 2.0 beziehungsweise CC BY 4.0, je nach Land. Der genaue Vermerk steht nach dem Laden
 im Heightmap-Dialog unter der Höhenquelle. Bereitgestellt über hoehendaten.de.</li>
+<li>Höhen bei Quelle swissALTI3D: © swisstopo (Bundesamt für Landestopografie swisstopo),
+swissALTI3D. Die Quellenangabe ist nach den Nutzungsbedingungen von swisstopo Pflicht.</li>
 <li>Karten- und Gewässerdaten: © OpenStreetMap-Mitwirkende.</li>
 <li>Relief-Hintergrund im Studio: AWS Terrain Tiles (Mapzen/Tilezen).</li>
 </ul>

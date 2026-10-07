@@ -23,6 +23,7 @@ ACTION_ICONS = (
     ("json export", "json_export"),
     ("json import", "json_import"),
     ("öffnen", "oeffnen"),
+    ("projekt schließen", "schliessen"),
     ("speichern", "speichern"),
     ("beenden", "beenden"),
     ("rückgängig", "rueckgaengig"),

@@ -37,8 +37,9 @@ class PreflightCheckDialog(QDialog):
 
         layout.addWidget(
             QLabel(
-                "Prüfung des aktuell geladenen OSM-Kartenausschnitts, "
-                "bevor der grosse Import-Lauf gestartet wird:"
+                "Prüfung der aktuell geladenen OSM-Daten, bevor du "
+                "Heightmap, Städte, Industrien und weitere Dateien "
+                "erzeugst:"
             )
         )
 

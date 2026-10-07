@@ -25,17 +25,31 @@ from src.heightmap.dgm1_dem import MIN_REQUEST_INTERVAL_S, Dgm1FetchJob
 class Dgm1FetchDialog(QDialog):
     """Laedt die fehlenden DGM1-Kacheln und zeigt Fortschritt und Abbruch-Knopf."""
 
-    def __init__(self, parent, selection, cache_dir: Path):
+    def __init__(
+        self,
+        parent,
+        selection,
+        cache_dir: Path,
+        job=None,
+        title: str = "DGM1-Kacheln laden",
+        note: str | None = None,
+        seconds_per_tile: float = MIN_REQUEST_INTERVAL_S,
+    ):
+        """Ohne job laedt das Fenster DGM1-Kacheln. Fuer andere Quellen (swissALTI3D) wird ein
+        Auftrag mit derselben Schnittstelle uebergeben (done, total, text, finished, error,
+        summary, start, cancel), dazu Titel, Hinweistext und die geschaetzte Zeit je Kachel."""
 
         super().__init__(parent)
 
-        self.setWindowTitle("DGM1-Kacheln laden")
+        self.setWindowTitle(title)
         self.setMinimumWidth(460)
 
         self.error = None
         self.summary = None
 
-        self._job = Dgm1FetchJob(selection, cache_dir)
+        self._seconds_per_tile = seconds_per_tile
+
+        self._job = job if job is not None else Dgm1FetchJob(selection, cache_dir)
 
         layout = QVBoxLayout(self)
 
@@ -47,9 +61,13 @@ class Dgm1FetchDialog(QDialog):
         layout.addWidget(self.bar)
 
         self.note = QLabel(
-            "Der Dienst hoehendaten.de erlaubt etwa 20 Kacheln pro Minute. "
-            "Bereits geladene Kacheln werden übersprungen. Du kannst jederzeit "
-            "abbrechen und später weitermachen."
+            note
+            if note is not None
+            else (
+                "Der Dienst hoehendaten.de erlaubt etwa 20 Kacheln pro Minute. "
+                "Bereits geladene Kacheln werden übersprungen. Du kannst jederzeit "
+                "abbrechen und später weitermachen."
+            )
         )
         self.note.setWordWrap(True)
         layout.addWidget(self.note)
@@ -105,7 +123,7 @@ class Dgm1FetchDialog(QDialog):
 
         if job.total > 0:
             self.bar.setValue(int(job.done * 100 / job.total))
-            remaining_min = (job.total - job.done) * MIN_REQUEST_INTERVAL_S / 60.0
+            remaining_min = (job.total - job.done) * self._seconds_per_tile / 60.0
             self.label.setText(
                 f"{job.text}  (höchstens noch etwa {remaining_min:.0f} Min.)"
             )

@@ -130,5 +130,47 @@ class HeightmapDialogDocumentedTest(unittest.TestCase):
             self.assertIn(word, overview, word)
 
 
+class HeightmapGuideTest(unittest.TestCase):
+
+    @unittest.skipUnless((ROOT / "src" / "gui" / "heightmap_guide.py").exists(), "heightmap_guide.py fehlt")
+    def test_guide_is_current(self):
+        guide = _assigned(_read("src", "gui", "heightmap_guide.py"), "GUIDE_HTML")
+        self.assertNotIn("Satellit", guide)
+        self.assertIn("Karte + Relief", guide)
+        self.assertNotIn("Glättung 1000 m", guide)
+        self.assertIn("Glättung 400 m", guide)
+        for button in ("Biome-Maske aus OSM", "Städte aus OSM", "Industrien aus OSM", "Bahnhöfe aus OSM"):
+            self.assertIn(button, guide, button)
+
+    def test_overview_covers_menus_and_rectangle_fields(self):
+        groups = _assigned(_read("src", "gui", "feature_overview_dialog.py"), "FEATURE_GROUPS")
+        text = " ".join(f"{menu} {name} {desc}" for menu, features in groups for name, desc in features)
+        for word in ("Ansicht-Menü", "Neu und Projekt schließen", "Speichern und Speichern unter", "Marker und Auswahl", "Sicherheitsrand", "Drehwinkel",
+                     "heightmaps-Ordner", "ergänzt das Studio aus Copernicus"):
+            self.assertIn(word, text, word)
+
+
+class SwissSourceDocumentedTest(unittest.TestCase):
+
+    def test_attribution_is_everywhere_it_matters(self):
+        guide = _assigned(_read("src", "gui", "heightmap_guide.py"), "GUIDE_HTML") if (ROOT / "src" / "gui" / "heightmap_guide.py").exists() else ""
+        notices = _read("THIRD_PARTY_NOTICES.md")
+        readme = _read("README.md")
+        self.assertIn("swissALTI3D", guide)
+        self.assertIn("Bundesamt für Landestopografie swisstopo", guide)
+        self.assertIn("Quellenangabe ist Pflicht", notices)
+        self.assertIn("https://www.swisstopo.admin.ch/en/terms-of-use-free-geodata-and-geoservices", notices)
+        self.assertIn("swissALTI3D", readme)
+        self.assertIn("Bundesamt für Landestopografie swisstopo", readme)
+
+    def test_overview_names_the_swiss_source(self):
+        groups = _assigned(_read("src", "gui", "feature_overview_dialog.py"), "FEATURE_GROUPS")
+        text = " ".join(f"{name} {desc}" for _menu, features in groups for name, desc in features)
+        self.assertIn("swissALTI3D Schweiz", text)
+
+    def test_license_file_stays_mit(self):
+        self.assertIn("MIT License", _read("LICENSE"))
+
+
 if __name__ == "__main__":
     unittest.main()

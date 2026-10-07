@@ -1,5 +1,5 @@
 """
-Vorab-Pruefung vor dem grossen TPF2-Import-Lauf.
+Vorab-Pruefung der geladenen OSM-Daten.
 
 Zwei Arten von Ergebnissen, bewusst getrennt:
 
@@ -73,7 +73,7 @@ def run_preflight_check(
 ) -> list[CheckResult]:
     """
     Prueft das aktuell geladene OSM-Projekt auf offensichtliche
-    Auffaelligkeiten, BEVOR der grosse Import-Lauf in TPF2 gestartet wird.
+    Auffaelligkeiten, bevor weitere Dateien erzeugt werden.
     """
 
     results: list[CheckResult] = []

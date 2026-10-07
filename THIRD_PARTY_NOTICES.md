@@ -18,6 +18,13 @@ Das Studio selbst steht unter der MIT-Lizenz (siehe [LICENSE](LICENSE)). Es nutz
 - Der Zugang erfolgt über <https://hoehendaten.de>. Die Höhendaten werden nicht mit dem Studio ausgeliefert, sondern beim Download bezogen.
 - Wer eine daraus erzeugte Karte veröffentlicht, nennt die angezeigte Quelle.
 
+### swissALTI3D (Schweiz und Liechtenstein)
+
+- Geländemodell von swisstopo, im Studio mit 2 m Auflösung genutzt. Die Kacheln werden beim Laden von <https://data.geo.admin.ch> bezogen und nicht mit dem Studio ausgeliefert.
+- Nutzungsbedingungen: Open Government Data (OGD) von swisstopo, <https://www.swisstopo.admin.ch/en/terms-of-use-free-geodata-and-geoservices>. Die Daten dürfen genutzt, verbreitet, bearbeitet und auch kommerziell verwendet werden. **Die Quellenangabe ist Pflicht**, zum Beispiel „©swisstopo“ oder „Bundesamt für Landestopografie swisstopo“.
+- Wer eine daraus erzeugte Karte veröffentlicht, nennt die Quelle. Das Studio zeigt sie im Heightmap-Dialog an: „© swisstopo (Bundesamt für Landestopografie swisstopo), swissALTI3D“.
+- Bei übermäßiger Nutzung kann swisstopo den Zugriff einschränken. Das Studio lädt nur die nötigen Kacheln, mit kurzer Pause dazwischen, und legt sie im Zwischenspeicher ab.
+
 ### Copernicus DEM (GLO-30)
 
 - Weltweites Höhenmodell mit etwa 30 m Auflösung, bezogen über <https://copernicus-dem-30m.s3.amazonaws.com/>

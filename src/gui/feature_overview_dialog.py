@@ -16,26 +16,47 @@ FEATURE_GROUPS = (
         "Datei-Menü",
         (
             (
+                "Neu und Projekt schließen",
+                "Beide beginnen ein neues, leeres Projekt: Marker, Rechteck, "
+                "OSM-Daten, eigene Objekte und die Rückgängig-Liste werden "
+                "geleert, die Ebenen sind wieder ausgeblendet. Bei "
+                "ungespeicherten Änderungen fragt das Studio vorher nach "
+                "dem Speichern. Läuft gerade ein OSM-Download, geht es "
+                "erst danach.",
+            ),
+            (
+                "Öffnen",
+                "Lädt ein gespeichertes Projekt (.tpf2ms) mit Projektname, "
+                "Rechteck-Tool-Auswahl (inkl. Drehung), geladenen Layern "
+                "und Heightmap-Export-Status. Beim erneuten Öffnen des "
+                "Rechteck-Tools werden Mittelpunkt, Größe und Drehwinkel "
+                "automatisch aus dem geladenen Projekt vorbelegt.",
+            ),
+            (
+                "Speichern und Speichern unter...",
+                "Speichern schreibt in die Datei, die du zuletzt geöffnet "
+                "oder gespeichert hast. Gibt es noch keine, fragt es nach "
+                "dem Namen. 'Speichern unter...' fragt immer nach dem "
+                "Namen. Beim Beenden fragt das Studio bei ungespeicherten "
+                "Änderungen nach.",
+            ),
+            (
+                "Projekt-Dashboard...",
+                "Übersicht aller gespeicherten .tpf2ms-Projekte in einem "
+                "gewählten Ordner (der Ordner wird gemerkt): Auswahl, ob "
+                "OSM-Daten geladen sind, ob bereits eine Heightmap "
+                "exportiert wurde, letztes Änderungsdatum. Doppelklick "
+                "öffnet das Projekt direkt.",
+            ),
+            (
                 "Projekteigenschaften...",
                 "Projektname setzen/ändern (z.B. 'Rheintal', 'Nürnberg-"
                 "Korridor'). Wird mit gespeichert und erscheint im "
                 "Fenstertitel sowie im Projekt-Dashboard.",
             ),
             (
-                "Projekt-Dashboard...",
-                "Übersicht aller gespeicherten .tpf2ms-Projekte in einem "
-                "gewählten Ordner: Auswahlgröße/-drehung, ob OSM-Daten "
-                "geladen sind, ob bereits eine Heightmap exportiert wurde, "
-                "letztes Änderungsdatum. Doppelklick öffnet das Projekt "
-                "direkt.",
-            ),
-            (
-                "Speichern / Öffnen",
-                "Speichert bzw. lädt Projektname, Rechteck-Tool-Auswahl "
-                "(inkl. Drehung), geladene Layer und Heightmap-Export-"
-                "Status. Beim erneuten Öffnen des Rechteck-Tools werden "
-                "Mittelpunkt, Größe und Drehwinkel automatisch aus dem "
-                "geladenen Projekt vorbelegt.",
+                "Beenden",
+                "Schließt das Studio.",
             ),
         ),
     ),
@@ -50,8 +71,25 @@ FEATURE_GROUPS = (
         ),
     ),
     (
+        "Ansicht-Menü",
+        (
+            (
+                "Docks ein- und ausblenden",
+                "Blendet die Bereiche Projekt, Layer und Eigenschaften ein "
+                "oder aus.",
+            ),
+        ),
+    ),
+    (
         "Werkzeuge-Menü",
         (
+            (
+                "Marker und Auswahl",
+                "Marker setzen: ein Klick auf die Karte setzt einen Marker, "
+                "der den Mittelpunkt für das Rechteck-Tool liefert. "
+                "Auswahl: einen Bereich auf der Karte auswählen (zwei "
+                "Ecken).",
+            ),
             (
                 "Koordinaten-Messwerkzeug",
                 "Zwei Punkte auf der Karte anklicken: erster Klick zeigt "
@@ -60,12 +98,15 @@ FEATURE_GROUPS = (
             ),
             (
                 "Rechteck-Tool",
-                "Legt den Kartenausschnitt fest: Mittelpunkt (aus einem "
-                "ausgewählten Marker), Kartengröße im Format des Spiels und "
-                "Drehwinkel. Das Rechteck lässt sich auf der Karte "
-                "verschieben (blauer Punkt) und drehen (oranger Punkt). Beim "
-                "erneuten Öffnen füllt es sich mit den Werten der aktuellen "
-                "Projekt-Auswahl vor.",
+                "Legt ein gedrehtes Kartenband an (Mittelpunkt, Größe, "
+                "Drehwinkel). Im Dialog stellst du Breite und Länge des "
+                "Mittelpunkts, die Kartengröße im Format des Spiels (der "
+                "Dialog zeigt Kilometer und Pixel), den Drehwinkel und den "
+                "Sicherheitsrand für Downloads ein (Standard 500 m, ein "
+                "zusätzlicher Rand um das Rechteck). Das Rechteck lässt sich "
+                "auf der Karte verschieben (blauer Punkt) und drehen "
+                "(oranger Punkt). Beim erneuten Öffnen füllt es sich mit "
+                "den Werten der aktuellen Projekt-Auswahl vor.",
             ),
             (
                 "OSM laden",
@@ -97,8 +138,8 @@ FEATURE_GROUPS = (
             ),
             (
                 "Vorab-Prüfung...",
-                "Ampel-Checks für das geladene OSM-Projekt vor dem großen "
-                "Import-Lauf: strukturelle Plausibilität (z.B. Knoten/Wege-"
+                "Ampel-Checks für die geladenen OSM-Daten, bevor du "
+                "weiterarbeitest: strukturelle Plausibilität (z.B. Knoten/Wege-"
                 "Verhältnis), 0-Treffer trotz aktivierter Kategorie, "
                 "besondere Prüfung für 'Orte' (0 Städte bei aktivierter "
                 "Kategorie = Fehler). Dichte-Kennzahlen (Straßen/Gebäude/"
@@ -124,7 +165,12 @@ FEATURE_GROUPS = (
                 "geladen (etwa 20 Kacheln pro Minute, danach liegen sie im "
                 "Zwischenspeicher), die Quellenangabe zeigt der Dialog an. "
                 "Eigene Kacheln: GeoTIFF-Dateien (1-km-Raster), die du "
-                "selbst bei einem Landesportal heruntergeladen hast.",
+                "selbst bei einem Landesportal heruntergeladen hast. "
+                "swissALTI3D Schweiz: Geländemodell von swisstopo für die "
+                "Schweiz und Liechtenstein (2 m), die Kacheln kommen von "
+                "data.geo.admin.ch. Die Auswahl erscheint nur bei Karten "
+                "dort. Wo DGM1- oder swissALTI3D-Daten fehlen, ergänzt das "
+                "Studio aus Copernicus.",
             ),
             (
                 "Schnellvorschau",
@@ -137,7 +183,7 @@ FEATURE_GROUPS = (
                 "Voreinstellung",
                 "Original: alle Optionen aus, die echten Höhen. Empfohlen: "
                 "hängt von der Höhenquelle ab (bei Copernicus Glätten, "
-                "Einebnen und Wasser nach OSM, bei DGM1 ohne Glätten, "
+                "Einebnen und Wasser nach OSM, bei DGM1 und swissALTI3D ohne Glätten, "
                 "Einebnen 10 m und Wasser nach OSM mit Böschung 10 m). "
                 "Optionen, die OSM-Daten brauchen, bleiben ohne geladene "
                 "OSM-Daten aus. Eigene Einstellungen entstehen, sobald du "
@@ -206,7 +252,8 @@ FEATURE_GROUPS = (
             ),
             (
                 "Exportieren...",
-                "Speichert die fertige Heightmap als 16-Bit-PNG. Die "
+                "Speichert die fertige Heightmap als 16-Bit-PNG und "
+                "schlägt dafür den heightmaps-Ordner von TPF3 vor. Die "
                 "Anleitung im Dialog öffnet mit F1.",
             ),
             (

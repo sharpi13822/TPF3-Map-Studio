@@ -21,7 +21,9 @@ from PySide6.QtWidgets import (
 )
 
 from src.features import VACUUMTUBE_IMPORTER
+from src.core.project.project import Project
 from src.map.layer import Layer
+from src.undo.undo_stack import UndoStack
 from src.heightmap.station_markers import station_marker_data
 from src.heightmap.station_export import collect_stations
 from src.gui.actions import AppActions
@@ -130,6 +132,10 @@ class MainWindow(QMainWindow):
     Hauptfenster von TPF3-Map-Studio.
     """
 
+    # Pfad der aktuell geoeffneten oder zuletzt gespeicherten Projektdatei
+    # (None = noch nicht gespeichert). "Speichern" schreibt dorthin.
+    _project_file = None
+
     def __init__(self):
         super().__init__()
 
@@ -225,6 +231,18 @@ class MainWindow(QMainWindow):
 
         self.actions.open_project.triggered.connect(
             self._open_project
+        )
+
+        self.actions.new_project.triggered.connect(
+            self._new_project
+        )
+
+        self.actions.save_project_as.triggered.connect(
+            self._save_project_as
+        )
+
+        self.actions.close_project.triggered.connect(
+            self._close_project
         )
 
         self.actions.rectangle_tool.triggered.connect(
@@ -335,14 +353,31 @@ class MainWindow(QMainWindow):
     # ---------------------------------------------------------
 
     def _save_project(self):
+        """
+        Speichert in die aktuelle Projektdatei. Gibt es noch keine,
+        fragt der Dialog wie bei "Speichern unter..." nach dem Namen.
+        """
+
+        if self._project_file:
+
+            self._save_project_to(self._project_file)
+
+            return
+
+        self._save_project_as()
+
+    def _save_project_as(self):
+        """
+        Fragt immer nach dem Dateinamen.
+        """
 
         filename, _ = QFileDialog.getSaveFileName(
 
             self,
 
-            "Projekt speichern",
+            "Projekt speichern unter",
 
-            "",
+            self._project_file or "",
 
             "TPF3-Map-Studio (*.tpf2ms)"
 
@@ -350,6 +385,10 @@ class MainWindow(QMainWindow):
 
         if not filename:
             return
+
+        self._save_project_to(filename)
+
+    def _save_project_to(self, filename: str):
 
         try:
 
@@ -370,6 +409,8 @@ class MainWindow(QMainWindow):
             )
 
             return
+
+        self._project_file = filename
 
         self.statusBar().showMessage(
             "Projekt gespeichert."
@@ -433,9 +474,142 @@ class MainWindow(QMainWindow):
 
         self._sync_layers_to_map()
 
+        self._project_file = filename
+
         self.statusBar().showMessage(
             "Projekt geladen."
         )
+
+        self._update_window_title()
+
+    # ---------------------------------------------------------
+    # Neues Projekt / Projekt schliessen
+    # ---------------------------------------------------------
+
+    def _confirm_discard_changes(self) -> bool:
+        """
+        Fragt bei ungespeicherten Aenderungen nach. True = weitermachen.
+        """
+
+        project = self.map_widget.controller.project
+
+        if not project.dirty:
+            return True
+
+        result = QMessageBox.question(
+
+            self,
+
+            "Projekt speichern",
+
+            "Das Projekt wurde geändert.\n\n"
+            "Vorher speichern?",
+
+            QMessageBox.Yes
+            | QMessageBox.No
+            | QMessageBox.Cancel,
+
+            QMessageBox.Yes
+
+        )
+
+        if result == QMessageBox.Cancel:
+            return False
+
+        if result == QMessageBox.Yes:
+
+            self._save_project()
+
+            if project.dirty:
+                return False
+
+        return True
+
+    def _new_project(self):
+        """
+        Beginnt ein neues, leeres Projekt (fragt vorher nach dem Speichern).
+        """
+
+        if self._osm_worker is not None and self._osm_worker.isRunning():
+
+            QMessageBox.information(
+                self,
+                "OSM-Download läuft",
+                "Bitte warten, bis der OSM-Download fertig ist."
+            )
+
+            return
+
+        if not self._confirm_discard_changes():
+            return
+
+        self._reset_project()
+
+        self.statusBar().showMessage(
+            "Neues Projekt."
+        )
+
+    def _close_project(self):
+        """
+        Schliesst das aktuelle Projekt. Das Studio hat nur ein Fenster,
+        danach ist ein leeres Projekt geoeffnet (wie bei "Neu").
+        """
+
+        self._new_project()
+
+    def _reset_project(self):
+        """
+        Setzt Projekt, Karte, Ebenen und Rueckgaengig-Liste auf einen
+        leeren Zustand zurueck.
+        """
+
+        controller = self.map_widget.controller
+
+        controller.project = Project()
+
+        controller.selected_marker = None
+
+        controller._next_marker_id = 1
+
+        controller.undo_stack = UndoStack()
+
+        controller.undo_stack.stack_changed.connect(
+            self._update_undo_actions
+        )
+
+        controller.set_tool(Tool.MARKER)
+
+        self.actions.marker_tool.setChecked(True)
+
+        # Ebenen wieder wie beim Start: ausgeblendet, entsperrt, voll sichtbar.
+        for layer in Layer:
+
+            controller.layer_manager.set_visible(layer, False)
+            controller.layer_manager.set_locked(layer, False)
+            controller.layer_manager.set_opacity(layer, 1.0)
+
+        # Alles von der Karte nehmen (OSM-Ebenen, eigene Objekte, Marker,
+        # Rechteck, Messlinie, Bahnhoefe).
+        self._run_js(
+            "["
+            "'clearMarkers','clearPolylines','clearRectangle','clearMeasureLine',"
+            "'clearStations','clearRoads','clearRailways','clearBuildings',"
+            "'clearWater','clearWaterways','clearParks','clearLanduse',"
+            "'clearVegetation'"
+            "].forEach(name => { try { window.MapApi[name](); } "
+            "catch (error) { console.warn(name, error); } });"
+        )
+
+        if self.layer_panel is not None:
+            self.layer_panel.sync_from_state()
+
+        self._sync_layers_to_map()
+
+        self.refresh_project_list()
+
+        self._update_undo_actions()
+
+        self._project_file = None
 
         self._update_window_title()
 
@@ -526,6 +700,14 @@ class MainWindow(QMainWindow):
 
         file_menu.addAction(
             self.actions.save_project
+        )
+
+        file_menu.addAction(
+            self.actions.save_project_as
+        )
+
+        file_menu.addAction(
+            self.actions.close_project
         )
 
         file_menu.addSeparator()

@@ -24,8 +24,10 @@ class AppActions:
             icon("save")
                 
         )
-        self.save_project_as = QAction("Speichern unter...",parent)
+        self.save_project_as = QAction("Speichern unter...", parent)
+        self.save_project_as.setToolTip("Projekt unter neuem Namen speichern")
         self.close_project = QAction("Projekt schließen", parent)
+        self.close_project.setToolTip("Aktuelles Projekt schließen und mit einem leeren Projekt weiterarbeiten")
 
         # Bearbeiten
         self.undo = QAction("Rückgängig", parent)
@@ -68,6 +70,3 @@ class AppActions:
 
         self.exit = QAction("Beenden", parent)
         self.exit.triggered.connect(parent.close)
-
-        # Test
-        self.test_marker = QAction("Testmarker", parent)

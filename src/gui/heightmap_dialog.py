@@ -31,12 +31,15 @@ from src.heightmap.heightmap_exporter import (
     SOURCE_COPERNICUS,
     SOURCE_DGM1_DE,
     SOURCE_DGM1_FOLDER,
+    SOURCE_SWISSALTI3D,
     build_heightmap_array,
     build_heightmap_array_ex,
     build_heightmap_array_preview,
     export_heightmap_png,
     pixel_size_for_selection,
 )
+from src.heightmap.lv95 import SWISS_BOUNDS
+from src.heightmap.swissalti3d_dem import SwissFetchJob
 from src.heightmap.tpf3_paths import find_tpf3_heightmaps_folder
 from src.heightmap.infrastructure_flatten import (
     build_infrastructure_mask,
@@ -60,6 +63,7 @@ from src.heightmap.water_slope_compensation import (
 
 DEFAULT_CACHE_DIR = Path.home() / ".tpf2_map_studio" / "dem_cache"
 DEFAULT_DGM1_CACHE_DIR = Path.home() / ".tpf2_map_studio" / "dgm1_cache"
+DEFAULT_SWISS_CACHE_DIR = Path.home() / ".tpf2_map_studio" / "swissalti3d_cache"
 # Grober Umriss Deutschlands (Breite von/bis, Laenge von/bis): nur dafuer, die
 # DGM1-Auswahl nur bei Karten in Deutschland anzubieten.
 GERMANY_BOUNDS = (47.2, 55.1, 5.8, 15.1)
@@ -159,6 +163,7 @@ class HeightmapDialog(QDialog):
             "Copernicus (weltweit, 30 m)",
             "DGM1 Deutschland (1 m, über hoehendaten.de)",
             "DGM1 aus eigenen GeoTIFF-Kacheln (Ordner)",
+            "swissALTI3D Schweiz (2 m, über data.geo.admin.ch)",
         ])
         self.source_combo.setToolTip(
             "Copernicus: weltweit, aber nur 30 m fein und mit Baumkronen. "
@@ -166,7 +171,10 @@ class HeightmapDialog(QDialog):
             "werden über den Webdienst hoehendaten.de geladen (etwa 20 Kacheln "
             "pro Minute, danach liegen sie im Zwischenspeicher). Eigene Kacheln: "
             "GeoTIFF-Dateien (1-km-Raster), die du selbst bei einem Landesportal "
-            "heruntergeladen hast."
+            "heruntergeladen hast. swissALTI3D Schweiz: Geländemodell von swisstopo "
+            "für die Schweiz und Liechtenstein (2 m), die Kacheln werden von "
+            "data.geo.admin.ch geladen und liegen danach im Zwischenspeicher. "
+            "Nur bei Karten in der Schweiz wählbar."
         )
         self.source_combo.currentIndexChanged.connect(
             self._on_source_changed
@@ -223,7 +231,8 @@ class HeightmapDialog(QDialog):
             "Original: alle Optionen aus, die echten Höhen. Empfohlen: "
             "hängt von der Höhenquelle ab. Copernicus: Gelände glätten, "
             "Trassen und Siedlungen einebnen und Wasser nur dort, wo "
-            "OpenStreetMap Wasser hat, mit den Standardwerten. DGM1: "
+            "OpenStreetMap Wasser hat, mit den Standardwerten. DGM1 und "
+            "swissALTI3D: "
             "Glätten aus (das Modell ist schon genau), Einebnen 10 m, "
             "Wasser nach OSM mit Böschung 10 m. Optionen, die OSM-Daten "
             "brauchen, bleiben ohne geladene OSM-Daten aus."
@@ -829,10 +838,11 @@ class HeightmapDialog(QDialog):
             SOURCE_COPERNICUS,
             SOURCE_DGM1_DE,
             SOURCE_DGM1_FOLDER,
+            SOURCE_SWISSALTI3D,
         )[self.source_combo.currentIndex()]
 
     def _update_source_availability(self):
-        """DGM1 Deutschland nur anbieten, wenn der Kartenmittelpunkt in Deutschland liegt."""
+        """DGM1 Deutschland nur bei Karten in Deutschland, swissALTI3D nur bei Karten in der Schweiz anbieten."""
 
         lat, lon = self.selection.center
         lat_min, lat_max, lon_min, lon_max = GERMANY_BOUNDS
@@ -845,6 +855,19 @@ class HeightmapDialog(QDialog):
             item.setEnabled(in_germany)
 
         if not in_germany and self.source_combo.currentIndex() == 1:
+            self.source_combo.setCurrentIndex(0)
+
+        # swissALTI3D nur bei Karten in der Schweiz (und Liechtenstein)
+        s_lat_min, s_lat_max, s_lon_min, s_lon_max = SWISS_BOUNDS
+
+        in_switzerland = s_lat_min <= lat <= s_lat_max and s_lon_min <= lon <= s_lon_max
+
+        swiss_item = self.source_combo.model().item(3)
+
+        if swiss_item is not None:
+            swiss_item.setEnabled(in_switzerland)
+
+        if not in_switzerland and self.source_combo.currentIndex() == 3:
             self.source_combo.setCurrentIndex(0)
 
     def _on_source_changed(self, index: int):
@@ -891,12 +914,37 @@ class HeightmapDialog(QDialog):
             self.status_label.setText("Berechne Höhenraster...")
             self.repaint()
 
+        elif source == SOURCE_SWISSALTI3D:
+
+            fetch_dialog = Dgm1FetchDialog(
+                self,
+                self.selection,
+                DEFAULT_SWISS_CACHE_DIR,
+                job=SwissFetchJob(self.selection, DEFAULT_SWISS_CACHE_DIR),
+                title="swissALTI3D-Kacheln laden",
+                note=(
+                    "Die Kacheln kommen von data.geo.admin.ch (swisstopo). Bereits "
+                    "geladene Kacheln werden übersprungen. Du kannst jederzeit "
+                    "abbrechen und später weitermachen."
+                ),
+                seconds_per_tile=1.0,
+            )
+
+            if not fetch_dialog.run():
+                raise RuntimeError(
+                    fetch_dialog.error or "Abgebrochen."
+                )
+
+            self.status_label.setText("Berechne Höhenraster...")
+            self.repaint()
+
         array, info = build_heightmap_array_ex(
             self.selection,
             DEFAULT_CACHE_DIR,
             source,
             dgm1_cache_dir=DEFAULT_DGM1_CACHE_DIR,
             dgm1_folder=self._dgm1_folder,
+            swiss_cache_dir=DEFAULT_SWISS_CACHE_DIR,
         )
 
         self._build_info = info
@@ -910,7 +958,7 @@ class HeightmapDialog(QDialog):
         if info is None or info.source == SOURCE_COPERNICUS:
             return ""
 
-        text = " (DGM1"
+        text = " (swissALTI3D" if info.source == SOURCE_SWISSALTI3D else " (DGM1"
 
         if info.fallback_fraction > 0.0005:
             text += (
@@ -931,14 +979,19 @@ class HeightmapDialog(QDialog):
 
         lines = []
 
+        swiss = info.source == SOURCE_SWISSALTI3D
+
         if info.attributions:
             lines.append("Quelle: " + " | ".join(info.attributions))
+        elif swiss:
+            lines.append("Quelle: © swisstopo (Bundesamt für Landestopografie swisstopo), swissALTI3D")
         else:
             lines.append("Quelle: DGM1 der Landesvermessung (Quellenvermerk des Landes beachten)")
 
         if info.missing_tiles > 0:
             lines.append(
-                f"{info.missing_tiles} Kacheln ohne DGM1-Daten im Ausschnitt "
+                f"{info.missing_tiles} Kacheln ohne "
+                f"{'swissALTI3D' if swiss else 'DGM1'}-Daten im Ausschnitt "
                 f"(dort Copernicus)."
             )
 
@@ -1396,7 +1449,7 @@ class HeightmapDialog(QDialog):
         # geaendert worden sein kann)
         info = getattr(self, "_build_info", None)
         source = info.source if info is not None else self._current_source()
-        dgm1 = source in (SOURCE_DGM1_DE, SOURCE_DGM1_FOLDER)
+        dgm1 = source in (SOURCE_DGM1_DE, SOURCE_DGM1_FOLDER, SOURCE_SWISSALTI3D)
 
         wanted_on = {
             1: (),

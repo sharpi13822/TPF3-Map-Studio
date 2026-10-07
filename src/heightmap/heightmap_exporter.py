@@ -19,6 +19,7 @@ from src.map.objects.selection import Selection
 from src.tpf2.tpf2_geometry import TPF2Geometry
 from src.heightmap.copernicus_dem import DemMosaic, download_tiles_for_selection
 from src.heightmap.dgm1_dem import Dgm1Error, Dgm1Mosaic
+from src.heightmap.swissalti3d_dem import required_swiss_tiles
 
 METERS_PER_PIXEL = 4.0
 
@@ -26,6 +27,7 @@ METERS_PER_PIXEL = 4.0
 SOURCE_COPERNICUS = "copernicus"
 SOURCE_DGM1_DE = "dgm1_de"          # Kacheln ueber hoehendaten.de (Zwischenspeicher)
 SOURCE_DGM1_FOLDER = "dgm1_folder"  # selbst heruntergeladene GeoTIFF-Kacheln
+SOURCE_SWISSALTI3D = "swissalti3d"  # swissALTI3D (Schweiz), Kacheln von data.geo.admin.ch
 
 
 @dataclass
@@ -121,6 +123,7 @@ def build_heightmap_array_ex(
     source: str = SOURCE_COPERNICUS,
     dgm1_cache_dir: Path | None = None,
     dgm1_folder: Path | None = None,
+    swiss_cache_dir: Path | None = None,
 ) -> tuple[np.ndarray, HeightmapBuildInfo]:
     """
     Wie build_heightmap_array(), waehlt aber die Hoehenquelle und liefert
@@ -129,7 +132,9 @@ def build_heightmap_array_ex(
     SOURCE_DGM1_DE liest nur bereits geladene Kacheln aus dgm1_cache_dir (der
     Abruf laeuft vorher ueber dgm1_dem.fetch_tiles_for_selection bzw.
     Dgm1FetchJob); SOURCE_DGM1_FOLDER liest die GeoTIFF-Dateien aus dgm1_folder.
-    Wo DGM1-Daten fehlen, wird aus Copernicus ergaenzt.
+    SOURCE_SWISSALTI3D liest die bereits geladenen swissALTI3D-Kacheln aus swiss_cache_dir
+    (Abruf vorher ueber swissalti3d_dem.SwissFetchJob).
+    Wo DGM1- oder swissALTI3D-Daten fehlen, wird aus Copernicus ergaenzt.
     """
 
     w_px, h_px = pixel_size_for_selection(selection)
@@ -143,18 +148,32 @@ def build_heightmap_array_ex(
 
         info = HeightmapBuildInfo(source=source)
 
-    elif source in (SOURCE_DGM1_DE, SOURCE_DGM1_FOLDER):
+    elif source in (SOURCE_DGM1_DE, SOURCE_DGM1_FOLDER, SOURCE_SWISSALTI3D):
 
         if source == SOURCE_DGM1_DE:
             if dgm1_cache_dir is None:
                 raise Dgm1Error("Kein Zwischenspeicher fuer DGM1-Kacheln angegeben.")
             dgm1 = Dgm1Mosaic.from_cache(selection, dgm1_cache_dir, METERS_PER_PIXEL)
+        elif source == SOURCE_SWISSALTI3D:
+            if swiss_cache_dir is None:
+                raise Dgm1Error("Kein Zwischenspeicher fuer swissALTI3D-Kacheln angegeben.")
+            dgm1 = Dgm1Mosaic.from_cache(
+                selection,
+                swiss_cache_dir,
+                METERS_PER_PIXEL,
+                tiles=required_swiss_tiles(selection),
+            )
         else:
             if dgm1_folder is None:
                 raise Dgm1Error("Kein Ordner mit DGM1-Kacheln angegeben.")
             dgm1 = Dgm1Mosaic.from_folder(selection, dgm1_folder, METERS_PER_PIXEL)
 
         if dgm1.slot_count == 0:
+            if source == SOURCE_SWISSALTI3D:
+                raise Dgm1Error(
+                    "Keine swissALTI3D-Kacheln fuer diesen Ausschnitt gefunden. Liegt der "
+                    "Ausschnitt ausserhalb der Schweiz und Liechtensteins, bitte Copernicus waehlen."
+                )
             raise Dgm1Error(
                 "Keine DGM1-Kacheln fuer diesen Ausschnitt gefunden. Liegt der Ausschnitt "
                 "ausserhalb Deutschlands, bitte Copernicus waehlen."

@@ -32,6 +32,7 @@ import numpy as np
 import requests
 
 from src.heightmap.copernicus_dem import _bilinear
+from src.heightmap.lv95 import LV95_ZONE, latlon_to_lv95
 from src.heightmap.utm import latlon_to_utm, zone_for_lon
 
 API_URL = "https://api.hoehendaten.de:14444/v1/rawtif"
@@ -62,6 +63,15 @@ class Dgm1Cancelled(Dgm1Error):
 # ---------------------------------------------------------------------------
 
 
+def _to_grid(lat, lon, zone: int):
+    """Breite/Laenge -> Ost/Nord im Kachelraster der Zone (UTM, bei LV95_ZONE Schweizer LV95)."""
+
+    if zone == LV95_ZONE:
+        return latlon_to_lv95(lat, lon)
+
+    return latlon_to_utm(lat, lon, zone)
+
+
 def required_dgm1_tiles(
     selection,
     margin_m: float = MARGIN_M,
@@ -73,17 +83,32 @@ def required_dgm1_tiles(
     Band braeuchte sonst mehr als dreimal so viele Kacheln.
     """
 
+    return _required_tiles(selection, margin_m, step_m, latlon_to_utm, zone_for_lon)
+
+
+def _required_tiles(
+    selection,
+    margin_m: float,
+    step_m: float,
+    to_grid,
+    zone_for,
+) -> list[tuple[int, int, int]]:
+    """
+    Gemeinsame Rechnung fuer DGM1 (UTM) und swissALTI3D (LV95): to_grid(lat, lon, zone)
+    liefert Ost/Nord, zone_for(mittlere_laenge) die Kennzahl des Rasters.
+    """
+
     corners = list(selection.corners_latlon())
 
     if len(corners) != 4:
         raise Dgm1Error("Der Kartenausschnitt hat keine vier Ecken.")
 
     center_lon = float(np.mean([c[1] for c in corners]))
-    zone = zone_for_lon(center_lon)
+    zone = zone_for(center_lon)
 
     pts = []
     for lat, lon in corners:
-        e, n = latlon_to_utm(lat, lon, zone)
+        e, n = to_grid(lat, lon, zone)
         pts.append((float(e), float(n)))
 
     # Ecken im Umlaufsinn ordnen (die Reihenfolge von corners_latlon ist nicht garantiert)
@@ -499,12 +524,20 @@ def read_raster_info(path: Path) -> RasterInfo:
         n0 += px / 2.0
 
     epsg = keys.get(GEOKEY_PROJECTED_CS)
-    zone = {25832: 32, 25833: 33}.get(epsg)
+    zone = {25832: 32, 25833: 33, LV95_ZONE: LV95_ZONE}.get(epsg)
 
     if zone is None:
-        # Kein EPSG-Code im Kopf: Zone aus dem Dateinamen ("32_497_5670..."), sonst 32
-        head = Path(path).name.split("_")[0]
-        zone = int(head) if head in ("32", "33") else 32
+        # Kein EPSG-Code im Kopf: Zone aus dem Dateinamen ("32_497_5670..." oder
+        # "swissalti3d_2019_2532-1151_2_2056_5728.tif"), sonst 32
+        name = Path(path).name
+        head = name.split("_")[0]
+
+        if head in ("32", "33"):
+            zone = int(head)
+        elif head == str(LV95_ZONE) or f"_{LV95_ZONE}_" in name:
+            zone = LV95_ZONE
+        else:
+            zone = 32
 
     nodata = None
     if nodata_raw not in (None, ""):
@@ -757,13 +790,21 @@ class Dgm1Mosaic:
         return out
 
     @classmethod
-    def from_cache(cls, selection, cache_dir: Path, cell_m: float = 4.0) -> "Dgm1Mosaic":
-        """Baut das Mosaik aus bereits geladenen Kacheln (kein Netzwerk)."""
+    def from_cache(
+        cls,
+        selection,
+        cache_dir: Path,
+        cell_m: float = 4.0,
+        tiles: list[tuple[int, int, int]] | None = None,
+    ) -> "Dgm1Mosaic":
+        """Baut das Mosaik aus bereits geladenen Kacheln (kein Netzwerk). Ohne tiles gilt
+        das UTM-Raster (DGM1 Deutschland), fuer die Schweiz kommt die LV95-Liste von
+        swissalti3d_dem.required_swiss_tiles."""
 
         slots: list[Slot] = []
         missing = 0
 
-        for zone, ie, inn in required_dgm1_tiles(selection):
+        for zone, ie, inn in (tiles if tiles is not None else required_dgm1_tiles(selection)):
             files = cached_files_for_slot(cache_dir, zone, ie, inn)
             if not files:
                 missing += 1
@@ -819,7 +860,7 @@ class Dgm1Mosaic:
             if todo.size == 0:
                 break
 
-            e, n = latlon_to_utm(flat_lat[todo], flat_lon[todo], zone)
+            e, n = _to_grid(flat_lat[todo], flat_lon[todo], zone)
 
             ie = np.floor(e / TILE_M).astype(np.int64)
             inn = np.floor(n / TILE_M).astype(np.int64)
