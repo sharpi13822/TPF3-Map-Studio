@@ -40,6 +40,16 @@ FEATURE_GROUPS = (
         ),
     ),
     (
+        "Bearbeiten-Menü",
+        (
+            (
+                "Rückgängig / Wiederholen",
+                "Macht Änderungen an Markern rückgängig oder stellt sie "
+                "wieder her, zum Beispiel Umbenennen und Löschen.",
+            ),
+        ),
+    ),
+    (
         "Werkzeuge-Menü",
         (
             (
@@ -47,6 +57,23 @@ FEATURE_GROUPS = (
                 "Zwei Punkte auf der Karte anklicken: erster Klick zeigt "
                 "lat/lon, zweiter Klick zeigt zusätzlich die Distanz "
                 "(als Linie auf der Karte und in der Statusleiste).",
+            ),
+            (
+                "Rechteck-Tool",
+                "Legt den Kartenausschnitt fest: Mittelpunkt (aus einem "
+                "ausgewählten Marker), Kartengröße im Format des Spiels und "
+                "Drehwinkel. Das Rechteck lässt sich auf der Karte "
+                "verschieben (blauer Punkt) und drehen (oranger Punkt). Beim "
+                "erneuten Öffnen füllt es sich mit den Werten der aktuellen "
+                "Projekt-Auswahl vor.",
+            ),
+            (
+                "OSM laden",
+                "Lädt die Daten für den gewählten Ausschnitt über die "
+                "Overpass-API von OpenStreetMap. Die Statusleiste zeigt den "
+                "Fortschritt. Danach erscheinen die Bahnhöfe automatisch "
+                "auf der Karte, die übrigen Ebenen schaltest du im Layer-Dock "
+                "ein.",
             ),
             (
                 "Overpass-Abfrage...",
@@ -79,39 +106,96 @@ FEATURE_GROUPS = (
             ),
             (
                 "Heightmap herunterladen",
-                "Erzeugt die Heightmap für den gewählten Ausschnitt. "
-                "Höhenquelle ist das DGM1 für Deutschland (1 m Auflösung, "
-                "über hoehendaten.de; die Quellenangabe steht im Dialog). "
-                "Zusätzlich zum bisherigen Ablauf: Button 'Schnellvorschau' "
-                "vor dem eigentlichen Download (gleiche Kacheln, aber nur "
-                "~300px statt voller Auflösung - bei großen Bändern das "
-                "~2000-fache weniger Rechenarbeit). Der Wasserhöhen-"
-                "Vorschlag erkennt jetzt zusätzlich Ausreißer wie Bergbau-"
-                "Restlöcher (Tukey-3×IQR-Methode) und bietet eine Checkbox "
-                "an, sie aus dem exportierten Höhenbereich auszuschließen "
-                "(standardmäßig aus, damit sich am Exportverhalten nichts "
-                "automatisch ändert).",
-            ),
-            (
-                "Rechteck-Tool",
-                "Unverändert in der Bedienung, aber: füllt sich beim "
-                "erneuten Öffnen automatisch mit Mittelpunkt/Größe/"
-                "Drehwinkel der aktuellen Projekt-Auswahl vor.",
+                "Öffnet den Heightmap-Dialog (siehe nächste Gruppe): "
+                "Höhendaten laden, Gelände und Wasser einstellen, die "
+                "Heightmap exportieren und Biome, Städte, Industrien und "
+                "Bahnhöfe aus OSM erzeugen.",
             ),
         ),
     ),
     (
-        "Heightmap-Dialog (Werkzeuge, Heightmap herunterladen)",
+        "Heightmap-Dialog",
         (
             (
-                "Wasser und Gelände",
-                "Die Wasserhöhe lässt sich aus den OSM-Gewässern "
-                "vorschlagen. 'Wasser nur dort, wo OpenStreetMap Wasser "
-                "hat' formt Flussbetten mit Böschung und Tiefe. 'Gefälle "
-                "ausgleichen' gleicht das Gefälle großer Flüsse aus, weil "
-                "das Spiel nur eine Wasserhöhe kennt. Dazu kommen Glätten, "
-                "Höhen stauchen und das Einebnen von Trassen und "
-                "Siedlungen. Die Anleitung öffnet mit F1.",
+                "Höhenquelle",
+                "Copernicus: weltweit, aber nur 30 m fein und mit "
+                "Baumkronen. DGM1 Deutschland: 1-m-Geländemodell der "
+                "Bundesländer, die Kacheln werden über hoehendaten.de "
+                "geladen (etwa 20 Kacheln pro Minute, danach liegen sie im "
+                "Zwischenspeicher), die Quellenangabe zeigt der Dialog an. "
+                "Eigene Kacheln: GeoTIFF-Dateien (1-km-Raster), die du "
+                "selbst bei einem Landesportal heruntergeladen hast.",
+            ),
+            (
+                "Schnellvorschau",
+                "Zeigt vor dem echten Download eine Vorschau in niedriger "
+                "Auflösung. Sie nutzt immer Copernicus, auch wenn unten eine "
+                "DGM1-Quelle gewählt ist. Danach lädt 'Höhendaten "
+                "herunterladen' die volle Auflösung.",
+            ),
+            (
+                "Voreinstellung",
+                "Original: alle Optionen aus, die echten Höhen. Empfohlen: "
+                "hängt von der Höhenquelle ab (bei Copernicus Glätten, "
+                "Einebnen und Wasser nach OSM, bei DGM1 ohne Glätten, "
+                "Einebnen 10 m und Wasser nach OSM mit Böschung 10 m). "
+                "Optionen, die OSM-Daten brauchen, bleiben ohne geladene "
+                "OSM-Daten aus. Eigene Einstellungen entstehen, sobald du "
+                "etwas änderst.",
+            ),
+            (
+                "Wasserhöhe",
+                "Das Spiel kennt nur eine Wasserhöhe. Der Dialog schlägt "
+                "einen Wert aus der Fläche vor und erkennt Ausreißer wie "
+                "Bergbau-Restlöcher. Dann lässt sich der Höhenbereich ohne "
+                "sie darstellen ('Ausreißer ausschließen', standardmäßig "
+                "aus). 'Wasserhöhe aus den OSM-Gewässern vorschlagen' liest "
+                "die Höhen des Hauptflusses und setzt den Wert in die Mitte "
+                "zwischen tiefstem und höchstem Punkt.",
+            ),
+            (
+                "Gelände glätten und Höhen stauchen",
+                "Glätten gegen Treppenstufen und Kristallflächen an Hängen "
+                "(das Copernicus-Modell hat nur etwa 30 m pro Pixel). Höhen "
+                "stauchen drückt alle Höhen über dem Wasserspiegel auf einen "
+                "Anteil, falls Hochflächen im Spiel über die Schneegrenze "
+                "ragen (weiße Flächen). Die Hänge werden dabei flacher.",
+            ),
+            (
+                "Trassen und Siedlungen einebnen",
+                "Bahnstrecken, größere Straßen und Gebäude aus OSM: das "
+                "Gelände dort wird abgeflacht, damit im Spiel weniger Rampen "
+                "nötig sind. Braucht geladene OSM-Daten. Die Glättung "
+                "bestimmt, wie eben es wird.",
+            ),
+            (
+                "Gefälle ausgleichen",
+                "Legt Flüsse und Seen auf eine gemeinsame Ebene und zieht "
+                "das Gelände relativ dazu mit. Das Relief über dem jeweiligen "
+                "Wasserspiegel bleibt erhalten, die absoluten Höhen über NN "
+                "stimmen danach aber nicht mehr. Gewässer, die deutlich "
+                "höher liegen (Bergseen, Nebenflüsse), dienen nicht als "
+                "Bezug.",
+            ),
+            (
+                "Wasser nur dort, wo OpenStreetMap Wasser hat",
+                "Gewässer bekommen ein festes Bett mit Böschung und Tiefe, "
+                "alles andere Land liegt knapp über dem Wasserspiegel: keine "
+                "überfluteten Auen und Tümpel. Ersetzt die sanfte Anpassung "
+                "darunter.",
+            ),
+            (
+                "Terrain sanft ans Wasserniveau anpassen",
+                "Verhindert trockenfallende Flüsse und Seen, weicht dafür "
+                "geringfügig von den echten Höhendaten ab. Sehr kleine "
+                "Einzelgewässer werden ausgenommen, um Krater zu vermeiden. "
+                "Das Gelände unterhalb des Wasserspiegels wird zusätzlich "
+                "weichgezeichnet.",
+            ),
+            (
+                "Werte auf Wasserhöhe 0 beziehen",
+                "Empfehlung des TPF3-Wikis für Biome und Materialien. Die "
+                "Mindesthöhe kann dabei negativ werden.",
             ),
             (
                 "Im TPF3-Import eintragen",
@@ -121,39 +205,62 @@ FEATURE_GROUPS = (
                 "werden.",
             ),
             (
+                "Exportieren...",
+                "Speichert die fertige Heightmap als 16-Bit-PNG. Die "
+                "Anleitung im Dialog öffnet mit F1.",
+            ),
+            (
                 "Biome-Maske aus OSM...",
-                "Erzeugt aus der geladenen OSM-Landnutzung eine "
-                "Biome-Maske (Kategorie 'Siedlung, Heide, Moor, Fels').",
+                "Erzeugt aus der geladenen OSM-Landnutzung eine Maske für "
+                "den Biome-Tab im Karteneditor. Braucht geladene OSM-Daten.",
             ),
             (
                 "Städte aus OSM...",
-                "Schreibt die Orte aus OSM als Datei für den Städte-Import "
-                "im Editor. Die Größe lässt sich per Faktor anpassen, die "
-                "Auswahl erfolgt je Ort.",
+                "Erzeugt aus den geladenen OSM-Orten eine Städte-Datei für "
+                "den Ordner towns_industries. Die Größe lässt sich per "
+                "Faktor anpassen, die Auswahl erfolgt je Ort.",
             ),
             (
                 "Industrien aus OSM...",
-                "Sucht Industrie-Objekte wie Sägewerke oder Ziegeleien in "
-                "OSM und schreibt eine Datei für den Industrie-Import im "
-                "Editor. Dabei werden Hang, Wasser und Kartenrand geprüft.",
+                "Erzeugt aus geladenen OSM-Objekten (Höfe, Steinbrüche, "
+                "Sägewerke, ...) eine Industrien-Datei für den Ordner "
+                "towns_industries. Dabei werden Hang, Wasser und Kartenrand "
+                "geprüft.",
             ),
             (
                 "Bahnhöfe aus OSM...",
-                "Liest Bahnhöfe und Haltepunkte aus den geladenen OSM-Daten "
-                "(mit Bahnsteigen, Haltepositionen und Gebäuden; "
-                "aufgegebene, im Bau befindliche und Betriebsbahnhöfe sind "
-                "gekennzeichnet) und schreibt bahnhoefe.json und "
-                "bahnhoefe.csv mit Koordinaten in Metern ab Kartenmitte. "
-                "Im Spiel wird nichts gebaut, die Dateien dienen als "
-                "Nachschlagewerk. Aneinanderstoßende Bahnsteig-Wege gelten "
-                "als ein Bahnsteig, bei Bahnsteigflächen zählt die Länge "
-                "statt des Umfangs.",
+                "Liest Bahnhöfe, Haltepunkte, Bahnsteige, Bahnhofsgebäude "
+                "und Haltepositionen aus den geladenen OSM-Daten "
+                "(aufgegebene, im Bau befindliche und Betriebsbahnhöfe sind "
+                "gekennzeichnet) und speichert sie als bahnhoefe.json (alles) "
+                "und bahnhoefe.csv (eine Zeile je Bahnhof) mit Koordinaten "
+                "in Metern ab Kartenmitte. Im Spiel wird nichts gebaut, die "
+                "Dateien dienen als Nachschlagewerk. Aneinanderstoßende "
+                "Bahnsteig-Wege gelten als ein Bahnsteig, bei "
+                "Bahnsteigflächen zählt die Länge statt des Umfangs.",
             ),
         ),
     ),
     (
         "Karte und Ebenen",
         (
+            (
+                "Kartenquelle",
+                "Wechselt zwischen der normalen Straßenkarte "
+                "(OpenStreetMap) und 'Karte + Relief' mit einem im Browser "
+                "berechneten Schattenrelief, das Täler, Hänge und Bergkämme "
+                "zeigt. Die Eisenbahnkarte (OpenRailwayMap) legt Gleise, "
+                "Bahnhöfe und Signale darüber, das Maß-Gitter hilft beim "
+                "Abschätzen von Abständen und Größen.",
+            ),
+            (
+                "Layer-Dock",
+                "Je Ebene: Haken (ein- und ausblenden), Schloss (sperrt "
+                "Auswahl und Bearbeitung in der Karte), Balken (Deckkraft) "
+                "und Pfeile (Reihenfolge). Rechtsklick auf eine Zeile: "
+                "anzeigen, ausblenden, sperren, entsperren oder die "
+                "Deckkraft zurücksetzen.",
+            ),
             (
                 "Ebene Bahnhöfe",
                 "Nach 'OSM laden' erscheinen die Bahnhöfe als Kreise mit "
@@ -164,6 +271,20 @@ FEATURE_GROUPS = (
                 "bestimmten Zoomstufe. Im Layer-Dock lässt sich die Ebene "
                 "ein- und ausschalten.",
             ),
+            (
+                "Zeichnen und JSON",
+                "Eigene Straßen, Flüsse und Gebäude zeichnen: Knopf wählen, "
+                "Punkte auf der Karte anklicken, dann 'Fertig'. 'JSON "
+                "Export' speichert die Objekte der Karte als Datei, 'JSON "
+                "Import' lädt sie wieder. 'Alle' und 'Keine' schalten alle "
+                "Ebenen im Panel ein oder aus.",
+            ),
+            (
+                "Marker-Liste (Dock Projekt)",
+                "Rechtsklick auf einen Marker: auf den Marker zentrieren, "
+                "umbenennen oder löschen. Doppelklick zentriert die Karte "
+                "auf den Marker.",
+            ),
         ),
     ),
     (
@@ -171,8 +292,8 @@ FEATURE_GROUPS = (
         (
             (
                 "Funktionsübersicht (dieses Fenster)",
-                "Diese Liste - fasst alle in gemeinsamer Arbeit "
-                "hinzugefügten Funktionen zusammen.",
+                "Diese Liste der Funktionen des Studios, gruppiert nach "
+                "Menü und Dialog.",
             ),
         ),
     ),
@@ -181,8 +302,8 @@ FEATURE_GROUPS = (
 
 class FeatureOverviewDialog(QDialog):
     """
-    Listet alle in dieser Zusammenarbeit hinzugefuegten Studio-Funktionen
-    auf, gruppiert nach Menue, mit Kurzbeschreibung.
+    Listet die Funktionen des Studios auf, gruppiert nach Menue und Dialog,
+    mit Kurzbeschreibung.
     """
 
     def __init__(self, parent):
@@ -194,9 +315,8 @@ class FeatureOverviewDialog(QDialog):
         outer_layout = QVBoxLayout(self)
 
         intro = QLabel(
-            "Übersicht aller Funktionen, die im Lauf der Zusammenarbeit "
-            "zum Studio hinzugekommen sind - gruppiert nach dem Menü, in "
-            "dem sie zu finden sind."
+            "Übersicht der Funktionen des Studios, gruppiert nach dem "
+            "Menü oder Dialog, in dem sie zu finden sind."
         )
         intro.setWordWrap(True)
         outer_layout.addWidget(intro)

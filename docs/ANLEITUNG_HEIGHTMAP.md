@@ -8,7 +8,7 @@ Was noch nicht im Spiel getestet ist, steht jeweils dabei.
 ## Teil A: Im Studio
 
 ### 1. Ausschnitt festlegen
-1. Studio starten. Im Panel auf der Karte unter **Kartenquelle** am besten **Satellit + Relief** wählen. Damit sieht man Täler und Hänge.
+1. Studio starten. Im Panel auf der Karte unter **Kartenquelle** am besten **Karte + Relief** wählen. Damit sieht man Täler und Hänge.
 2. Zum gewünschten Gebiet zoomen. Mit dem **Marker**-Werkzeug einen Marker in die Mitte setzen (optional, der Marker liefert später den Mittelpunkt).
 3. **Werkzeuge → Rechteck-Tool** öffnen:
    - **Mittelpunkt** prüfen (kommt vom Marker),

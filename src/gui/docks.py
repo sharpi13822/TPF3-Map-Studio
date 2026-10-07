@@ -36,15 +36,15 @@ Im Panel <i>Layer</i> auf der Karte bestimmst du mit den Haken,
 was du siehst. Fahre mit der Maus über einen Eintrag, dann erscheint
 eine kurze Erklärung.</p>
 <ul>
+<li><b>Straßen:</b> alle Straßen und Wege.</li>
+<li><b>Bahn:</b> Bahnstrecken.</li>
+<li><b>Gebäude:</b> alle Gebäudeumrisse.</li>
+<li><b>Wasser:</b> Seen, Teiche und breite Flüsse als Fläche.</li>
+<li><b>Flüsse:</b> Bäche und Flüsse als Linie.</li>
+<li><b>Parks:</b> Parks und Gärten.</li>
 <li><b>Landnutzung:</b> Felder, Wiesen, Obst- und Weinanbau,
 Gärtnereien.</li>
 <li><b>Vegetation:</b> Wälder und Baumreihen.</li>
-<li><b>Parks:</b> Parks und Gärten.</li>
-<li><b>Straßen:</b> alle Straßen und Wege.</li>
-<li><b>Schienen:</b> Bahnstrecken.</li>
-<li><b>Wasser:</b> Seen, Teiche und breite Flüsse als Fläche.</li>
-<li><b>Wasserwege:</b> Bäche und Flüsse als Linie.</li>
-<li><b>Gebäude:</b> alle Gebäudeumrisse.</li>
 <li><b>Bahnhöfe:</b> Bahnhöfe und Haltepunkte mit Namen, aus den
 geladenen OSM-Daten. Die Namen erscheinen beim Hineinzoomen.</li>
 </ul>
@@ -52,10 +52,10 @@ geladenen OSM-Daten. Die Namen erscheinen beim Hineinzoomen.</li>
 gleichzeitig sichtbar ist. Dann blendest du einzelne Ebenen aus.</p>
 
 <p><b>4. Hintergrundkarte wählen</b><br>
-Unter <i>Kartenquelle</i> wechselst du zwischen Straßenkarte und
-Satellitenbild. <i>Satellit + Relief</i> und <i>Karte + Relief</i>
-legen ein Schattenrelief darüber: Täler, Hänge und Bergkämme werden
-sichtbar, das hilft beim Wählen des Ausschnitts. Die
+Unter <i>Kartenquelle</i> wechselst du zwischen der normalen
+Straßenkarte (<i>OpenStreetMap</i>) und <i>Karte + Relief</i>. Das
+Relief legt ein Schattenrelief darüber: Täler, Hänge und Bergkämme
+werden sichtbar, das hilft beim Wählen des Ausschnitts. Die
 <i>Eisenbahnkarte</i> legt Gleise und Bahnhöfe darüber, praktisch zum
 Prüfen von Strecken. Das <i>Maß-Gitter</i>
 hilft beim Abschätzen von Abständen und Größen.</p>

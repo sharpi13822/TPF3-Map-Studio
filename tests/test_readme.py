@@ -28,7 +28,8 @@ class ReadmeTest(unittest.TestCase):
             self.assertTrue((ROOT / target).exists(), f"fehlt: {target}")
 
     def test_no_stale_claims(self):
-        for stale in ("Mod-Checker gegen", "Eingebaute Anleitung", "python src/main.py", "Transport Fever 2 vorzubereiten"):
+        for stale in ("Mod-Checker gegen", "Eingebaute Anleitung", "python src/main.py", "Transport Fever 2 vorzubereiten",
+                      "Esri", "Satellit"):
             self.assertNotIn(stale, self.readme)
 
     def test_required_sections(self):

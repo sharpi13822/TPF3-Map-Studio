@@ -58,7 +58,12 @@ LAYER_HELP_HTML = """
 
 <p><b>Haken:</b> blendet die Ebene auf der Karte ein oder aus.
 Beim Start sind alle Ebenen aus. Erst <i>Werkzeuge &rarr; OSM
-laden</i>, dann die gewünschten Haken setzen.</p>
+laden</i>, dann die gewünschten Haken setzen. Die Ebene
+<i>Bahnhöfe</i> schaltet das Studio nach dem Laden selbst ein.</p>
+
+<p><b>Schloss:</b> sperrt die Ebene. Ihre Objekte lassen sich in der
+Karte dann nicht mehr anklicken oder bearbeiten, so greifst du nicht
+versehentlich daneben.</p>
 
 <p><b>Balken:</b> stellt die Deckkraft der Ebene ein. Nach links
 ziehen macht sie durchsichtiger, ganz rechts ist sie voll
@@ -68,6 +73,9 @@ sichtbar. So siehst du Ebenen, die darunter liegen.</p>
 auf der Karte. Pfeil hoch legt sie vor die anderen Ebenen, Pfeil
 runter dahinter. Praktisch, wenn zum Beispiel Wald die Straßen
 verdeckt.</p>
+
+<p><b>Rechtsklick</b> auf eine Zeile: Ebene anzeigen, ausblenden,
+sperren, entsperren oder die Deckkraft zurücksetzen.</p>
 
 <p><b>Tipp:</b> Ein Klick auf ein Objekt auf der Karte zeigt seine
 Eckpunkte. Die Punkte lassen sich ziehen. Ein Klick ins Leere oder
@@ -1580,15 +1588,18 @@ class MainWindow(QMainWindow):
         menu = QMenu(self)
 
         center_action = menu.addAction(
-            "📍 Auf Marker zentrieren"
+            icon("mitte"),
+            "Auf Marker zentrieren"
         )
 
         rename_action = menu.addAction(
-            "✏️ Umbenennen"
+            icon("zeichnen"),
+            "Umbenennen"
         )
 
         delete_action = menu.addAction(
-            "🗑️ Löschen"
+            icon("loeschen"),
+            "Löschen"
         )
 
         action = menu.exec(

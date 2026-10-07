@@ -101,7 +101,7 @@ class LayerUiTest(unittest.TestCase):
         for element_id in ("layers-on", "layers-off", "export-json", "import-json", "json-file",
                            "draw-tools", "draw-road", "draw-river", "draw-building", "draw-finish", "layer-control"):
             self.assertIn(f'id="{element_id}"', html, element_id)
-        self.assertEqual(html.count('name="base-layer"'), 4)
+        self.assertEqual(html.count('name="base-layer"'), 2)
         self.assertIn('data-layer="openrailwaymap"', html)
         self.assertIn('data-layer="measurement-grid"', html)
         self.assertNotIn("<style>", html)
@@ -126,7 +126,7 @@ class DetailFixesTest(unittest.TestCase):
         self.assertIn(".leaflet-bar a", css)
         self.assertIn(".leaflet-control-attribution", css)
         html = (ROOT / "src" / "map" / "web" / "index.html").read_text(encoding="utf-8")
-        self.assertIn("css/style.css?v=4", html)
+        self.assertIn("css/style.css?v=5", html)
 
     def test_layer_panel_title_is_hidden_but_kept(self):
         source = (ROOT / "src" / "gui" / "layer_panel.py").read_text(encoding="utf-8")

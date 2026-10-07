@@ -21,7 +21,7 @@ Was noch nicht im Spiel getestet ist, steht jeweils dabei.</p>
 
 <h4>Ausschnitt festlegen</h4>
 <ol>
-<li>Im Panel auf der Karte unter <b>Kartenquelle</b> am besten <b>Satellit + Relief</b>
+<li>Im Panel auf der Karte unter <b>Kartenquelle</b> am besten <b>Karte + Relief</b>
 wählen, damit man Täler und Hänge sieht. Zum gewünschten Gebiet zoomen. Optional mit dem
 <b>Marker</b>-Werkzeug einen Marker in die Mitte setzen (er liefert den Mittelpunkt).</li>
 <li><b>Werkzeuge → Rechteck-Tool</b>: Mittelpunkt prüfen, <b>Kartengröße</b> und

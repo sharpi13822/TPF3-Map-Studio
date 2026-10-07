@@ -5,37 +5,16 @@ class MapEngine {
     #events;
 
     // Grundkarten, zwischen denen gewechselt werden kann (immer genau
-    // eine aktiv). "satellite" nutzt EOX Sentinel-2 cloudless per WMS -
-    // nicht-kommerziell nutzbar, siehe Quellenangabe in der Layer selbst.
+    // eine aktiv): die OpenStreetMap-Karte, mit oder ohne ein im Browser
+    // berechnetes Schattenrelief (siehe relief_layer.js).
     static BASE_LAYERS = {
         osm: {
             type: "xyz",
             url: "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
             attribution: "© OpenStreetMap-Mitwirkende"
         },
-        satellite: {
-            // Esri World Imagery - laut OSM-Wiki von Esri ausdruecklich
-            // ohne Einschraenkungen freigegeben (auch ohne Attributions-
-            // pflicht). Deutlich hoehere Aufloesung als Sentinel-2 in
-            // vielen Gebieten (bis 30cm in Teilen Westeuropas statt
-            // Sentinel-2s festen 10m/Pixel), daher beim Heranzoomen
-            // laenger scharf. Sehr weit verbreitetes, gut dokumentiertes
-            // URL-Muster.
-            type: "xyz",
-            url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
-            maxNativeZoom: 19,
-            attribution: "Tiles © Esri — Source: Esri, Maxar, Earthstar " +
-                "Geographics, CNES/Airbus DS, USDA FSA, USGS, Aerogrid, " +
-                "IGN, IGP und die GIS User Community"
-        },
 
-        // Zusammengesetzte Grundkarten: eine der Grundkarten oben plus ein
-        // im Browser berechnetes Schattenrelief (siehe relief_layer.js).
-        satellite_relief: {
-            type: "composite",
-            base: "satellite",
-            relief: true
-        },
+        // Zusammengesetzte Grundkarte: eine der Grundkarten oben plus Relief.
         osm_relief: {
             type: "composite",
             base: "osm",
@@ -95,7 +74,7 @@ class MapEngine {
     }
 
     /**
-     * Wechselt die Grundkarte (z.B. "osm" <-> "satellite"). Entfernt die
+     * Wechselt die Grundkarte (z.B. "osm" <-> "osm_relief"). Entfernt die
      * vorherige Grundkarte vollstaendig, bevor die neue hinzugefuegt
      * wird - es ist immer nur eine aktiv.
      */
@@ -1839,7 +1818,7 @@ class CommandDispatcher {
         });
 
         // ---------------------------------------------------------
-        // Grundkarten-Auswahl (OSM <-> Satellit)
+        // Grundkarten-Auswahl (OSM <-> OSM mit Relief)
         // ---------------------------------------------------------
 
         document
