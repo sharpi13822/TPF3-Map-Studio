@@ -126,6 +126,17 @@ QStatusBar {
     color: $dim;
     border-top: 1px solid $border;
 }
+QStatusBar::item {
+    border: 0;
+}
+QStatusBar QLabel {
+    border: 0;
+    background-color: transparent;
+}
+QSizeGrip {
+    background-color: transparent;
+    image: none;
+}
 QSplitter::handle {
     background-color: $border;
 }

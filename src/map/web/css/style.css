@@ -242,6 +242,41 @@ body {
 }
 
 /* --------------------------------------------------
+   Leaflet-Bedienelemente (Zoom, Quellenangabe)
+-------------------------------------------------- */
+
+.leaflet-bar {
+    border: 1px solid #2a3a46 !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5) !important;
+}
+
+.leaflet-bar a,
+.leaflet-bar a:hover {
+    background-color: #141e26 !important;
+    color: #d5dee5 !important;
+    border-bottom: 1px solid #2a3a46 !important;
+}
+
+.leaflet-bar a:hover {
+    background-color: #22313c !important;
+    color: #15b9f9 !important;
+}
+
+.leaflet-bar a.leaflet-disabled {
+    background-color: #141e26 !important;
+    color: #55656f !important;
+}
+
+.leaflet-control-attribution {
+    background: rgba(20, 30, 38, 0.88) !important;
+    color: #8ea1af !important;
+}
+
+.leaflet-control-attribution a {
+    color: #15b9f9 !important;
+}
+
+/* --------------------------------------------------
    Geometry Editor Handles
 -------------------------------------------------- */
 

@@ -33,6 +33,10 @@ class LayerPanel(QWidget):
 
         layout.addWidget(title)
 
+        # Der Dock-Titel "Layer" steht schon darueber. Das Label bleibt als Platzhalter im Layout
+        # (refresh_order rechnet mit Index 0 = Titel), wird aber nicht angezeigt.
+        title.hide()
+
         # ---------------------------------------------------------
         # Layer (in der Reihenfolge des LayerManagers)
         # ---------------------------------------------------------

@@ -114,5 +114,26 @@ class LayerUiTest(unittest.TestCase):
         self.assertNotIn("rgba(255,255,255,0.95)", css)
 
 
+class DetailFixesTest(unittest.TestCase):
+
+    def test_status_bar_items_have_no_border(self):
+        css = theme.build_stylesheet(ICONS)
+        self.assertIn("QStatusBar::item", css)
+        self.assertIn("QSizeGrip", css)
+
+    def test_leaflet_controls_are_dark(self):
+        css = (ROOT / "src" / "map" / "web" / "css" / "style.css").read_text(encoding="utf-8")
+        self.assertIn(".leaflet-bar a", css)
+        self.assertIn(".leaflet-control-attribution", css)
+        html = (ROOT / "src" / "map" / "web" / "index.html").read_text(encoding="utf-8")
+        self.assertIn("css/style.css?v=4", html)
+
+    def test_layer_panel_title_is_hidden_but_kept(self):
+        source = (ROOT / "src" / "gui" / "layer_panel.py").read_text(encoding="utf-8")
+        self.assertIn("title.hide()", source)
+        self.assertLess(source.index("layout.addWidget(title)"), source.index("title.hide()"))
+        self.assertIn("insertWidget(1 + index, row)", source)
+
+
 if __name__ == "__main__":
     unittest.main()
