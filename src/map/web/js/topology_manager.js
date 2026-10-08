@@ -423,8 +423,8 @@ class TopologyManager {
 
     }
 
-    // TODO:
-    // Wird später durch den VertexIndex ersetzt.
+    // Hinweis: Durchsucht alle Objekte linear. Ein VertexIndex könnte das
+    // bei sehr vielen Objekten beschleunigen.
 
     //====================================================
     // RETURN SHARED VERTICES
