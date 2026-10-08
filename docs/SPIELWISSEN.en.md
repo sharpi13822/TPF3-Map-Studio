@@ -12,7 +12,7 @@ Unofficial, not affiliated with Urban Games or the publisher. The game is German
 - The import has three fields: **minimum height** (height of the black pixels), **maximum height** (height of the white pixels) and **water level**. The wiki recommends water level 0 for the best results with biomes and materials.
 - There is only **one flat water level** for the whole map.
 - Defaults in the dialog: −100 / 500 / 0. They do not change with the map size.
-- **Editor limits (tested in the game):** the import accepts heights from **−20 to 3177 m** (span 3197 m). Nothing beyond that. For higher terrain, the Studio's height window helps (cap peaks, cut off lows or squash). The height window itself has not been tested in the game yet.
+- **Editor limits (tested in the game):** the import accepts heights from **−20 to 3177 m** (span 3197 m). Nothing beyond that. For higher terrain, the Studio's height window helps (cap peaks, cut off lows or squash). The height window itself has been tested in the game and works.
 - The Studio's formula with water level 0 and heights relative to the river: minimum = −buffer below, maximum = (mountain height − river height) + margin above.
 
 ## Snow and rock

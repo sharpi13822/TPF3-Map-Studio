@@ -58,7 +58,7 @@ Recommended order. Every change updates the preview. The numbers at the bottom o
     - **Mode:** *Oben kappen* (cap the top) sets peaks flat to the upper limit, *Unten abschneiden* (cut the bottom) sets lows flat to the lower limit, *Stauchen* (squash) presses the whole terrain into the window without stretching it. The water level is preserved.
     - **Setting the window:** with the two fields (lower and upper) and the **slider**, which spans the whole range of the editor. If the terrain already fits completely, you move the window with the slider and see at once what drops out.
     - **Preview:** red is lowered (capped or squashed), cyan is raised (cut off). One line says how many percent of the area are levelled.
-    - While the window is on, the option for outliers is ignored. The height window has not been tested in the game yet.
+    - While the window is on, the option for outliers is ignored.
 
 ### 5. Check and export
 16. Check in the preview: the river should be a continuous band in the valley, no straight stripes or wedges, no ponds except those from OSM.

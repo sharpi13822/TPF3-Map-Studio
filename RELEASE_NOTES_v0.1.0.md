@@ -14,7 +14,7 @@ A free Windows tool that prepares real-world map data for **Transport Fever 3**:
 
 **Install:** download `TPF3-Map-Studio-v0.1.0-win64.zip`, extract the **whole** ZIP, run `TPF3-Map-Studio.exe`. Windows may warn on first start ("More info" → "Run anyway"); antivirus false positives are known for PyInstaller programs.
 
-**Note:** the program interface is German only for now. The height window has not been tested in the game yet. Unofficial tool, not affiliated with Urban Games.
+**Note:** the program interface is German only for now. Unofficial tool, not affiliated with Urban Games.
 
 SHA-256: `<paste from the .sha256.txt file>`
 

@@ -12,7 +12,7 @@ Inoffiziell, keine Verbindung zu Urban Games oder dem Herausgeber.
 - Der Import hat drei Felder: **Mindesthöhe** (Höhe der schwarzen Pixel), **Maximalhöhe** (Höhe der weißen Pixel) und **Wasserhöhe**. Das Wiki empfiehlt Wasserhöhe 0 für die besten Ergebnisse bei Biomen und Materialien.
 - Es gibt nur **einen flachen Wasserspiegel** für die ganze Karte.
 - Standardwerte im Dialog: −100 / 500 / 0. Sie ändern sich nicht mit der Kartengröße.
-- **Grenzen des Editors (im Spiel getestet):** Der Import nimmt Höhen von **−20 bis 3177 m** (Spanne 3197 m). Mehr geht nicht. Für höheres Gelände hilft das Höhenfenster des Studios (Gipfel kappen, Tiefen abschneiden oder stauchen). Das Höhenfenster selbst ist im Spiel noch nicht geprüft.
+- **Grenzen des Editors (im Spiel getestet):** Der Import nimmt Höhen von **−20 bis 3177 m** (Spanne 3197 m). Mehr geht nicht. Für höheres Gelände hilft das Höhenfenster des Studios (Gipfel kappen, Tiefen abschneiden oder stauchen). Das Höhenfenster selbst ist im Spiel getestet und funktioniert.
 - Die Formel des Studios bei Wasserspiegel 0 und Höhen relativ zum Fluss: Minimum = −Puffer unten, Maximum = (Höhe Berg − Höhe Fluss) + Zuschlag oben.
 
 ## Schnee und Fels

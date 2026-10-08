@@ -56,7 +56,7 @@ Empfohlene Reihenfolge. Jede Änderung aktualisiert die Vorschau. Die Zahlen unt
     - **Modus:** *Oben kappen* setzt Gipfel flach auf die Obergrenze, *Unten abschneiden* setzt Tiefen flach auf die Untergrenze, *Stauchen* drückt das ganze Gelände ins Fenster, ohne es zu strecken. Das Wasserniveau bleibt dabei erhalten.
     - **Fenster einstellen:** mit den beiden Feldern (unten und oben) und dem **Schieberegler**, der über den ganzen Bereich des Editors geht. Passt das Gelände schon ganz hinein, schiebst du das Fenster mit dem Regler und siehst sofort, was wegfällt.
     - **Vorschau:** Rot ist tiefer gesetzt (gekappt oder gestaucht), Cyan ist höher gesetzt (abgeschnitten). Eine Zeile nennt, wie viel Prozent der Fläche planiert werden.
-    - Solange das Fenster an ist, wird die Option für Ausreißer ignoriert. Das Höhenfenster ist im Spiel noch nicht geprüft.
+    - Solange das Fenster an ist, wird die Option für Ausreißer ignoriert.
 
 ### 5. Kontrolle und Export
 16. In der Vorschau prüfen: Der Fluss sollte ein durchgehendes Band im Tal sein, keine geraden Streifen oder Keile, keine Tümpel außer denen aus OSM.

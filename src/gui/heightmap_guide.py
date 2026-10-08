@@ -121,7 +121,7 @@ getrennt. Die Wasserhöhe bleibt dabei erhalten, ein Gelände, das schon passt, 
 gestaucht), <b>hellblau</b> = höher gesetzt (unten abgeschnitten). Darunter steht zum Beispiel
 „4,2 % der Fläche werden planiert“, gerechnet auf der ganzen Karte. Vorschau, Zahlen unten und
 exportierte Datei benutzen dasselbe Raster. Liegt die Wasserhöhe außerhalb des Fensters, warnt der
-Dialog. <i>Das Höhenfenster ist im Spiel noch nicht geprüft.</i></p>
+Dialog.</p>
 
 <h4>Kontrolle und Export</h4>
 <ol start="12">
