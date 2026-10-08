@@ -88,6 +88,7 @@ exe = EXE(
     bootloader_ignore_signals=False,
     strip=False,
     upx=False,  # UPX-Kompression mit QtWebEngine hat oefter Probleme verursacht
+    icon="src/icons/app.ico",
     console=False,  # TEMPORÄR für Fehlersuche
     disable_windowed_traceback=False,
 )
