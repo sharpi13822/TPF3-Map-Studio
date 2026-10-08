@@ -18,3 +18,4 @@ build/
 update_tmp/
 
 *.tpf2ms
+*.sha256.txt

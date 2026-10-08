@@ -16,7 +16,7 @@ A free Windows tool that prepares real-world map data for **Transport Fever 3**:
 
 **Note:** the program interface is German only for now. Unofficial tool, not affiliated with Urban Games.
 
-SHA-256: `<paste from the .sha256.txt file>`
+SHA-256: `b561cad96a6e8e2b26b120477f024320e393cbc9e6f0ed193df436d80382d766`
 
 ## Deutsch
 
@@ -24,4 +24,4 @@ Ein freies Windows-Werkzeug, das echte Kartendaten für **Transport Fever 3** vo
 
 **Download:** `TPF3-Map-Studio-v0.1.0-win64.zip`, **komplett** entpacken, `TPF3-Map-Studio.exe` starten. Beim ersten Start warnt Windows ("Weitere Informationen" → "Trotzdem ausführen").
 
-Prüfsumme (SHA-256): `<aus der .sha256.txt einfügen>`
+Prüfsumme (SHA-256): `b561cad96a6e8e2b26b120477f024320e393cbc9e6f0ed193df436d80382d766`
