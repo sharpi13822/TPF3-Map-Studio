@@ -114,5 +114,28 @@ class PrivacyTest(unittest.TestCase):
             self.assertNotIn("backup.git", text, name)
 
 
+class GameKnowledgeTest(unittest.TestCase):
+
+    def test_both_languages_exist_and_match(self):
+        de = _read("docs/SPIELWISSEN.md")
+        en = _read("docs/SPIELWISSEN.en.md")
+        self.assertIn("[English](SPIELWISSEN.en.md)", de)
+        self.assertIn("[Deutsch](SPIELWISSEN.md)", en)
+        self.assertEqual(len(_headings(de, 2)), len(_headings(en, 2)))
+
+    def test_key_measurements_are_in_both(self):
+        for name in ("docs/SPIELWISSEN.md", "docs/SPIELWISSEN.en.md"):
+            text = _read(name)
+            for needle in ("3177", "26, 77, 128, 179, 230", "3493540", "325", "375"):
+                self.assertIn(needle, text, f"{name}: {needle}")
+
+    def test_no_private_data(self):
+        for name in ("docs/SPIELWISSEN.md", "docs/SPIELWISSEN.en.md"):
+            text = _read(name).lower()
+            self.assertNotIn("@gmail", text, name)
+            self.assertNotIn("steamcommunity.com/id", text, name)
+            self.assertNotIn("pettelt", text, name)
+
+
 if __name__ == "__main__":
     unittest.main()
