@@ -1,24 +1,10 @@
 /*
-===========================================================
-TPF3 MAP STUDIO
-GeometryEditor V2.4
------------------------------------------------------------
-Author : ChatGPT + <dein Projekt>
-Version: 2.4
-Status : Stable
+ * TPF3 Map Studio: GeometryEditor
+ *
+ * Zeichnen und Bearbeiten von Strassen, Fluessen und Gebaeuden auf der Karte
+ * (Leaflet). Arbeitet mit dem TopologyManager zusammen.
+ */
 
-Änderungen gegenüber V2.1
-
-✔ komplett neu strukturiert
-✔ Edit Mode
-✔ Style Handling
-✔ Vorbereitung Segment Handles
-✔ Vorbereitung Snapping
-✔ Vorbereitung Undo/Redo
-===========================================================
-*/
-
-console.log("GeometryEditor V9 TEST");
 
 class GeometryEditor {
 
@@ -50,8 +36,14 @@ class GeometryEditor {
 
         };
 
-        // Aktiver Vertex
+        // Aktuell bearbeitetes Objekt
         this.object = null;
+
+        // Ausgewaehlter Eckpunkt (null = keiner)
+        this.activeVertex = null;
+
+        // Objekt, zu dem der Undo-/Redo-Verlauf gehoert
+        this.historyObject = null;
 
         this.undoStack = [];
         this.redoStack = [];
@@ -118,6 +110,19 @@ class GeometryEditor {
 
         this.object = object;
 
+        // Verlauf und Auswahl gehoeren zu genau einem Objekt. Sonst wuerde
+        // Strg+Z bei einem anderen Objekt dessen Geometrie durch die des
+        // vorher bearbeiteten ersetzen, und Entf einen alten Index loeschen.
+        if (this.historyObject !== object) {
+
+            this.undoStack = [];
+            this.redoStack = [];
+            this.historyObject = object;
+
+        }
+
+        this.activeVertex = null;
+
         this.map = object._map;
 
         this.log("START", object);
@@ -128,15 +133,9 @@ class GeometryEditor {
 
         this.refresh();
 
-        console.log(
-            "VERTEX HANDLES:",
-            this.vertexHandles.length
-        );
+        this.log("VERTEX HANDLES:", this.vertexHandles.length);
 
-        console.log(
-           "SEGMENT HANDLES:",
-            this.segmentHandles.length
-        ); 
+        this.log("SEGMENT HANDLES:", this.segmentHandles.length);
 
         this.bindEvents();
  
@@ -162,6 +161,8 @@ class GeometryEditor {
         this.unbindEvents();
 
         this.object = null;
+
+        this.activeVertex = null;
 
         this.log(
             "GeometryEditor STOP"
@@ -320,7 +321,7 @@ class GeometryEditor {
 
         // Auswahl wiederherstellen
 
-        if (this.activeVertex !== null) {
+        if (this.activeVertex != null) {
 
             this.selectVertex(this.activeVertex);
     
@@ -823,7 +824,7 @@ class GeometryEditor {
 
     createHandles() {
 
-        console.log("CREATE HANDLES");
+        this.log("CREATE HANDLES");
 
         if (!this.object) return;
 
@@ -1196,10 +1197,59 @@ class GeometryEditor {
 }
 
     //====================================================
+    // UNDO / REDO: ERLAUBT?
+    //====================================================
+
+    // OSM-Objekte (numerische ID) werden ueber verschobene Nodes
+    // gespeichert (osmVertexMoved). Ein Geometrie-Schnappschuss laesst sich
+    // dort nicht zuruecksetzen: Python wuerde einen verschobenen Punkt als
+    // "geloescht + neu" sehen und andere Ways am selben Node nicht
+    // nachziehen. Darum gibt es Strg+Z/Strg+Y nur fuer eigene Objekte.
+    // Sonst zeigt die Karte den alten Stand, waehrend Python (und damit
+    // der Export) den neuen behaelt.
+
+    canUseHistory() {
+
+        if (!this.object) return false;
+
+        if (typeof this.object.tpf2?.id === "number") {
+
+            if (typeof showToast === "function") {
+
+                showToast(
+                    "Rückgängig/Wiederholen gibt es nur für eigene " +
+                    "Objekte, nicht für OSM-Objekte."
+                );
+
+            }
+
+            return false;
+
+        }
+
+        return true;
+
+    }
+
+    // Meldet den wiederhergestellten Stand an Python (eigene Objekte).
+    syncHistoryToPython() {
+
+        if (!this.object) return;
+
+        bridges.adapter.polylineMoved(
+            String(this.object.tpf2.id),
+            this.object.tpf2.geometry
+        );
+
+    }
+
+    //====================================================
     // UNDO
     //====================================================
 
     undo() {
+
+        if (!this.canUseHistory()) return;
 
         if (!this.undoStack.length) return;
 
@@ -1216,6 +1266,8 @@ class GeometryEditor {
 
         this.redrawObject();
 
+        this.syncHistoryToPython();
+
         this.refresh();
 
 }
@@ -1225,6 +1277,8 @@ class GeometryEditor {
     //====================================================
 
     redo() {
+
+        if (!this.canUseHistory()) return;
 
         if (!this.redoStack.length) return;
 
@@ -1240,6 +1294,8 @@ class GeometryEditor {
             this.redoStack.pop();
 
         this.redrawObject();
+
+        this.syncHistoryToPython();
 
         this.refresh();
 
@@ -1472,10 +1528,6 @@ class GeometryEditor {
                 insertIndex
 
         );
-
-        marker.addTo(this.handleLayer);
-
-        this.segmentHandles.push(marker);
 
     }
 
@@ -2001,7 +2053,7 @@ class GeometryEditor {
         // Delete        
         if (event.key !== "Delete") return;
 
-        if (this.activeVertex === null) return;
+        if (this.activeVertex == null) return;
 
         event.preventDefault();
 

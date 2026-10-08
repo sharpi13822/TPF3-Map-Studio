@@ -6,6 +6,7 @@ from PySide6.QtCore import QObject, Signal
 
 from src.core.project.project import Project
 from src.core.project_serializer import ProjectSerializer
+from src.features import VACUUMTUBE_IMPORTER
 
 from src.osm.overpass_client import OverpassClient
 from src.osm.overpass_query_builder import OverpassQueryConfig
@@ -1018,78 +1019,86 @@ class MapController(QObject):
         GeometryBuilder(osm).build()
 
         # ---------------------------------------------------------
-        # Export-Test
+        # TPF2-Export (gehoert zum ausgeblendeten Importer von VacuumTube)
         # ---------------------------------------------------------
+        # Schreibt Dateien nach Dokumente\TPF3-Map-Studio\exports und kostet
+        # bei grossen Karten Zeit. Nur mit eingeblendetem Importer.
 
-        exporter = OSMExporter()
+        if VACUUMTUBE_IMPORTER:
 
-        export_data = exporter.export(osm)
+            # ---------------------------------------------------------
+            # Export-Test
+            # ---------------------------------------------------------
 
-        # --------------------------------------------------
-        # TPF2 Export
-        # --------------------------------------------------
+            exporter = OSMExporter()
 
-        tpf2_exporter = TPF2Exporter.from_export_data(
-            export_data
+            export_data = exporter.export(osm)
 
-        )
+            # --------------------------------------------------
+            # TPF2 Export
+            # --------------------------------------------------
 
-        tpf2_data = tpf2_exporter.export(
-            export_data
-        )
+            tpf2_exporter = TPF2Exporter.from_export_data(
+                export_data
 
-        # --------------------------------------------------
-        # TPF2 Lua / Construction Export
-        # --------------------------------------------------
+            )
 
-        output_path = (
-            Path.home()
-            / "Documents"
-            / "TPF3-Map-Studio"
-            / "exports"
-            / "osm_map_1"
-        )
+            tpf2_data = tpf2_exporter.export(
+                export_data
+            )
 
-        tpf2_writer = TPF2LuaWriter(
-            name="OSM Map",
-            description=(
-                "OpenStreetMap export "
-                "for Transport Fever 2"
-            ),
-        )
+            # --------------------------------------------------
+            # TPF2 Lua / Construction Export
+            # --------------------------------------------------
 
-        tpf2_writer.write(
-            tpf2_data,
-            output_path,
-        )
+            output_path = (
+                Path.home()
+                / "Documents"
+                / "TPF3-Map-Studio"
+                / "exports"
+                / "osm_map_1"
+            )
 
-        print(
-            f"TPF2-Mod: {output_path}"
-        )
+            tpf2_writer = TPF2LuaWriter(
+                name="OSM Map",
+                description=(
+                    "OpenStreetMap export "
+                    "for Transport Fever 2"
+                ),
+            )
 
-        print("Export:")
-        print(f"  Roads      : {len(export_data.roads)}")
-        print(f"  Railways   : {len(export_data.railways)}")
-        print(f"  Buildings  : {len(export_data.buildings)}")
-        print(f"  Water      : {len(export_data.water)}")
-        print(f"  Waterways  : {len(export_data.waterways)}")
-        print(f"  Parks      : {len(export_data.parks)}")
-        print(f"  Landuse    : {len(export_data.landuse)}")
-        print(f"  Vegetation : {len(export_data.vegetation)}")
+            tpf2_writer.write(
+                tpf2_data,
+                output_path,
+            )
 
-        print(
-            f"TPF2 Roads     : "
-            f"{len(tpf2_data.get('roads', []))}"
-        )
+            print(
+                f"TPF2-Mod: {output_path}"
+            )
 
-        print(
-            f"TPF2 Railways  : "
-            f"{len(tpf2_data.get('railways', []))}"
-        )
+            print("Export:")
+            print(f"  Roads      : {len(export_data.roads)}")
+            print(f"  Railways   : {len(export_data.railways)}")
+            print(f"  Buildings  : {len(export_data.buildings)}")
+            print(f"  Water      : {len(export_data.water)}")
+            print(f"  Waterways  : {len(export_data.waterways)}")
+            print(f"  Parks      : {len(export_data.parks)}")
+            print(f"  Landuse    : {len(export_data.landuse)}")
+            print(f"  Vegetation : {len(export_data.vegetation)}")
 
-        print(
-            f"TPF2 Export    : {output_path}"
-        )
+            print(
+                f"TPF2 Roads     : "
+                f"{len(tpf2_data.get('roads', []))}"
+            )
+
+            print(
+                f"TPF2 Railways  : "
+                f"{len(tpf2_data.get('railways', []))}"
+            )
+
+            print(
+                f"TPF2 Export    : {output_path}"
+            )
 
         return osm
 
