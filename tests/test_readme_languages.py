@@ -137,5 +137,43 @@ class GameKnowledgeTest(unittest.TestCase):
             self.assertNotIn("pettelt", text, name)
 
 
+class HeightmapGuideTest(unittest.TestCase):
+
+    DE = "docs/ANLEITUNG_HEIGHTMAP.md"
+    EN = "docs/ANLEITUNG_HEIGHTMAP.en.md"
+
+    def test_both_languages_link_each_other(self):
+        self.assertIn("[English](ANLEITUNG_HEIGHTMAP.en.md)", _read(self.DE))
+        self.assertIn("[Deutsch](ANLEITUNG_HEIGHTMAP.md)", _read(self.EN))
+
+    def test_same_structure(self):
+        de, en = _read(self.DE), _read(self.EN)
+        for level in (2, 3):
+            self.assertEqual(len(_headings(de, level)), len(_headings(en, level)), f"Ebene {level}")
+        steps_de = re.findall(r"(?m)^(\d+)\. ", de)
+        steps_en = re.findall(r"(?m)^(\d+)\. ", en)
+        self.assertEqual(steps_de, steps_en)
+        self.assertEqual(steps_de[:25], [str(n) for n in range(1, 26)])
+
+    def test_key_facts_in_both(self):
+        for name in (self.DE, self.EN):
+            text = _read(name)
+            for needle in ("3177", "swissALTI3D", "swisstopo", "dl-de/by-2-0", "hoehen_schneegrenze_test.png", "400 m"):
+                self.assertIn(needle, text, f"{name}: {needle}")
+
+    def test_step_references_match_the_steps(self):
+        for name, marker in ((self.DE, "Höhenfenster begrenzen"), (self.EN, "Höhenfenster begrenzen")):
+            text = _read(name)
+            line = [l for l in text.splitlines() if l.startswith("15. ")][0]
+            self.assertIn(marker, line, name)
+            self.assertIn("(Schritt 15)" if name == self.DE else "(step 15)", text, name)
+
+    def test_no_private_data(self):
+        for name in (self.DE, self.EN):
+            text = _read(name).lower()
+            self.assertNotIn("@gmail", text, name)
+            self.assertNotIn("steamcommunity.com/id", text, name)
+
+
 if __name__ == "__main__":
     unittest.main()
