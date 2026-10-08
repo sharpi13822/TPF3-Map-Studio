@@ -37,10 +37,9 @@ from src.heightmap.dgm1_dem import (
     slot_is_cached,
 )
 from src.heightmap.lv95 import LV95_ZONE, latlon_to_lv95, lv95_to_latlon
+from src.http_identity import USER_AGENT
 
 STAC_ITEMS_URL = "https://data.geo.admin.ch/api/stac/v0.9/collections/ch.swisstopo.swissalti3d/items"
-
-USER_AGENT = "TPF3-Map-Studio (https://github.com/sharpi13822/TPF3-Map-Studio)"
 
 # Quellenangabe nach den Nutzungsbedingungen von swisstopo (OGD)
 ATTRIBUTION = "© swisstopo (Bundesamt für Landestopografie swisstopo), swissALTI3D"
