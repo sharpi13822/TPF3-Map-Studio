@@ -100,6 +100,29 @@ Wasserspiegel. Im Test am Rhein (Bingen bis Koblenz, DGM1, Größenwahnsinnig 1:
 waren im Spiel beide Enden des Flusses gefüllt.</li>
 </ol>
 
+<h4>Höhenfenster (Grenzen des Karteneditors)</h4>
+<p>Der Karteneditor von TPF3 nimmt beim Import nur Höhen von <b>−20 bis 3177 m</b> an (im Spiel
+getestet). Liegt das Gelände darüber oder darunter, zum Beispiel in den Alpen, zeigt der Dialog unten
+einen Hinweis. Dann den Haken <b>Höhenfenster begrenzen</b> setzen. Das Fenster gilt in den Werten, die
+du im Editor einträgst: Mit dem Haken „Werte auf Wasserhöhe 0 beziehen“ ist es relativ zur Wasserhöhe.
+Voreingestellt ist der Bereich des Geländes innerhalb der Editor-Grenzen. Mit den Feldern <b>Fenster
+von … bis</b> wird es enger, der <b>Schieberegler</b> verschiebt es über den ganzen Bereich des Editors: nach oben werden tiefe
+Stellen abgeschnitten, nach unten die Gipfel gekappt (gerechnet wird beim Loslassen).
+Für alles außerhalb des Fensters gibt es drei Modi:</p>
+<ul>
+<li><b>Oben kappen</b>: Alles über dem Fenster wird flach auf die Obergrenze gesetzt, die Gipfel werden
+planiert. Das Fenster liegt zunächst an der tiefsten Stelle.</li>
+<li><b>Unten abschneiden</b>: Alles unter dem Fenster wird flach auf die Untergrenze gesetzt, tiefe
+Stellen werden planiert. Das Fenster liegt zunächst an der höchsten Stelle.</li>
+<li><b>Stauchen</b>: Das ganze Gelände wird ins Fenster gedrückt, über und unter der Wasserhöhe
+getrennt. Die Wasserhöhe bleibt dabei erhalten, ein Gelände, das schon passt, wird nicht gestreckt.</li>
+</ul>
+<p>Die Vorschau färbt die betroffenen Stellen ein: <b>rot</b> = tiefer gesetzt (oben gekappt oder
+gestaucht), <b>hellblau</b> = höher gesetzt (unten abgeschnitten). Darunter steht zum Beispiel
+„4,2 % der Fläche werden planiert“, gerechnet auf der ganzen Karte. Vorschau, Zahlen unten und
+exportierte Datei benutzen dasselbe Raster. Liegt die Wasserhöhe außerhalb des Fensters, warnt der
+Dialog. <i>Das Höhenfenster ist im Spiel noch nicht geprüft.</i></p>
+
 <h4>Kontrolle und Export</h4>
 <ol start="12">
 <li>In der Vorschau prüfen: Der Fluss sollte ein durchgehendes Band im Tal sein, keine
@@ -183,6 +206,7 @@ geprüft.</i></td></tr>
 Alpen)</td><td>Das Gelände liegt ganz über der Schneegrenze des Spiels, weil die Höhen über Meer eingetragen
 werden (Bern: 488 bis 936 m). Haken <b>„Werte auf Wasserhöhe 0 beziehen“</b> setzen, <b>Höhen stauchen</b>
 (bei Bern etwa 75 %), neue Zahlen unten ablesen, neu exportieren und mit den neuen Zahlen importieren.</td></tr>
+<tr><td>Der Editor nimmt die Höhen nicht an, oder das Gelände ragt über 3177 m (Alpen)</td><td>Der Editor nimmt nur −20 bis 3177 m. <b>Höhenfenster begrenzen</b> anhaken, Modus wählen (Oben kappen, Unten abschneiden oder Stauchen), neue Zahlen unten ablesen. Die Zeile unter dem Fenster zeigt, wie viel Fläche planiert wird.</td></tr>
 <tr><td>Weiße Flächen auf den Höhen</td><td>Schneegrenze im Spiel. Schneegrenzen-Test
 machen, dann <b>Höhen stauchen</b>.</td></tr>
 <tr><td>Graue Felsstreifen an Hängen</td><td>Ab einer Neigung färbt das Spiel Fels. Hänge mit

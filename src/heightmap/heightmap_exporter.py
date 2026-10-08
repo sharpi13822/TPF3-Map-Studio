@@ -17,6 +17,7 @@ import numpy as np
 
 from src.map.objects.selection import Selection
 from src.tpf2.tpf2_geometry import TPF2Geometry
+from src.heightmap.height_clipping import normalize_heights
 from src.heightmap.copernicus_dem import DemMosaic, download_tiles_for_selection
 from src.heightmap.dgm1_dem import Dgm1Error, Dgm1Mosaic
 from src.heightmap.swissalti3d_dem import required_swiss_tiles
@@ -269,7 +270,7 @@ def export_heightmap_png(
 
     from PIL import Image
 
-    norm = np.clip((heightmap - range_min_m) / (range_max_m - range_min_m), 0, 1)
+    norm = normalize_heights(heightmap, range_min_m, range_max_m)
     img16 = (norm * 65535).astype(np.uint16)
 
     output_path.parent.mkdir(parents=True, exist_ok=True)

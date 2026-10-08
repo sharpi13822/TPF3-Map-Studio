@@ -96,6 +96,7 @@ class HeightmapDialogDocumentedTest(unittest.TestCase):
         "Ausreißer": "Ausreißer",
         "Wasserhöhe aus den OSM-Gewässern vorschlagen": "Wasserhöhe aus den OSM-Gewässern vorschlagen",
         "Gelände glätten": "Gelände glätten",
+        "Höhenfenster begrenzen": "Höhenfenster",
         "Trassen und Siedlungen einebnen": "Trassen und Siedlungen einebnen",
         "Gefälle ausgleichen": "Gefälle ausgleichen",
         "Wasser nur dort": "Wasser nur dort",

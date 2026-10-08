@@ -5,6 +5,8 @@
 
 # TPF3 Map Studio
 
+**Deutsch** | [English](README.en.md)
+
 Ein freies Werkzeug für Windows, das echte Kartendaten für den Bau realer Karten in **Transport Fever 3** vorbereitet: Kartenausschnitt wählen, OpenStreetMap-Daten und Höhendaten laden und daraus Heightmap, Biome-Maske, Städte, Industrien und eine Bahnhofsliste für den Import im Editor des Spiels erzeugen.
 
 > Inoffizielles Werkzeug. Es steht in keiner Verbindung zu Urban Games oder dem Herausgeber von Transport Fever.
@@ -45,6 +47,7 @@ Das erscheint nur beim ersten Start. Falls dein Virenscanner die Datei zusätzli
 - [So arbeitest du](#so-arbeitest-du)
 - [Selbst bauen: von Python bis zur .exe](#selbst-bauen-von-python-bis-zur-exe)
 - [Daten und Quellenangaben](#daten-und-quellenangaben)
+- [Danksagung](#danksagung)
 - [Fragen, Probleme und Kontakt](#fragen-probleme-und-kontakt)
 - [Unterstützung](#unterstützung)
 - [Lizenz](#lizenz)
@@ -60,7 +63,7 @@ Das erscheint nur beim ersten Start. Falls dein Virenscanner die Datei zusätzli
 
 - **Kartenausschnitt** per Rechteck-Tool festlegen (Mittelpunkt, Größe, Drehwinkel) und im Format des Spiels (z. B. Größenwahnsinnig 1:5) planen
 - **OSM-Daten laden** mit konfigurierbarer Overpass-Abfrage (Checkboxen und Vorlagen statt Freitext)
-- **Heightmap** aus dem DGM1 (Deutschland, 1 m), aus swissALTI3D (Schweiz und Liechtenstein, 2 m), aus Copernicus (weltweit, 30 m, mit Baumkronen) oder aus eigenen GeoTIFF-Kacheln. Mit Schnellvorschau (immer Copernicus), Wasserhöhen-Vorschlag, Flüssen nach OSM, Gefälle-Ausgleich, Einebnen von Trassen und Siedlungen, Glätten und Stauchen. Der Dialog nennt die Werte, die beim Import im Spiel einzutragen sind. Die Heightmap wird als 16-Bit-PNG gespeichert
+- **Heightmap** aus dem DGM1 (Deutschland, 1 m), aus swissALTI3D (Schweiz und Liechtenstein, 2 m), aus Copernicus (weltweit, 30 m, mit Baumkronen) oder aus eigenen GeoTIFF-Kacheln. Mit Schnellvorschau (immer Copernicus), Wasserhöhen-Vorschlag, Flüssen nach OSM, Gefälle-Ausgleich, Einebnen von Trassen und Siedlungen, Glätten und Stauchen sowie einem Höhenfenster für die Grenzen des Karteneditors (−20 bis 3177 m: Gipfel kappen, Tiefen abschneiden oder stauchen, mit Vorschau). Der Dialog nennt die Werte, die beim Import im Spiel einzutragen sind. Die Heightmap wird als 16-Bit-PNG gespeichert
 - **Biome-Maske, Städte und Industrien** aus OSM, als Dateien für den Import im Editor
 - **Bahnhöfe** als Marker mit Namen auf der Karte und als Liste (`bahnhoefe.json` und `bahnhoefe.csv`) mit Bahnsteigen, Haltepositionen und Status (aufgegeben, im Bau). Im Spiel wird dadurch nichts gebaut, die Liste dient als Nachschlagewerk
 - **Karte:** OpenStreetMap, wahlweise mit Schattenrelief, dazu zuschaltbar die Eisenbahnkarte (OpenRailwayMap) und ein Maß-Gitter. Ebenen lassen sich ein- und ausblenden, sperren, in der Deckkraft und in der Reihenfolge ändern

@@ -1,5 +1,7 @@
 # Hinweise zu Drittanbietern
 
+**Deutsch** | [English](THIRD_PARTY_NOTICES.en.md)
+
 Das Studio selbst steht unter der MIT-Lizenz (siehe [LICENSE](LICENSE)). Es nutzt öffentliche Datenquellen, Kartendienste und Bibliotheken, die eigenen Lizenzen und Nutzungsbedingungen unterliegen. Diese Datei fasst sie zusammen. Sie ist keine Rechtsberatung. Maßgeblich sind jeweils die Originaltexte der Anbieter.
 
 ## Daten

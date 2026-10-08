@@ -208,6 +208,20 @@ FEATURE_GROUPS = (
                 "ragen (weiße Flächen). Die Hänge werden dabei flacher.",
             ),
             (
+                "Höhenfenster begrenzen",
+                "Der Karteneditor von TPF3 nimmt nur Höhen von -20 bis 3177 m "
+                "an. Mit dem Haken legst du das Gelände in ein Fenster (Felder "
+                "'Fenster von ... bis', ein Schieberegler verschiebt es). Für "
+                "Werte außerhalb gibt es drei Modi: Oben kappen (Gipfel werden "
+                "flach gesetzt), Unten abschneiden (Tiefen werden flach "
+                "gesetzt) und Stauchen (alles wird ins Fenster gedrückt, die "
+                "Wasserhöhe bleibt). Die Vorschau färbt betroffene Stellen ein "
+                "(rot: tiefer gesetzt, hellblau: höher gesetzt) und zeigt, wie "
+                "viel Fläche planiert wird. Vorschau, Zahlen und Export "
+                "benutzen dasselbe Raster. Ohne Haken warnt der Dialog, wenn "
+                "die Höhen außerhalb der Editor-Grenzen liegen.",
+            ),
+            (
                 "Trassen und Siedlungen einebnen",
                 "Bahnstrecken, größere Straßen und Gebäude aus OSM: das "
                 "Gelände dort wird abgeflacht, damit im Spiel weniger Rampen "

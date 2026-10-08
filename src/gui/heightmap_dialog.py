@@ -13,6 +13,7 @@ from PySide6.QtWidgets import (
     QMessageBox,
     QCheckBox,
     QComboBox,
+    QSlider,
     QApplication,
 )
 from PySide6.QtGui import QKeySequence, QPixmap, QShortcut
@@ -39,6 +40,17 @@ from src.heightmap.heightmap_exporter import (
     pixel_size_for_selection,
 )
 from src.heightmap.height_hints import height_hint
+from src.heightmap.height_clipping import (
+    GAME_MAX_M,
+    GAME_MIN_M,
+    MIN_WINDOW_M,
+    MODES,
+    apply_height_window,
+    default_window,
+    describe_report,
+    limit_warning,
+    window_slider_range,
+)
 from src.heightmap.lv95 import SWISS_BOUNDS
 from src.heightmap.swissalti3d_dem import SwissFetchJob
 from src.heightmap.tpf3_paths import find_tpf3_heightmaps_folder
@@ -105,6 +117,9 @@ FLATTEN_SIGMA_RANGE_M = (1.0, 1000.0)
 DGM1_RECOMMENDED_FLATTEN_SIGMA_M = 10.0
 DGM1_RECOMMENDED_ENFORCE_TRANSITION_M = 10.0
 
+# Schritte des Schiebereglers fuer das Hoehenfenster
+CLIP_SLIDER_STEPS = 1000
+
 DEFAULT_ENFORCE_DEPTH_M = 8.0     # Tiefe in der Flussmitte (Fahrrinne)
 DEFAULT_ENFORCE_EDGE_M = 2.0      # Tiefe direkt am Ufer
 DEFAULT_ENFORCE_BANK_M = 2.0
@@ -141,6 +156,11 @@ class HeightmapDialog(QDialog):
         self._processed_suggestion = None
         self._downloaded_once = False
         self._applying_preset = False
+        # Hoehenfenster: Bericht der letzten Rechnung und Zwischenspeicher
+        self._clip_report = None
+        self._clip_key = None
+        self._clip_array = None
+        self._clip_window_set = False
 
         self.setWindowTitle("Heightmap")
         self.setMinimumWidth(420)
@@ -604,6 +624,85 @@ class HeightmapDialog(QDialog):
         self.water_blend_note_label = QLabel("")
         self.water_blend_note_label.setWordWrap(True)
         layout.addWidget(self.water_blend_note_label)
+
+        # -------------------------------------------------
+        # Höhenfenster (Grenzen des Karteneditors)
+        # -------------------------------------------------
+
+        self.clip_checkbox = QCheckBox(
+            "Höhenfenster begrenzen (Editor nimmt nur "
+            f"{GAME_MIN_M:.0f} bis {GAME_MAX_M:.0f} m)"
+        )
+        self.clip_checkbox.setToolTip(
+            "Der Karteneditor von TPF3 nimmt nur Höhen in diesem Bereich an. "
+            "Liegt das Gelände (zum Beispiel in den Alpen) darüber oder darunter, "
+            "wird es hier in ein Fenster gelegt. Die Vorschau färbt betroffene "
+            "Stellen ein: rot = tiefer gesetzt (oben gekappt oder gestaucht), "
+            "hellblau = höher gesetzt (unten abgeschnitten). Das Fenster gilt "
+            "in Eintragswerten, also mit dem Haken unten bezogen auf die "
+            "Wasserhöhe."
+        )
+        self.clip_checkbox.setEnabled(False)
+        self.clip_checkbox.toggled.connect(
+            self._on_clip_toggled
+        )
+        layout.addWidget(self.clip_checkbox)
+
+        clip_mode_row = QHBoxLayout()
+        clip_mode_row.addWidget(QLabel("Werte außerhalb:"))
+
+        self.clip_mode_combo = QComboBox()
+        self.clip_mode_combo.addItems([
+            "Oben kappen (Gipfel planieren)",
+            "Unten abschneiden (Tiefen planieren)",
+            "Stauchen (alles ins Fenster drücken)",
+        ])
+        self.clip_mode_combo.setEnabled(False)
+        self.clip_mode_combo.setToolTip(
+            "Oben kappen: Alles über dem Fenster wird flach auf die Obergrenze "
+            "gesetzt, das Fenster liegt zunächst an der tiefsten Stelle. "
+            "Unten abschneiden: Alles unter dem Fenster wird flach auf die "
+            "Untergrenze gesetzt, das Fenster liegt zunächst an der höchsten "
+            "Stelle. Stauchen: das ganze Gelände wird ins Fenster gedrückt, die "
+            "Wasserhöhe bleibt dabei erhalten. Die Fensterbreite bestimmen "
+            "die Felder darunter, der Schieberegler verschiebt das Fenster."
+        )
+        self.clip_mode_combo.currentIndexChanged.connect(
+            self._on_clip_mode_changed
+        )
+        clip_mode_row.addWidget(self.clip_mode_combo, 1)
+        layout.addLayout(clip_mode_row)
+
+        clip_window_row = QHBoxLayout()
+
+        clip_window_row.addWidget(QLabel("Fenster von:"))
+        self.clip_min_input = self._make_clip_spin()
+        clip_window_row.addWidget(self.clip_min_input)
+
+        clip_window_row.addWidget(QLabel("bis:"))
+        self.clip_max_input = self._make_clip_spin()
+        clip_window_row.addWidget(self.clip_max_input)
+
+        clip_window_row.addStretch(1)
+        layout.addLayout(clip_window_row)
+
+        clip_slider_row = QHBoxLayout()
+        clip_slider_row.addWidget(QLabel("Fenster verschieben:"))
+
+        self.clip_slider = QSlider(Qt.Horizontal)
+        self.clip_slider.setRange(0, CLIP_SLIDER_STEPS)
+        # Erst beim Loslassen neu rechnen, nicht bei jedem Pixel
+        self.clip_slider.setTracking(False)
+        self.clip_slider.setEnabled(False)
+        self.clip_slider.valueChanged.connect(
+            self._on_clip_slider_changed
+        )
+        clip_slider_row.addWidget(self.clip_slider, 1)
+        layout.addLayout(clip_slider_row)
+
+        self.clip_report_label = QLabel("")
+        self.clip_report_label.setWordWrap(True)
+        layout.addWidget(self.clip_report_label)
 
         # -------------------------------------------------
         # Werte fuer den TPF3-Import (immer passend zum Export)
@@ -1071,6 +1170,7 @@ class HeightmapDialog(QDialog):
         self.smooth_checkbox.setEnabled(True)
         self.smooth_sigma_input.setEnabled(self.smooth_checkbox.isChecked())
         self.compress_input.setEnabled(True)
+        self.clip_checkbox.setEnabled(True)
 
         self.enforce_checkbox.blockSignals(True)
         self.enforce_checkbox.setEnabled(has_water_data)
@@ -1161,6 +1261,12 @@ class HeightmapDialog(QDialog):
         self.export_button.setEnabled(True)
         self.download_button.setEnabled(True)
 
+        # Neues Raster: das Hoehenfenster beginnt wieder bei der Voreinstellung
+        self._clip_window_set = False
+
+        if self.clip_checkbox.isChecked():
+            self._reset_clip_window()
+
         self._update_preview()
 
     # ---------------------------------------------------------
@@ -1244,6 +1350,11 @@ class HeightmapDialog(QDialog):
         ausreisserbereinigte Spanne, falls der Nutzer das explizit
         angehakt hat.
         """
+
+        # Mit Hoehenfenster ist das Fenster selbst der Bereich: Vorschau, Zahlen
+        # und Export benutzen genau diese Grenzen.
+        if self.clip_checkbox.isChecked():
+            return self._clip_window_real()
 
         # Bei aktivem Gefaelle-Ausgleich verschieben sich die Hoehen
         # (Gelaende wird relativ zum Wasser abgesenkt/angehoben) - der
@@ -1483,6 +1594,7 @@ class HeightmapDialog(QDialog):
             # "Empfohlen" bleibt der gewählte Stauchwert erhalten.
             if index == 1:
                 self.compress_input.setValue(100.0)
+                self.clip_checkbox.setChecked(False)
 
             self.enforce_transition_input.setValue(
                 DGM1_RECOMMENDED_ENFORCE_TRANSITION_M
@@ -1602,6 +1714,11 @@ class HeightmapDialog(QDialog):
         self._update_preview()
 
     def _on_relative_values_toggled(self, checked: bool):
+
+        # Das Hoehenfenster gilt in Eintragswerten: es wandert mit der Wasserhoehe.
+        if self.clip_checkbox.isChecked() and self.heightmap_array is not None:
+            self._update_preview()
+            return
 
         # Nur den Text neu schreiben, nichts neu berechnen.
         if self.heightmap_array is not None:
@@ -1752,8 +1869,11 @@ class HeightmapDialog(QDialog):
         self._processed_key = None
         self._processed_array = None
         self._processed_suggestion = None
+        self._clip_key = None
+        self._clip_array = None
+        self._clip_report = None
 
-    def _effective_heightmap(self):
+    def _unclipped_heightmap(self):
         """
         Liefert das Hoehenraster, das fuer Vorschau/Export tatsaechlich
         verwendet wird. Reihenfolge, wenn angehakt:
@@ -1883,6 +2003,248 @@ class HeightmapDialog(QDialog):
 
         return array
 
+    def _effective_heightmap(self):
+        """
+        Das Raster, das Vorschau, Zahlen im Dialog und Export tatsaechlich
+        benutzen: das bearbeitete Gelaende, danach (wenn angehakt) das
+        Hoehenfenster. Alles laeuft ueber apply_height_window(), damit Vorschau
+        und exportierte PNG nicht auseinanderlaufen.
+        """
+
+        array = self._unclipped_heightmap()
+
+        if not self.clip_checkbox.isChecked():
+            self._clip_report = None
+            return array
+
+        window_min, window_max = self._clip_window_real()
+        mode = self._clip_mode()
+        water_level = self.water_level_input.value()
+
+        key = (self._processing_key(), mode, window_min, window_max)
+
+        if key == self._clip_key and self._clip_array is not None:
+            return self._clip_array
+
+        QApplication.setOverrideCursor(Qt.WaitCursor)
+
+        try:
+            clipped, report = apply_height_window(
+                array,
+                window_min,
+                window_max,
+                mode,
+                anchor=water_level,
+            )
+        finally:
+            QApplication.restoreOverrideCursor()
+
+        self._clip_array = clipped
+        self._clip_report = report
+        self._clip_key = key
+        self._processed_suggestion = None
+
+        return clipped
+
+    # ---------------------------------------------------------
+    # Hoehenfenster
+    # ---------------------------------------------------------
+
+    def _make_clip_spin(self):
+
+        spin = QDoubleSpinBox()
+        spin.setRange(GAME_MIN_M, GAME_MAX_M)
+        spin.setDecimals(0)
+        spin.setSuffix(" m")
+        spin.setMinimumWidth(110)
+        spin.setKeyboardTracking(False)
+        spin.setEnabled(False)
+        spin.valueChanged.connect(self._on_clip_spin_changed)
+
+        return spin
+
+    def _clip_mode(self) -> str:
+
+        return MODES[self.clip_mode_combo.currentIndex()]
+
+    def _clip_offset(self) -> float:
+        """Eintragswerte -> echte Hoehen: mit dem Haken relativ zur Wasserhoehe."""
+
+        if self.relative_values_checkbox.isChecked():
+            return self.water_level_input.value()
+
+        return 0.0
+
+    def _clip_window_real(self) -> tuple[float, float]:
+
+        offset = self._clip_offset()
+
+        return (
+            self.clip_min_input.value() + offset,
+            self.clip_max_input.value() + offset,
+        )
+
+    def _clip_data_range(self) -> tuple[float, float]:
+        """Hoehenbereich des Rasters vor dem Fenster, in Eintragswerten."""
+
+        array = self._unclipped_heightmap()
+        offset = self._clip_offset()
+
+        return float(array.min()) - offset, float(array.max()) - offset
+
+    def _set_clip_window(self, low: float, high: float):
+
+        for spin, value in (
+            (self.clip_min_input, low),
+            (self.clip_max_input, high),
+        ):
+            spin.blockSignals(True)
+            spin.setValue(value)
+            spin.blockSignals(False)
+
+        self._clip_window_set = True
+
+        self._sync_clip_slider()
+
+    def _reset_clip_window(self, width: float | None = None):
+        """Fenster passend zum Modus voreinstellen (ganze Zahlen, nie knapper als das Gelaende)."""
+
+        import math
+
+        data_min, data_max = self._clip_data_range()
+
+        low, high = default_window(data_min, data_max, self._clip_mode(), width)
+
+        low = max(GAME_MIN_M, float(math.floor(low)))
+        high = min(GAME_MAX_M, float(math.ceil(high)))
+
+        if high - low < MIN_WINDOW_M:
+            high = min(GAME_MAX_M, low + MIN_WINDOW_M)
+            low = high - MIN_WINDOW_M
+
+        self._set_clip_window(low, high)
+
+    def _sync_clip_slider(self):
+        """Schieberegler passend zum Fenster setzen (ohne eine Rechnung auszuloesen)."""
+
+        if self.heightmap_array is None:
+            return
+
+        low = self.clip_min_input.value()
+        width = self.clip_max_input.value() - low
+
+        first, last = window_slider_range(width)
+
+        self.clip_slider.blockSignals(True)
+
+        if last - first < 1.0:
+
+            self.clip_slider.setEnabled(False)
+            self.clip_slider.setValue(0)
+
+        else:
+
+            self.clip_slider.setEnabled(self.clip_checkbox.isChecked())
+
+            share = min(1.0, max(0.0, (low - first) / (last - first)))
+
+            self.clip_slider.setValue(round(share * CLIP_SLIDER_STEPS))
+
+        self.clip_slider.blockSignals(False)
+
+    def _on_clip_toggled(self, checked: bool):
+
+        self.clip_mode_combo.setEnabled(checked)
+        self.clip_min_input.setEnabled(checked)
+        self.clip_max_input.setEnabled(checked)
+
+        if not checked:
+
+            self.clip_slider.setEnabled(False)
+            self._clip_report = None
+            self.clip_report_label.setText("")
+
+        elif self.heightmap_array is not None:
+
+            if self._clip_window_set:
+                self._sync_clip_slider()
+            else:
+                self._reset_clip_window()
+
+        self._update_preview()
+
+    def _on_clip_mode_changed(self, _index: int):
+
+        if self.heightmap_array is None or not self.clip_checkbox.isChecked():
+            return
+
+        width = None
+
+        if self._clip_window_set:
+            width = self.clip_max_input.value() - self.clip_min_input.value()
+
+        self._reset_clip_window(width)
+
+        self._update_preview()
+
+    def _on_clip_spin_changed(self, *_):
+
+        low = self.clip_min_input.value()
+        high = self.clip_max_input.value()
+
+        if high - low < MIN_WINDOW_M:
+
+            if low + MIN_WINDOW_M <= GAME_MAX_M:
+                high = low + MIN_WINDOW_M
+            else:
+                low = high - MIN_WINDOW_M
+
+            self._set_clip_window(low, high)
+
+        else:
+
+            self._clip_window_set = True
+            self._sync_clip_slider()
+
+        self._update_preview()
+
+    def _on_clip_slider_changed(self, value: int):
+
+        if self.heightmap_array is None:
+            return
+
+        width = self.clip_max_input.value() - self.clip_min_input.value()
+
+        first, last = window_slider_range(width)
+
+        low = round(first + (last - first) * value / CLIP_SLIDER_STEPS)
+        low = min(max(low, GAME_MIN_M), GAME_MAX_M - width)
+
+        self._set_clip_window(low, low + width)
+
+        self._update_preview()
+
+    def _update_clip_report_label(self):
+
+        report = self._clip_report
+
+        if report is None:
+            self.clip_report_label.setText("")
+            return
+
+        text = describe_report(report)
+
+        water_level = self.water_level_input.value()
+
+        if not report.window_min_m <= water_level <= report.window_max_m:
+            text += (
+                "\nAchtung: Die Wasserhöhe liegt außerhalb des Fensters, "
+                "die Flüsse wären im Spiel trocken oder die ganze Karte läge "
+                "unter Wasser."
+            )
+
+        self.clip_report_label.setText(text)
+
     def _active_suggestion(self):
         """
         Die Hoehenbereichs-/Ausreisser-Angaben passend zum tatsaechlich
@@ -1895,6 +2257,7 @@ class HeightmapDialog(QDialog):
             and not self.enforce_checkbox.isChecked()
             and not self.smooth_checkbox.isChecked()
             and not self.flatten_checkbox.isChecked()
+            and not self.clip_checkbox.isChecked()
             and self.compress_input.value() >= 100.0
         ):
             return self.suggestion
@@ -1914,6 +2277,11 @@ class HeightmapDialog(QDialog):
         """
 
         checkbox = self.exclude_outliers_checkbox
+
+        # Mit Hoehenfenster bestimmt das Fenster den Bereich, die Auswahl entfaellt.
+        if self.clip_checkbox.isChecked():
+            checkbox.setVisible(False)
+            return
 
         checkbox.blockSignals(True)
 
@@ -1998,6 +2366,13 @@ class HeightmapDialog(QDialog):
         if hint:
             lines.append(hint)
 
+        offset = water if self.relative_values_checkbox.isChecked() else 0.0
+
+        warning = limit_warning(range_min - offset, range_max - offset)
+
+        if warning:
+            lines.append(warning)
+
         return "\n".join(lines)
 
     # ---------------------------------------------------------
@@ -2016,6 +2391,11 @@ class HeightmapDialog(QDialog):
 
         array = self._effective_heightmap()
 
+        if self.clip_checkbox.isChecked():
+            self._sync_clip_slider()
+
+        self._update_clip_report_label()
+
         self._sync_outlier_checkbox(self._active_suggestion())
 
         range_min, range_max = self._effective_range()
@@ -2032,6 +2412,11 @@ class HeightmapDialog(QDialog):
             range_min_m=range_min,
             range_max_m=range_max,
             pixel_size_m=self._pixel_size_m(),
+            original_heightmap=(
+                self._unclipped_heightmap()
+                if self._clip_report is not None
+                else None
+            ),
         )
 
         buffer = io.BytesIO()
@@ -2095,7 +2480,10 @@ class HeightmapDialog(QDialog):
 
         outlier_warning = ""
 
-        if self.exclude_outliers_checkbox.isChecked():
+        if (
+            self.exclude_outliers_checkbox.isChecked()
+            and not self.clip_checkbox.isChecked()
+        ):
 
             outlier_warning = (
                 f"\n\nHinweis: Die {self._active_suggestion().outlier_count} als "
@@ -2167,6 +2555,16 @@ class HeightmapDialog(QDialog):
                 f"den echten Höhendaten ab."
             )
 
+        clip_note = ""
+
+        if self._clip_report is not None:
+
+            clip_note = (
+                f"\n\nHöhenfenster {self._clip_report.window_min_m:.0f} bis "
+                f"{self._clip_report.window_max_m:.0f} m: "
+                f"{describe_report(self._clip_report)}"
+            )
+
         QMessageBox.information(
             self,
             "Export abgeschlossen",
@@ -2179,4 +2577,5 @@ class HeightmapDialog(QDialog):
             f"{slope_note}"
             f"{enforce_note}"
             f"{water_blend_note}"
+            f"{clip_note}"
         )

@@ -16,6 +16,8 @@ from pathlib import Path
 
 import numpy as np
 
+from src.heightmap.height_clipping import CHANGE_TOLERANCE_M, normalize_heights
+
 EDGE_MARGIN_PX = 3
 SUGGESTION_PERCENTILE = 7.5
 
@@ -27,6 +29,22 @@ SUGGESTION_PERCENTILE = 7.5
 # z.B. 0.5/99.5 wuerden das tun, da per Definition immer ~1% der Flaeche
 # ausserhalb liegt, auch ohne jede Anomalie).
 OUTLIER_IQR_FACTOR = 3.0
+
+
+# Einfaerbung der vom Hoehenfenster veraenderten Stellen in der Vorschau
+CLIP_LOWERED_RGB = (220, 50, 50)    # tiefer gesetzt: oben gekappt oder gestaucht
+CLIP_RAISED_RGB = (60, 220, 240)    # hoeher gesetzt: unten abgeschnitten
+CLIP_BLEND = 0.7
+
+
+def _blend(rgb: np.ndarray, mask: np.ndarray, color) -> np.ndarray:
+    if not mask.any():
+        return rgb
+
+    out = rgb.copy()
+    mixed = rgb[mask].astype(np.float32) * (1.0 - CLIP_BLEND) + np.array(color, dtype=np.float32) * CLIP_BLEND
+    out[mask] = np.clip(mixed, 0, 255).astype(np.uint8)
+    return out
 
 
 @dataclass
@@ -164,10 +182,16 @@ def render_preview(
     output_path: Path | None = None,
     max_size_px: int = 900,
     pixel_size_m: float | None = None,
+    original_heightmap: np.ndarray | None = None,
 ):
     """Vorschau wie im TPF2-Importfenster: graues Gelaende-Relief,
     Wasserflaeche blau eingefaerbt, mit Min/Max und Wasserhoehe als
-    Beschriftung. Gibt ein PIL.Image zurueck."""
+    Beschriftung. Gibt ein PIL.Image zurueck.
+
+    Mit original_heightmap (das Raster VOR dem Hoehenfenster, gleiche Form wie
+    heightmap) werden die vom Hoehenfenster veraenderten Stellen eingefaerbt:
+    Rot = tiefer gesetzt (oben gekappt oder gestaucht), Hellblau = hoeher gesetzt
+    (unten abgeschnitten)."""
 
     from PIL import Image, ImageDraw
 
@@ -175,7 +199,7 @@ def render_preview(
     step = max(1, max(h, w) // max_size_px)
     small = heightmap[::step, ::step]
 
-    norm = np.clip((small - range_min_m) / (range_max_m - range_min_m), 0, 1)
+    norm = normalize_heights(small, range_min_m, range_max_m)
     gray = norm * 200 + 30
 
     # Mit pixel_size_m (Meter pro Pixel des vollen Rasters) wird das Relief
@@ -190,6 +214,13 @@ def render_preview(
 
     water_mask = small <= water_level_m
     rgb[water_mask] = [40, 90, 120]
+
+    if original_heightmap is not None:
+        original_small = original_heightmap[::step, ::step]
+        lowered = small < original_small - CHANGE_TOLERANCE_M
+        raised = small > original_small + CHANGE_TOLERANCE_M
+        rgb = _blend(rgb, lowered, CLIP_LOWERED_RGB)
+        rgb = _blend(rgb, raised, CLIP_RAISED_RGB)
 
     img = Image.fromarray(rgb, mode="RGB")
 
