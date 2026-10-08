@@ -32,6 +32,7 @@ import numpy as np
 import requests
 
 from src.heightmap.copernicus_dem import _bilinear
+from src.http_identity import USER_AGENT
 from src.heightmap.lv95 import LV95_ZONE, latlon_to_lv95
 from src.heightmap.utm import latlon_to_utm, zone_for_lon
 
@@ -228,7 +229,10 @@ def fetch_slot(
             resp = post(
                 API_URL,
                 json=payload,
-                headers={"Accept": "application/json"},
+                headers={
+                    "User-Agent": USER_AGENT,
+                    "Accept": "application/json",
+                },
                 timeout=90,
             )
         except requests.RequestException as exc:

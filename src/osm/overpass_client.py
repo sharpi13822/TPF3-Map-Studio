@@ -1,5 +1,6 @@
 import requests
 
+from src.http_identity import USER_AGENT
 from src.map.objects.selection import Selection
 from src.osm.osm_parser import OSMParser
 from src.osm.objects.osm_data import OSMData
@@ -61,7 +62,7 @@ class OverpassClient:
                     server,
                     data={"data": query},
                     headers={
-                        "User-Agent": "TPF3-Map-Studio",
+                        "User-Agent": USER_AGENT,
                         "Accept": "application/json",
                     },
                     timeout=self.timeout,
