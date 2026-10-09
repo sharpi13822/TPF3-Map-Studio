@@ -271,6 +271,38 @@ def build_biome_index(
     return index
 
 
+def thin_forest_by_height(
+    index: np.ndarray,
+    heights: np.ndarray,
+    water_level_m: float,
+    limit_m: float,
+    replacement_biome: int = 0,
+) -> np.ndarray:
+    """
+    Ersetzt Biom 1 (Wiese mit Baumgruppen) durch ein Biom ohne Baeume, wo
+    das Gelaende mindestens limit_m ueber dem Wasserspiegel liegt. Das
+    Hoehenraster darf eine andere Groesse als die Maske haben (Nächster
+    Nachbar). Liefert eine neue Kopie.
+    """
+
+    result = index.copy()
+
+    h, w = result.shape
+    hh, hw = heights.shape
+
+    rows = (np.arange(h) * hh) // h
+    cols = (np.arange(w) * hw) // w
+
+    above = (
+        np.asarray(heights, dtype=np.float32)[np.ix_(rows, cols)]
+        - np.float32(water_level_m)
+    )
+
+    result[(result == 1) & (above >= np.float32(limit_m))] = replacement_biome
+
+    return result
+
+
 def index_to_gray(index: np.ndarray) -> np.ndarray:
     """Biom-Indizes 0..4 in die Grauwerte fuer die Biome-Maske umsetzen."""
 

@@ -14,8 +14,10 @@ import numpy as np
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QImage, QPixmap
 from PySide6.QtWidgets import (
+    QCheckBox,
     QComboBox,
     QDialog,
+    QDoubleSpinBox,
     QFileDialog,
     QFormLayout,
     QHBoxLayout,
@@ -33,6 +35,7 @@ from src.heightmap.biome_mask import (
     index_to_preview_rgb,
     mask_size_for_selection,
     save_biome_png,
+    thin_forest_by_height,
 )
 from src.heightmap.tpf3_paths import find_tpf3_heightmaps_folder
 from src.i18n import tr
@@ -49,11 +52,21 @@ _PREVIEW_HEIGHT = 480
 
 class BiomeMaskDialog(QDialog):
 
-    def __init__(self, parent, selection, osm):
+    def __init__(
+        self,
+        parent,
+        selection,
+        osm,
+        heights=None,
+        water_level_m=0.0,
+        default_limit_m=340.0,
+    ):
         super().__init__(parent)
 
         self.selection = selection
         self.osm = osm
+        self._heights = heights
+        self._water_level_m = float(water_level_m)
         self._index: np.ndarray | None = None
 
         self.setWindowTitle(tr("Biome-Maske aus OSM"))
@@ -99,6 +112,28 @@ class BiomeMaskDialog(QDialog):
         self.resolution_box.setCurrentIndex(1)
 
         form.addRow(tr("Auflösung:"), self.resolution_box)
+
+        self.thin_checkbox = QCheckBox(tr("Bäume in der Höhe ausdünnen"))
+        self.thin_checkbox.setToolTip(
+            tr("Ersetzt Biom 1 (Wiese mit Baumgruppen) ab der Grenze durch "
+               "ein Biom ohne Bäume. Die Höhe kommt aus dem Heightmap-Dialog "
+               "(mit allen Einstellungen). Ob die übrigen Biome Bäume "
+               "haben, ist im Spiel nicht geprüft.")
+        )
+        self.thin_checkbox.setEnabled(self._heights is not None)
+        form.addRow(self.thin_checkbox)
+
+        self.thin_limit_input = QDoubleSpinBox()
+        self.thin_limit_input.setRange(0.0, 1000.0)
+        self.thin_limit_input.setDecimals(0)
+        self.thin_limit_input.setSuffix(" m")
+        self.thin_limit_input.setValue(float(default_limit_m))
+        form.addRow(tr("Baumgrenze (m über Wasser):"), self.thin_limit_input)
+
+        self.thin_biome_box = QComboBox()
+        self.thin_biome_box.addItem(BIOME_NAMES[0], 0)
+        self.thin_biome_box.addItem(BIOME_NAMES[2], 2)
+        form.addRow(tr("Ersatzbiom:"), self.thin_biome_box)
 
         self.preview_label = QLabel(tr("Noch keine Vorschau."))
         self.preview_label.setAlignment(Qt.AlignCenter)
@@ -166,6 +201,15 @@ class BiomeMaskDialog(QDialog):
                 tr("Die Maske konnte nicht berechnet werden:\n{error}").format(error=error),
             )
             return
+
+        if self.thin_checkbox.isChecked() and self._heights is not None:
+            index = thin_forest_by_height(
+                index,
+                self._heights,
+                self._water_level_m,
+                self.thin_limit_input.value(),
+                int(self.thin_biome_box.currentData()),
+            )
 
         self._index = index
 

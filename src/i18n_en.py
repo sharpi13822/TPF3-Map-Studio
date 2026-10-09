@@ -1312,6 +1312,14 @@ guide of the heightmap dialog (F1).</p>
         'Elevation zones in the preview',
     "Zeigt in der Vorschau grün, Fels und Schnee nach der Höhe über dem Wasserspiegel. Felsgrenze und Schneegrenze stellst du mit Feld oder Schieber ein (Schätzwerte, nur für die Vorschau, nicht für den Export). Darunter stehen das Maximum und die Flächenanteile. Der Schieber unter 'Höhen stauchen auf' rechnet beim Loslassen neu. Echter Fels hängt im Spiel zusätzlich an der Neigung.":
         "Shows green, rock and snow in the preview according to the height above the water level. You set the rock limit and snow limit with the field or the slider (estimates, for the preview only, not for the export). Below it are the maximum and the area shares. The slider under 'Compress elevations to:' recalculates when you release it. In the game, real rock also depends on the slope.",
+    'Bäume in der Höhe ausdünnen':
+        'Thin out trees at altitude',
+    'Ersetzt Biom 1 (Wiese mit Baumgruppen) ab der Grenze durch ein Biom ohne Bäume. Die Höhe kommt aus dem Heightmap-Dialog (mit allen Einstellungen). Ob die übrigen Biome Bäume haben, ist im Spiel nicht geprüft.':
+        'Replaces biome 1 (meadow with groups of trees) above the limit with a biome without trees. The height comes from the heightmap dialog (with all its settings). Whether the other biomes have trees has not been checked in the game.',
+    'Baumgrenze (m über Wasser):':
+        'Tree limit (m above water):',
+    'Ersatzbiom:':
+        'Replacement biome:',
     'Gelände glätten und Höhen stauchen':
         'Smooth terrain and compress elevations',
     'Glätten gegen Treppenstufen und Kristallflächen an Hängen (das Copernicus-Modell hat nur etwa 30 m pro Pixel). Höhen stauchen drückt alle Höhen über dem Wasserspiegel auf einen Anteil, falls Hochflächen im Spiel über die Schneegrenze ragen (weiße Flächen). Die Hänge werden dabei flacher.':

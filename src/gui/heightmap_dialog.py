@@ -948,7 +948,20 @@ class HeightmapDialog(QDialog):
             )
             return
 
-        BiomeMaskDialog(self, self.selection, self.osm).exec()
+        heights = (
+            self._effective_heightmap()
+            if self.heightmap_array is not None
+            else None
+        )
+
+        BiomeMaskDialog(
+            self,
+            self.selection,
+            self.osm,
+            heights=heights,
+            water_level_m=self.water_level_input.value(),
+            default_limit_m=self.rock_input.value(),
+        ).exec()
 
     def _open_towns_dialog(self):
 
