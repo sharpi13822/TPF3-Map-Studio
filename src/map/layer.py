@@ -1,5 +1,7 @@
 from enum import Enum
 
+from src.i18n import tr
+
 
 class GeometryType(Enum):
 
@@ -30,4 +32,7 @@ class Layer(Enum):
 
     @property
     def label(self):
-        return self.value
+        # Anzeigename in der aktiven Sprache. Der Wert (self.value) bleibt
+        # der deutsche Name, weil er als Kennung im Projekt und in der
+        # Karte benutzt wird.
+        return tr(self.value)

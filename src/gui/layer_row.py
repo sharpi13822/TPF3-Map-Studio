@@ -11,6 +11,7 @@ from PySide6.QtWidgets import (
 )
 
 from src.gui.icon_set import icon, icon_path
+from src.i18n import tr
 
 
 # Layer-Name -> Symbol aus src/gui/icons
@@ -102,7 +103,7 @@ class LayerRowWidget(QWidget):
 
         self.lock.setIconSize(QSize(16, 16))
 
-        self.lock.setToolTip("Ebene sperren: keine Auswahl und Bearbeitung in der Karte")
+        self.lock.setToolTip(tr("Ebene sperren: keine Auswahl und Bearbeitung in der Karte"))
 
         self._update_lock_icon(locked)
 
@@ -170,7 +171,7 @@ class LayerRowWidget(QWidget):
 
         self.up_button.setIconSize(QSize(14, 14))
 
-        self.up_button.setToolTip("Ebene nach oben (vor die anderen)")
+        self.up_button.setToolTip(tr("Ebene nach oben (vor die anderen)"))
 
         self.up_button.setFixedWidth(28)
 
@@ -184,7 +185,7 @@ class LayerRowWidget(QWidget):
 
         self.down_button.setIconSize(QSize(14, 14))
 
-        self.down_button.setToolTip("Ebene nach unten (hinter die anderen)")
+        self.down_button.setToolTip(tr("Ebene nach unten (hinter die anderen)"))
 
         self.down_button.setFixedWidth(28)
 
@@ -326,27 +327,27 @@ class LayerRowWidget(QWidget):
         menu = QMenu(self)
 
         show_action = menu.addAction(
-            "Layer anzeigen"
+            tr("Layer anzeigen")
         )
 
         hide_action = menu.addAction(
-            "Layer ausblenden"
+            tr("Layer ausblenden")
         )
 
         menu.addSeparator()
 
         lock_action = menu.addAction(
-            "Layer sperren"
+            tr("Layer sperren")
         )
 
         unlock_action = menu.addAction(
-            "Layer entsperren"
+            tr("Layer entsperren")
         )
 
         menu.addSeparator()
 
         reset_action = menu.addAction(
-            "Deckkraft zurücksetzen"
+            tr("Deckkraft zurücksetzen")
         )
 
         action = menu.exec(

@@ -2,12 +2,13 @@ from PySide6.QtWidgets import QToolBar
 from PySide6.QtCore import Qt
 from PySide6.QtCore import QSize
 from PySide6.QtCore import Qt, QSize
+from src.i18n import tr
 
 
 class MainToolbar(QToolBar):
 
     def __init__(self, actions):
-        super().__init__("Werkzeuge")
+        super().__init__(tr("Werkzeuge"))
         self.setToolButtonStyle(Qt.ToolButtonIconOnly)
         self.setIconSize(QSize(24, 24))
         self.setMovable(False)

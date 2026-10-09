@@ -11,6 +11,7 @@ from PySide6.QtWidgets import (
     QTextBrowser,
     QVBoxLayout,
 )
+from src.i18n import tr
 
 
 GUIDE_HTML = """
@@ -97,7 +98,7 @@ Anleitung des Heightmap-Dialogs (F1).</p>
 
 def create_project_dock(parent):
 
-    dock = QDockWidget("Projekt", parent)
+    dock = QDockWidget(tr("Projekt"), parent)
     dock.setAllowedAreas(Qt.LeftDockWidgetArea)
 
     parent.project_list = QListWidget()
@@ -111,7 +112,7 @@ def create_project_dock(parent):
 
 def create_properties_dock(parent):
 
-    dock = QDockWidget("Eigenschaften", parent)
+    dock = QDockWidget(tr("Eigenschaften"), parent)
     dock.setAllowedAreas(Qt.RightDockWidgetArea)
 
     form = QWidget()
@@ -130,7 +131,7 @@ def create_properties_dock(parent):
     parent.prop_lon = QLabel()
 
     parent.delete_marker_button = QPushButton(
-        "Marker löschen"
+        tr("Marker löschen")
     )
 
     parent.delete_marker_button.clicked.connect(
@@ -138,22 +139,22 @@ def create_properties_dock(parent):
     )
 
     layout.addRow(
-        "ID:",
+        tr("ID:"),
         parent.prop_id
     )
 
     layout.addRow(
-        "Name:",
+        tr("Name:"),
         parent.prop_name
     )
 
     layout.addRow(
-        "Breite:",
+        tr("Breite:"),
         parent.prop_lat
     )
 
     layout.addRow(
-        "Länge:",
+        tr("Länge:"),
         parent.prop_lon
     )
 

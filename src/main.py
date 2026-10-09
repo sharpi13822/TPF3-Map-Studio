@@ -16,6 +16,13 @@ from src.logging_config import install_qt_message_handler, setup_logging
 
 setup_logging()
 
+# Die Sprache muss feststehen, BEVOR src.window und die Dialoge importiert
+# werden: Texte auf Modulebene werden beim Import einmal uebersetzt. Ein
+# Sprachwechsel im Menue wirkt deshalb nach einem Neustart.
+from src.i18n import init_language
+
+init_language()
+
 from PySide6.QtWidgets import QApplication
 from src.window import MainWindow
 

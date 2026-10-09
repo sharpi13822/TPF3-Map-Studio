@@ -6,6 +6,7 @@ from PySide6.QtWidgets import (
 )
 
 from src.gui.layer_row import LayerRowWidget
+from src.i18n import tr
 
 
 class LayerPanel(QWidget):
@@ -27,7 +28,7 @@ class LayerPanel(QWidget):
         # Titel
         # ---------------------------------------------------------
 
-        title = QLabel("Layer")
+        title = QLabel(tr("Layer"))
 
         title.setAlignment(Qt.AlignCenter)
 

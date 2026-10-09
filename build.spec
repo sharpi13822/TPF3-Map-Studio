@@ -61,6 +61,8 @@ a = Analysis(
         "PySide6.QtWebEngineCore",
         "PySide6.QtNetwork",
         "certifi",
+        # Wird in src/i18n.py erst bei Bedarf importiert (englischer Katalog).
+        "src.i18n_en",
         "requests",
         "urllib3",
         "scipy",

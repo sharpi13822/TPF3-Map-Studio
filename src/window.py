@@ -21,6 +21,7 @@ from PySide6.QtWidgets import (
 )
 
 from src.features import VACUUMTUBE_IMPORTER
+from src.i18n import get_language, save_language, tr
 from src.core.project.project import Project
 from src.map.layer import Layer
 from src.undo.undo_stack import UndoStack
@@ -83,6 +84,14 @@ sperren, entsperren oder die Deckkraft zurücksetzen.</p>
 Eckpunkte. Die Punkte lassen sich ziehen. Ein Klick ins Leere oder
 die Esc-Taste beendet das.</p>
 """
+
+
+# Sprachauswahl im Menue: (Kuerzel, Anzeigename). Die Namen werden nie
+# uebersetzt, jede Sprache steht in ihrer eigenen Schreibweise.
+LANGUAGE_CHOICES = (
+    ("de", "Deutsch"),
+    ("en", "English"),
+)
 
 
 class _OsmWorker(QThread):
@@ -203,12 +212,12 @@ class MainWindow(QMainWindow):
 
         status = QStatusBar()
 
-        self.tool_status = QLabel("Werkzeug: Marker")
+        self.tool_status = QLabel(tr("Werkzeug: Marker"))
 
         self.measure_status = QLabel("")
 
         status.showMessage(
-            "Bereit"
+            tr("Bereit")
         )
 
         status.addPermanentWidget(
@@ -276,8 +285,8 @@ class MainWindow(QMainWindow):
 
             QMessageBox.critical(
                 self,
-                "Fehler",
-                "Die Karte konnte nicht geladen werden."
+                tr("Fehler"),
+                tr("Die Karte konnte nicht geladen werden.")
             )
 
             return
@@ -375,7 +384,7 @@ class MainWindow(QMainWindow):
 
             self,
 
-            "Projekt speichern unter",
+            tr("Projekt speichern unter"),
 
             self._project_file or "",
 
@@ -402,9 +411,9 @@ class MainWindow(QMainWindow):
 
                 self,
 
-                "Fehler",
+                tr("Fehler"),
 
-                f"Projekt konnte nicht gespeichert werden.\n\n{e}"
+                tr("Projekt konnte nicht gespeichert werden.\n\n{error}").format(error=e)
 
             )
 
@@ -413,7 +422,7 @@ class MainWindow(QMainWindow):
         self._project_file = filename
 
         self.statusBar().showMessage(
-            "Projekt gespeichert."
+            tr("Projekt gespeichert.")
         )
 
         self._update_window_title()
@@ -428,7 +437,7 @@ class MainWindow(QMainWindow):
 
             self,
 
-            "Projekt öffnen",
+            tr("Projekt öffnen"),
 
             "",
 
@@ -460,9 +469,9 @@ class MainWindow(QMainWindow):
 
                 self,
 
-                "Fehler",
+                tr("Fehler"),
 
-                f"Projekt konnte nicht geladen werden.\n\n{e}"
+                tr("Projekt konnte nicht geladen werden.\n\n{error}").format(error=e)
 
             )
 
@@ -477,7 +486,7 @@ class MainWindow(QMainWindow):
         self._project_file = filename
 
         self.statusBar().showMessage(
-            "Projekt geladen."
+            tr("Projekt geladen.")
         )
 
         self._update_window_title()
@@ -500,10 +509,10 @@ class MainWindow(QMainWindow):
 
             self,
 
-            "Projekt speichern",
+            tr("Projekt speichern"),
 
-            "Das Projekt wurde geändert.\n\n"
-            "Vorher speichern?",
+            tr("Das Projekt wurde geändert.\n\n"
+            "Vorher speichern?"),
 
             QMessageBox.Yes
             | QMessageBox.No
@@ -534,8 +543,8 @@ class MainWindow(QMainWindow):
 
             QMessageBox.information(
                 self,
-                "OSM-Download läuft",
-                "Bitte warten, bis der OSM-Download fertig ist."
+                tr("OSM-Download läuft"),
+                tr("Bitte warten, bis der OSM-Download fertig ist.")
             )
 
             return
@@ -546,7 +555,7 @@ class MainWindow(QMainWindow):
         self._reset_project()
 
         self.statusBar().showMessage(
-            "Neues Projekt."
+            tr("Neues Projekt.")
         )
 
     def _close_project(self):
@@ -640,8 +649,8 @@ class MainWindow(QMainWindow):
 
         name, ok = QInputDialog.getText(
             self,
-            "Projekteigenschaften",
-            "Projektname:",
+            tr("Projekteigenschaften"),
+            tr("Projektname:"),
             text=project.name
         )
 
@@ -660,7 +669,7 @@ class MainWindow(QMainWindow):
         self._update_window_title()
 
         self.statusBar().showMessage(
-            f"Projektname geändert: {name}"
+            tr("Projektname geändert: {name}").format(name=name)
         )
 
     # ---------------------------------------------------------
@@ -675,7 +684,7 @@ class MainWindow(QMainWindow):
         # Datei
         # ---------------------------------------------------------
 
-        file_menu = menu.addMenu("Datei")
+        file_menu = menu.addMenu(tr("Datei"))
 
         file_menu.addAction(
             self.actions.new_project
@@ -686,7 +695,7 @@ class MainWindow(QMainWindow):
         )
 
         self.dashboard_action = QAction(
-            "Projekt-Dashboard...",
+            tr("Projekt-Dashboard..."),
             self
         )
 
@@ -713,7 +722,7 @@ class MainWindow(QMainWindow):
         file_menu.addSeparator()
 
         self.project_properties_action = QAction(
-            "Projekteigenschaften...",
+            tr("Projekteigenschaften..."),
             self
         )
 
@@ -735,10 +744,10 @@ class MainWindow(QMainWindow):
         # Bearbeiten
         # ---------------------------------------------------------
 
-        edit_menu = menu.addMenu("Bearbeiten")
+        edit_menu = menu.addMenu(tr("Bearbeiten"))
 
         self.undo_action = QAction(
-            "Rückgängig",
+            tr("Rückgängig"),
             self
         )
 
@@ -751,7 +760,7 @@ class MainWindow(QMainWindow):
         )
 
         self.redo_action = QAction(
-            "Wiederholen",
+            tr("Wiederholen"),
             self
         )
 
@@ -786,7 +795,7 @@ class MainWindow(QMainWindow):
         # Ansicht
         # ---------------------------------------------------------
 
-        view_menu = menu.addMenu("Ansicht")
+        view_menu = menu.addMenu(tr("Ansicht"))
 
         view_menu.addAction(
             self.project_dock.toggleViewAction()
@@ -804,7 +813,7 @@ class MainWindow(QMainWindow):
         # Werkzeuge
         # ---------------------------------------------------------
 
-        tools_menu = menu.addMenu("Werkzeuge")
+        tools_menu = menu.addMenu(tr("Werkzeuge"))
 
         tools_menu.addAction(
             self.actions.marker_tool
@@ -815,11 +824,11 @@ class MainWindow(QMainWindow):
         )
 
         self.osm_action = tools_menu.addAction(
-            "OSM laden"
+            tr("OSM laden")
         )
 
         overpass_config_action = tools_menu.addAction(
-            "Overpass-Abfrage..."
+            tr("Overpass-Abfrage...")
         )
 
         overpass_config_action.triggered.connect(
@@ -828,7 +837,7 @@ class MainWindow(QMainWindow):
 
         if VACUUMTUBE_IMPORTER:
             export_osm_action = tools_menu.addAction(
-                "OSM als .osm exportieren..."
+                tr("OSM als .osm exportieren...")
             )
 
             export_osm_action.triggered.connect(
@@ -837,7 +846,7 @@ class MainWindow(QMainWindow):
 
         if VACUUMTUBE_IMPORTER:
             converter_command_action = tools_menu.addAction(
-                "Converter-Befehl anzeigen..."
+                tr("Converter-Befehl anzeigen...")
             )
 
             converter_command_action.triggered.connect(
@@ -846,7 +855,7 @@ class MainWindow(QMainWindow):
 
         if VACUUMTUBE_IMPORTER:
             short_segment_action = tools_menu.addAction(
-                "Kurze Verbindungssegmente..."
+                tr("Kurze Verbindungssegmente...")
             )
 
             short_segment_action.triggered.connect(
@@ -858,7 +867,7 @@ class MainWindow(QMainWindow):
         )
 
         rectangle_action = tools_menu.addAction(
-            "Rechteck-Tool"
+            tr("Rechteck-Tool")
         )
 
         rectangle_action.triggered.connect(
@@ -870,7 +879,7 @@ class MainWindow(QMainWindow):
         )
 
         heightmap_action = tools_menu.addAction(
-            "Heightmap herunterladen"
+            tr("Heightmap herunterladen")
         )
 
         heightmap_action.triggered.connect(
@@ -879,7 +888,7 @@ class MainWindow(QMainWindow):
 
         if VACUUMTUBE_IMPORTER:
             mod_checker_action = tools_menu.addAction(
-                "Mod-Checker..."
+                tr("Mod-Checker...")
             )
 
             mod_checker_action.triggered.connect(
@@ -887,7 +896,7 @@ class MainWindow(QMainWindow):
             )
 
         preflight_action = tools_menu.addAction(
-            "Vorab-Prüfung..."
+            tr("Vorab-Prüfung...")
         )
 
         preflight_action.triggered.connect(
@@ -898,12 +907,12 @@ class MainWindow(QMainWindow):
         # Hilfe
         # ---------------------------------------------------------
 
-        help_menu = menu.addMenu("Hilfe")
+        help_menu = menu.addMenu(tr("Hilfe"))
 
         # Die Import-Anleitung beschreibt den Importer von VacuumTube (src/features.py).
         if VACUUMTUBE_IMPORTER:
             import_guide_action = help_menu.addAction(
-                "Import-Anleitung..."
+                tr("Import-Anleitung...")
             )
 
             import_guide_action.triggered.connect(
@@ -911,11 +920,77 @@ class MainWindow(QMainWindow):
             )
 
         feature_overview_action = help_menu.addAction(
-            "Funktionsübersicht..."
+            tr("Funktionsübersicht...")
         )
 
         feature_overview_action.triggered.connect(
             self._open_feature_overview
+        )
+
+        # ---------------------------------------------------------
+        # Sprache / Language
+        # ---------------------------------------------------------
+
+        # Der Menuename bleibt in beiden Sprachen gleich, damit man ihn
+        # auch dann findet, wenn man die aktuelle Sprache nicht versteht.
+        language_menu = menu.addMenu("Sprache / Language")
+
+        self._language_group = QActionGroup(self)
+
+        self._language_group.setExclusive(True)
+
+        for code, name in LANGUAGE_CHOICES:
+
+            language_action = QAction(name, self)
+
+            language_action.setCheckable(True)
+
+            language_action.setChecked(code == get_language())
+
+            language_action.setData(code)
+
+            self._language_group.addAction(language_action)
+
+            language_menu.addAction(language_action)
+
+        self._language_group.triggered.connect(
+            self._language_chosen
+        )
+
+    # ---------------------------------------------------------
+    # Sprache
+    # ---------------------------------------------------------
+
+    def _language_chosen(self, action):
+        """
+        Speichert die gewaehlte Sprache. Sie gilt ab dem naechsten Start;
+        die Hinweise stehen bewusst in beiden Sprachen.
+        """
+
+        code = action.data()
+
+        saved = save_language(code)
+
+        if not saved:
+
+            QMessageBox.warning(
+                self,
+                "Sprache / Language",
+                "Die Sprachwahl konnte nicht gespeichert werden.\n\n"
+                "The language setting could not be saved."
+            )
+
+            return
+
+        if code == get_language():
+            return
+
+        QMessageBox.information(
+            self,
+            "Sprache / Language",
+            "Die Sprache wird nach einem Neustart des Studios "
+            "umgestellt.\n\n"
+            "The language will change after you restart the Studio."
         )
 
     # ---------------------------------------------------------
@@ -954,9 +1029,9 @@ class MainWindow(QMainWindow):
 
             QMessageBox.warning(
                 self,
-                "Keine Auswahl",
-                "Bitte zuerst mit dem Rechteck-Tool einen "
-                "Kartenausschnitt festlegen."
+                tr("Keine Auswahl"),
+                tr("Bitte zuerst mit dem Rechteck-Tool einen "
+                "Kartenausschnitt festlegen.")
             )
 
             return
@@ -964,14 +1039,16 @@ class MainWindow(QMainWindow):
         self.osm_action.setEnabled(False)
 
         filter_text = (
-            "gedrehtes Polygon (poly-Filter)"
+            tr("gedrehtes Polygon (poly-Filter)")
             if selection.is_rotated
-            else "ungedrehte Box"
+            else tr("ungedrehte Box")
         )
 
         self.statusBar().showMessage(
-            f"OSM-Daten werden geladen... "
-            f"Drehung {selection.rotation_deg:.2f}°, {filter_text}"
+            tr(
+                "OSM-Daten werden geladen... "
+                "Drehung {deg:.2f}°, {filter}"
+            ).format(deg=selection.rotation_deg, filter=filter_text)
         )
 
         # Als Attribut speichern, sonst raeumt Python den Thread weg.
@@ -1011,17 +1088,21 @@ class MainWindow(QMainWindow):
         selection = controller.project.selection
 
         rotation_text = (
-            f", Drehung {selection.rotation_deg:.2f}°"
+            tr(", Drehung {deg:.2f}°").format(deg=selection.rotation_deg)
             if selection is not None
             else ""
         )
 
         self.statusBar().showMessage(
-            f"OSM geladen: "
-            f"{osm.node_count} Nodes, "
-            f"{osm.way_count} Ways, "
-            f"{osm.relation_count} Relations"
-            f"{rotation_text}"
+            tr(
+                "OSM geladen: {nodes} Nodes, {ways} Ways, "
+                "{relations} Relations{rotation}"
+            ).format(
+                nodes=osm.node_count,
+                ways=osm.way_count,
+                relations=osm.relation_count,
+                rotation=rotation_text,
+            )
         )
 
         self._update_window_title()
@@ -1049,8 +1130,10 @@ class MainWindow(QMainWindow):
             self.show_stations_on_map(data, announce=False)
 
             self.statusBar().showMessage(
-                f"{self.statusBar().currentMessage()}, "
-                f"{len(data['stations'])} Bahnhöfe"
+                tr("{message}, {count} Bahnhöfe").format(
+                    message=self.statusBar().currentMessage(),
+                    count=len(data['stations']),
+                )
             )
 
         except Exception as error:  # noqa: BLE001
@@ -1060,9 +1143,9 @@ class MainWindow(QMainWindow):
     def _on_osm_failed(self, message: str):
 
         self.statusBar().showMessage(
-            f"OSM-Download fehlgeschlagen: {message}"
+            tr("OSM-Download fehlgeschlagen: {message}").format(message=message)
             if message else
-            "OSM-Download fehlgeschlagen."
+            tr("OSM-Download fehlgeschlagen.")
         )
 
     def _on_osm_worker_finished(self):
@@ -1102,18 +1185,18 @@ class MainWindow(QMainWindow):
 
             QMessageBox.warning(
                 self,
-                "Keine OSM-Daten",
-                "Es sind keine OSM-Daten geladen. Zuerst 'OSM laden' "
-                "ausführen (Werkzeuge-Menü)."
+                tr("Keine OSM-Daten"),
+                tr("Es sind keine OSM-Daten geladen. Zuerst 'OSM laden' "
+                "ausführen (Werkzeuge-Menü).")
             )
 
             return
 
         filename, _ = QFileDialog.getSaveFileName(
             self,
-            "OSM-Datei exportieren",
+            tr("OSM-Datei exportieren"),
             "map.osm",
-            "OSM-Dateien (*.osm)"
+            tr("OSM-Dateien (*.osm)")
         )
 
         if not filename:
@@ -1142,14 +1225,14 @@ class MainWindow(QMainWindow):
 
             QMessageBox.critical(
                 self,
-                "Export fehlgeschlagen",
+                tr("Export fehlgeschlagen"),
                 str(exc)
             )
 
             return
 
         self.statusBar().showMessage(
-            f"OSM-Datei exportiert: {filename}"
+            tr("OSM-Datei exportiert: {filename}").format(filename=filename)
         )
 
     # ---------------------------------------------------------
@@ -1272,9 +1355,14 @@ class MainWindow(QMainWindow):
         )
 
         self.statusBar().showMessage(
-            f"Kartenband gesetzt: "
-            f"{values['width_m']/1000:.3f} x {values['height_m']/1000:.3f} km, "
-            f"Drehung {values['rotation_deg']:.2f}°"
+            tr(
+                "Kartenband gesetzt: {width:.3f} x {height:.3f} km, "
+                "Drehung {deg:.2f}°"
+            ).format(
+                width=values['width_m'] / 1000,
+                height=values['height_m'] / 1000,
+                deg=values['rotation_deg'],
+            )
         )
 
     # ---------------------------------------------------------
@@ -1316,7 +1404,9 @@ class MainWindow(QMainWindow):
         if announce:
 
             self.statusBar().showMessage(
-                f"{len(items)} Bahnhöfe auf der Karte (Ebene Bahnhöfe)"
+                tr("{count} Bahnhöfe auf der Karte (Ebene Bahnhöfe)").format(
+                    count=len(items)
+                )
             )
 
     def _send_layer_opacity(self, layer):
@@ -1464,13 +1554,15 @@ class MainWindow(QMainWindow):
         self.map_widget.controller.set_tool(tool)
 
         names = {
-            Tool.MARKER: "Marker",
-            Tool.SELECTION: "Auswahl",
-            Tool.MEASURE: "Koordinaten-Messwerkzeug",
+            Tool.MARKER: tr("Marker"),
+            Tool.SELECTION: tr("Auswahl"),
+            Tool.MEASURE: tr("Koordinaten-Messwerkzeug"),
         }
 
         self.tool_status.setText(
-            f"Werkzeug: {names.get(tool, tool.value)}"
+            tr("Werkzeug: {name}").format(
+                name=names.get(tool, tool.value)
+            )
         )
 
     def _toggle_measure_tool(self):
@@ -1480,11 +1572,11 @@ class MainWindow(QMainWindow):
         )
 
         self.tool_status.setText(
-            "Werkzeug: Koordinaten-Messwerkzeug"
+            tr("Werkzeug: Koordinaten-Messwerkzeug")
         )
 
         self.measure_status.setText(
-            "Messung: ersten Punkt anklicken"
+            tr("Messung: ersten Punkt anklicken")
         )
 
     # ---------------------------------------------------------
@@ -1501,9 +1593,9 @@ class MainWindow(QMainWindow):
         if selection is None:
             QMessageBox.warning(
                 self,
-                "Keine Auswahl",
-                "Bitte zuerst mit dem Rechteck-Tool einen "
-                "Kartenausschnitt festlegen."
+                tr("Keine Auswahl"),
+                tr("Bitte zuerst mit dem Rechteck-Tool einen "
+                "Kartenausschnitt festlegen.")
             )
             return
 
@@ -1594,7 +1686,7 @@ class MainWindow(QMainWindow):
         layout.addWidget(original)
         original.show()
 
-        help_label = QLabel(LAYER_HELP_HTML)
+        help_label = QLabel(tr(LAYER_HELP_HTML))
         help_label.setTextFormat(Qt.RichText)
         help_label.setWordWrap(True)
         help_label.setMargin(8)
@@ -1656,9 +1748,11 @@ class MainWindow(QMainWindow):
             return
 
         self.statusBar().showMessage(
-            f"Marker: {marker.id} | "
-            f"{marker.lat:.6f}, "
-            f"{marker.lon:.6f}"
+            tr("Marker: {id} | {lat:.6f}, {lon:.6f}").format(
+                id=marker.id,
+                lat=marker.lat,
+                lon=marker.lon,
+            )
         )
 
         self.prop_id.setText(
@@ -1771,17 +1865,17 @@ class MainWindow(QMainWindow):
 
         center_action = menu.addAction(
             icon("mitte"),
-            "Auf Marker zentrieren"
+            tr("Auf Marker zentrieren")
         )
 
         rename_action = menu.addAction(
             icon("zeichnen"),
-            "Umbenennen"
+            tr("Umbenennen")
         )
 
         delete_action = menu.addAction(
             icon("loeschen"),
-            "Löschen"
+            tr("Löschen")
         )
 
         action = menu.exec(
@@ -1917,10 +2011,10 @@ class MainWindow(QMainWindow):
 
                 self,
 
-                "Projekt speichern",
+                tr("Projekt speichern"),
 
-                "Das Projekt wurde geändert.\n\n"
-                "Vor dem Beenden speichern?",
+                tr("Das Projekt wurde geändert.\n\n"
+                "Vor dem Beenden speichern?"),
 
                 QMessageBox.Yes
                 | QMessageBox.No

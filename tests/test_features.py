@@ -38,7 +38,7 @@ class FeaturesTest(unittest.TestCase):
 
     def test_import_guide_menu_guarded(self):
         text = (ROOT / "src" / "window.py").read_text(encoding="utf-8")
-        guard = text.index("if VACUUMTUBE_IMPORTER:", text.index('help_menu = menu.addMenu("Hilfe")'))
+        guard = text.index("if VACUUMTUBE_IMPORTER:", text.index('help_menu = menu.addMenu(tr("Hilfe"))'))
         self.assertLess(guard, text.index('"Import-Anleitung..."'))
         self.assertLess(text.index('"Import-Anleitung..."'), text.index('"Funktionsübersicht..."'))
 
