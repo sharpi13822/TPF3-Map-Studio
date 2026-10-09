@@ -15,9 +15,13 @@ from PySide6.QtWidgets import (
     QComboBox,
     QSlider,
     QApplication,
+    QAbstractSpinBox,
+    QFrame,
+    QScrollArea,
+    QWidget,
 )
 from PySide6.QtGui import QKeySequence, QPixmap, QShortcut
-from PySide6.QtCore import Qt
+from PySide6.QtCore import QEvent, QObject, Qt
 
 from src.gui.biome_dialog import BiomeMaskDialog
 from src.gui.heightmap_guide import HeightmapGuideDialog
@@ -131,6 +135,23 @@ DEFAULT_ENFORCE_MAX_RISE_M = 15.0
 REFERENCE_WATERWAY_TYPES = frozenset({"river", "canal"})
 
 
+class _WheelGuard(QObject):
+    """
+    Das Mausrad soll in der Scrollflaeche die Seite scrollen und nicht
+    versehentlich Zahlenfelder, Auswahllisten oder den Schieberegler
+    veraendern. Nur ein Feld, das angeklickt wurde (Fokus hat), reagiert
+    auf das Rad.
+    """
+
+    def eventFilter(self, obj, event):
+
+        if event.type() == QEvent.Wheel and not obj.hasFocus():
+            event.ignore()
+            return True
+
+        return False
+
+
 class HeightmapDialog(QDialog):
     """
     Laedt automatisch die Copernicus-Hoehendaten fuer die aktuelle
@@ -165,7 +186,19 @@ class HeightmapDialog(QDialog):
         self.setWindowTitle("Heightmap")
         self.setMinimumWidth(420)
 
-        layout = QVBoxLayout(self)
+        # Aeusserer Rahmen: oben die Scrollflaeche mit allen Einstellungen,
+        # darunter fest die Knopfleiste (auch auf kleinen Bildschirmen sichtbar).
+        outer = QVBoxLayout(self)
+
+        self._scroll_area = QScrollArea()
+        self._scroll_area.setWidgetResizable(True)
+        self._scroll_area.setFrameShape(QFrame.NoFrame)
+        outer.addWidget(self._scroll_area, 1)
+
+        self._scroll_content = QWidget()
+        self._scroll_area.setWidget(self._scroll_content)
+
+        layout = QVBoxLayout(self._scroll_content)
 
         # -------------------------------------------------
         # Download
@@ -732,7 +765,7 @@ class HeightmapDialog(QDialog):
         # -------------------------------------------------
 
         button_row = QHBoxLayout()
-        layout.addLayout(button_row)
+        outer.addLayout(button_row)
 
         # Anleitung: Schritt fuer Schritt von der Auswahl bis zum Import
         # im Spiel (auch ueber F1 erreichbar).
@@ -813,6 +846,56 @@ class HeightmapDialog(QDialog):
         close_button = QPushButton("Schließen")
         close_button.clicked.connect(self.reject)
         button_row.addWidget(close_button)
+
+        self._install_wheel_guard()
+        self._fit_to_screen()
+
+    # ---------------------------------------------------------
+    # Scrollflaeche und Fenstergroesse
+    # ---------------------------------------------------------
+
+    def _install_wheel_guard(self):
+        """Mausrad nur bei angeklickten Feldern, sonst scrollt die Seite."""
+
+        self._wheel_guard = _WheelGuard(self)
+
+        for cls in (QAbstractSpinBox, QComboBox, QSlider):
+
+            for widget in self._scroll_content.findChildren(cls):
+                widget.setFocusPolicy(Qt.StrongFocus)
+                widget.installEventFilter(self._wheel_guard)
+
+    def _fit_to_screen(self, available=None):
+        """
+        Startgroesse: so gross, dass moeglichst alles sichtbar ist, aber nie
+        groesser als der nutzbare Bildschirm. Reicht der Platz nicht, scrollt
+        die Seite (die Knopfleiste bleibt unten stehen).
+        `available` (QRect) dient nur den Tests, sonst gilt der Bildschirm.
+        """
+
+        if available is None:
+
+            screen = self.screen() or QApplication.primaryScreen()
+
+            if screen is None:
+                return
+
+            available = screen.availableGeometry()
+
+        content = self._scroll_content.sizeHint()
+        buttons = self.export_button.sizeHint().height()
+
+        # Platz fuer Rahmen, Titelleiste und den senkrechten Rollbalken
+        want_w = content.width() + 60
+        want_h = content.height() + buttons + 60
+
+        max_w = max(480, int(available.width() * 0.95))
+        max_h = max(360, int(available.height() * 0.90))
+
+        self.resize(
+            min(max(want_w, self.minimumSizeHint().width()), max_w),
+            min(want_h, max_h),
+        )
 
     # ---------------------------------------------------------
     # Anleitung
