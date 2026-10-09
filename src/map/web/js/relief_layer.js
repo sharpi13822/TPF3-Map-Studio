@@ -14,9 +14,10 @@
 const RELIEF_TILE_URL =
     "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png";
 
-const RELIEF_ATTRIBUTION =
+const RELIEF_ATTRIBUTION = t(
     "Relief: AWS Terrain Tiles (Mapzen/Tilezen; Quellen u.a. SRTM, " +
-    "Copernicus, siehe github.com/tilezen/joerd)";
+    "Copernicus, siehe github.com/tilezen/joerd)"
+);
 
 // Lichtquelle: Nordwest, 45 Grad ueber dem Horizont (klassische Schummerung)
 const RELIEF_AZIMUTH_DEG = 315;
@@ -81,8 +82,9 @@ const ReliefLayer = L.GridLayer.extend({
 
                     if (typeof showToast === "function") {
                         showToast(
-                            "Relief konnte nicht berechnet werden: " +
-                            error.message,
+                            tf("Relief konnte nicht berechnet werden: {message}", {
+                                message: error.message
+                            }),
                             true
                         );
                     }

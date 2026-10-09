@@ -11,7 +11,7 @@ class MapEngine {
         osm: {
             type: "xyz",
             url: "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
-            attribution: "© OpenStreetMap-Mitwirkende"
+            attribution: t("© OpenStreetMap-Mitwirkende")
         },
 
         // Zusammengesetzte Grundkarte: eine der Grundkarten oben plus Relief.
@@ -700,7 +700,9 @@ class GeometryManager {
                     if (lockedLayers.has(object.tpf2?.layer)) {
 
                         showToast(
-                            `Ebene '${object.tpf2.layer}' ist gesperrt`
+                            tf("Ebene '{layer}' ist gesperrt", {
+                                layer: object.tpf2.layer
+                            })
                         );
 
                         return;
@@ -727,7 +729,7 @@ class GeometryManager {
                         ? window.geometryEditor.vertexHandles.length
                         : 0;
 
-                    let detail = `Eckpunkte: ${handles}`;
+                    let detail = tf("Eckpunkte: {count}", { count: handles });
 
                     const editor = window.geometryEditor;
 
@@ -735,26 +737,37 @@ class GeometryManager {
 
                         if (editor.lastEditable === false) {
 
-                            detail +=
-                                " (nicht bearbeitbar, Geometrie: " +
-                                String(JSON.stringify(meta.geometry))
-                                    .slice(0, 90) +
-                                ")";
+                            detail += tf(
+                                " (nicht bearbeitbar, Geometrie: {geometry})",
+                                {
+                                    geometry: String(
+                                        JSON.stringify(meta.geometry)
+                                    ).slice(0, 90)
+                                }
+                            );
 
                         } else if (editor.lastStats) {
 
-                            detail +=
-                                ` (von ${editor.lastStats.total} Punkten ` +
-                                `liegen ${editor.lastStats.outOfView} ` +
-                                `außerhalb des Bildes)`;
+                            detail += tf(
+                                " (von {total} Punkten liegen {outside} " +
+                                "außerhalb des Bildes)",
+                                {
+                                    total: editor.lastStats.total,
+                                    outside: editor.lastStats.outOfView
+                                }
+                            );
 
                         }
 
                     }
 
                     showToast(
-                        `Ausgewählt: ${meta.layer} ${meta.id} ` +
-                        `(${meta.type}), ${detail}`
+                        tf("Ausgewählt: {layer} {id} ({type}), {detail}", {
+                            layer: meta.layer,
+                            id: meta.id,
+                            type: meta.type,
+                            detail: detail
+                        })
                     );
 
                 } catch (error) {
@@ -762,7 +775,9 @@ class GeometryManager {
                     console.error("Objekt-Auswahl:", error);
 
                     showToast(
-                        "Fehler bei der Auswahl: " + error.message,
+                        tf("Fehler bei der Auswahl: {message}", {
+                            message: error.message
+                        }),
                         true
                     );
 
@@ -1781,7 +1796,7 @@ class CommandDispatcher {
                 maxZoom: 19,
                 opacity: 0.8,
                 attribution:
-                    "Daten © OpenStreetMap-Mitwirkende, Stil: CC-BY-SA 2.0 " +
+                    t("Daten © OpenStreetMap-Mitwirkende, Stil: CC-BY-SA 2.0 ") +
                     "OpenRailwayMap"
             }
         );

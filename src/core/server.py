@@ -5,6 +5,8 @@ import socket
 import threading
 import sys
 
+from src.i18n import web_script
+
 
 def _safe_print(*args, **kwargs):
     """
@@ -36,6 +38,20 @@ class _QuietRequestHandler(SimpleHTTPRequestHandler):
 
     def log_message(self, format, *args):
         pass
+
+    def do_GET(self):
+        # Das Woerterbuch der Kartenoberflaeche haengt von der gewaehlten
+        # Sprache ab und ist deshalb keine feste Datei.
+        if self.path.split("?", 1)[0] == "/i18n_data.js":
+            body = web_script().encode("utf-8")
+            self.send_response(200)
+            self.send_header("Content-Type", "application/javascript; charset=utf-8")
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+            return
+
+        super().do_GET()
 
     def end_headers(self):
         # Ohne Cache-Header behaelt QtWebEngine alte JS-Dateien und

@@ -64,7 +64,7 @@
                 Fluss
             </button>
 
-            <button id="draw-building" title="Eigenes Gebäude zeichnen: Punkte auf der Karte anklicken, dann Fertig">
+            <button id="draw-building" data-i18n="Gebäude (Zeichenknopf)" title="Eigenes Gebäude zeichnen: Punkte auf der Karte anklicken, dann Fertig">
                 <img class="btn-icon" src="icons/ui/gebaeude_hell.png" alt="">
                 Gebäude
             </button>
@@ -104,6 +104,11 @@
 
     <!-- Qt WebChannel -->
     <script src="qrc:///qtwebchannel/qwebchannel.js"></script> 
+
+    <!-- Sprache: Woerterbuch vom lokalen Server, dann t()/tf() -->
+    <script src="i18n_data.js"></script>
+
+    <script src="js/i18n.js"></script>
     
     <!-- Leaflet -->
     <script src="leaflet/leaflet.js"></script>

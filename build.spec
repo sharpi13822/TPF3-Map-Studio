@@ -63,6 +63,7 @@ a = Analysis(
         "certifi",
         # Wird in src/i18n.py erst bei Bedarf importiert (englischer Katalog).
         "src.i18n_en",
+        "src.i18n_web_en",
         "requests",
         "urllib3",
         "scipy",

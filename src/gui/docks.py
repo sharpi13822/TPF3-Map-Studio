@@ -166,7 +166,7 @@ def create_properties_dock(parent):
     # schmalen Dock lesbar bleibt.
     guide = QTextBrowser()
     guide.setOpenLinks(False)
-    guide.setHtml(GUIDE_HTML)
+    guide.setHtml(tr(GUIDE_HTML))
 
     container = QWidget()
 

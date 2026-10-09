@@ -1,5 +1,6 @@
 from dataclasses import dataclass, field
 
+from src.i18n import tr
 from src.map.objects.marker import Marker
 from src.map.objects.selection import Selection
 from src.osm.objects.osm_data import OSMData
@@ -13,7 +14,7 @@ class Project:
     Enthält sämtliche Projektdaten.
     """
 
-    name: str = "Neues Projekt"
+    name: str = tr("Neues Projekt")
 
     # ---------------------------------------------------------
     # Projektinformationen

@@ -40,25 +40,25 @@ class InfoPanel {
 
             <div class="info-title">
 
-                Objekt Information
+                ${t("Objekt Information")}
 
             </div>
 
             <div id="info-content">
 
-                Kein Objekt ausgewählt
+                ${t("Kein Objekt ausgewählt")}
 
             </div>
 
             <button id="edit-object">
 
-                Bearbeiten
+                ${t("Bearbeiten")}
 
             </button>
 
             <button id="delete-object">
 
-                Löschen
+                ${t("Löschen")}
 
             </button>
 
@@ -116,7 +116,7 @@ class InfoPanel {
         if (!object) {
 
             this.content.innerHTML =
-                "Kein Objekt ausgewählt";
+                t("Kein Objekt ausgewählt");
 
             return;
 
@@ -137,7 +137,7 @@ class InfoPanel {
 
             <br>
 
-            <b>Layer:</b>
+            <b>${t("Layer:")}</b>
 
             ${this.translateLayer(
                 this.object.layer
@@ -145,7 +145,7 @@ class InfoPanel {
 
             <br>
 
-            <b>Typ:</b>
+            <b>${t("Typ:")}</b>
 
             ${this.translateValue(
                 "type",
@@ -154,7 +154,7 @@ class InfoPanel {
 
             <br>
 
-            <b>Punkte:</b>
+            <b>${t("Punkte:")}</b>
 
             ${
                 this.object.geometry
@@ -164,7 +164,7 @@ class InfoPanel {
 
             <br><br>
 
-            <b>Eigenschaften:</b>
+            <b>${t("Eigenschaften:")}</b>
 
             <br><br>
 
@@ -185,7 +185,7 @@ class InfoPanel {
             Object.keys(properties).length === 0
         ) {
 
-            return "Keine Eigenschaften";
+            return t("Keine Eigenschaften");
 
         }
 
@@ -293,7 +293,7 @@ class InfoPanel {
 
         let html = `
 
-            <b>Eigenschaften bearbeiten</b>
+            <b>${t("Eigenschaften bearbeiten")}</b>
 
             <br><br>
 
@@ -338,7 +338,7 @@ class InfoPanel {
 
             <button id="save-properties">
 
-                Speichern
+                ${t("Speichern")}
 
             </button>
 
@@ -419,7 +419,7 @@ class InfoPanel {
 
         }
 
-        if (!confirm("Objekt wirklich löschen?")) {
+        if (!confirm(t("Objekt wirklich löschen?"))) {
 
             return;
 
@@ -438,7 +438,7 @@ class InfoPanel {
         this.object = null;
 
         this.content.innerHTML =
-            "Kein Objekt ausgewählt";
+            t("Kein Objekt ausgewählt");
 
 }
 
@@ -505,15 +505,15 @@ class InfoPanel {
 
         return {
 
-            polyline: "Linie",
+            polyline: t("Linie"),
 
-            polygon: "Polygon",
+            polygon: t("Polygon"),
 
-            multipolygon: "Multipolygon",
+            multipolygon: t("Multipolygon"),
 
-            rectangle: "Rechteck",
+            rectangle: t("Rechteck"),
 
-            circle: "Kreis"
+            circle: t("Kreis")
 
         };
     }
@@ -527,23 +527,23 @@ class InfoPanel {
 
         return {
 
-            roads: "Straßen",
+            roads: t("Straßen"),
 
-            railways: "Bahnstrecken",
+            railways: t("Bahnstrecken"),
 
-            buildings: "Gebäude",
+            buildings: t("Gebäude"),
 
-            water: "Gewässer",
+            water: t("Gewässer"),
 
-            waterways: "Flüsse",
+            waterways: t("Flüsse"),
 
-            parks: "Parks",
+            parks: t("Parks"),
 
-            landuse: "Landnutzung",
+            landuse: t("Landnutzung"),
 
-            vegetation: "Vegetation",
+            vegetation: t("Vegetation"),
 
-            selection: "Auswahl"
+            selection: t("Auswahl")
 
         };
     }
@@ -587,23 +587,23 @@ class InfoPanel {
 
     return {
 
-        name: "Name",
+        name: t("Name"),
 
-        type: "Typ",
+        type: t("Typ"),
 
-        ref: "Referenz",
+        ref: t("Referenz"),
 
-        maxspeed: "Höchstgeschwindigkeit",
+        maxspeed: t("Höchstgeschwindigkeit"),
 
-        oneway: "Einbahnstraße",
+        oneway: t("Einbahnstraße"),
 
-        bridge: "Brücke",
+        bridge: t("Brücke"),
 
-        tunnel: "Tunnel",
+        tunnel: t("Tunnel"),
 
-        surface: "Oberfläche",
+        surface: t("Oberfläche"),
 
-        lanes: "Fahrstreifen"
+        lanes: t("Fahrstreifen")
 
     };
 

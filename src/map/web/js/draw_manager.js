@@ -388,7 +388,7 @@ class DrawManager {
         const properties = {
 
             name:
-                "Neues Objekt",
+                t("Neues Objekt"),
 
             type:
                 this.mode

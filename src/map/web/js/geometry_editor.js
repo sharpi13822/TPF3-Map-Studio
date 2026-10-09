@@ -1217,8 +1217,10 @@ class GeometryEditor {
             if (typeof showToast === "function") {
 
                 showToast(
-                    "Rückgängig/Wiederholen gibt es nur für eigene " +
-                    "Objekte, nicht für OSM-Objekte."
+                    t(
+                        "Rückgängig/Wiederholen gibt es nur für eigene " +
+                        "Objekte, nicht für OSM-Objekte."
+                    )
                 );
 
             }

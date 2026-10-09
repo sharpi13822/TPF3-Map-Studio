@@ -21,6 +21,7 @@ testbar ist.
 """
 
 import configparser
+import json
 import locale
 import os
 import sys
@@ -60,6 +61,28 @@ def _catalog(language):
             catalog = {}
         _catalogs[language] = catalog
     return _catalogs[language]
+
+
+def web_dictionary(language=None):
+    """Woerterbuch der Kartenoberflaeche (Deutsch -> Sprache). Bei Deutsch leer."""
+    language = language or _language
+    if language == DEFAULT_LANGUAGE:
+        return {}
+    if language == "en":
+        from src.i18n_web_en import WEB_CATALOG
+        return dict(WEB_CATALOG)
+    return {}
+
+
+def web_script(language=None):
+    """JavaScript fuer die Karte: window.TPF_LANG und window.TPF_I18N."""
+    language = language or _language
+    return (
+        "window.TPF_LANG = " + json.dumps(language) + ";\n"
+        "window.TPF_I18N = "
+        + json.dumps(web_dictionary(language), ensure_ascii=False)
+        + ";\n"
+    )
 
 
 def tr(text):

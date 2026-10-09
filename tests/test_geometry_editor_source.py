@@ -84,7 +84,8 @@ global.document = {addEventListener(){}, removeEventListener(){}};
 global.L = {};
 const calls = [], toasts = [];
 global.bridges = {adapter: {polylineMoved: (id, g) => calls.push([id, JSON.stringify(g)])}};
-global.showToast = t => toasts.push(t);
+global.showToast = msg => toasts.push(msg);
+global.t = text => text;  // Uebersetzung (js/i18n.js): hier unveraendert
 const src = fs.readFileSync(process.argv[2], 'utf8') + '\nmodule.exports = GeometryEditor;';
 const m = {exports: {}};
 new Function('module', 'exports', src)(m, m.exports);
