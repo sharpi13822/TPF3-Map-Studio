@@ -403,7 +403,7 @@ class HeightmapDialog(QDialog):
 
         smooth_row.addWidget(QLabel(tr("Höhen stauchen auf:")))
         self.compress_input = QDoubleSpinBox()
-        self.compress_input.setRange(20.0, 100.0)
+        self.compress_input.setRange(5.0, 100.0)
         self.compress_input.setDecimals(0)
         self.compress_input.setSuffix(" %")
         self.compress_input.setValue(100.0)
