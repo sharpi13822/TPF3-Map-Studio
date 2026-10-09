@@ -1,17 +1,14 @@
 # PyInstaller-Buildkonfiguration fuer TPF3-Map-Studio.
 #
-# WICHTIG - bitte einmal selbst testen: Ich kann diese exe hier nicht
-# selbst bauen/testen (keine Windows-Umgebung, kein PySide6 verfuegbar).
-# Diese Datei ist nach dokumentierter PyInstaller-Praxis fuer
-# PySide6+QtWebEngine-Projekte aufgebaut, aber gerade das Buendeln von
-# QtWebEngine ist erfahrungsgemaess die Stelle, an der beim ersten
-# Versuch noch nachjustiert werden muss (siehe Hinweise unten).
-#
 # Verwendung (im Projekt-Hauptordner, mit aktivierter venv):
 #   pip install pyinstaller
-#   pyinstaller build.spec
+#   tools\make_release.ps1 -Version <x.y.z>   (baut und packt das Release)
+#   oder nur bauen: pyinstaller build.spec
 #
 # Ergebnis liegt danach in dist/TPF3-Map-Studio/
+#
+# Das Paket wird klein gehalten: tools/build_filter.py entfernt Dateien, die das
+# Studio nicht braucht (andere Sprachen, Entwicklerwerkzeuge, QML-Module).
 
 from PyInstaller.utils.hooks import collect_data_files, collect_submodules, collect_dynamic_libs
 
@@ -76,6 +73,14 @@ a = Analysis(
     noarchive=False,
 )
 
+# Nicht benoetigte Dateien aus dem Paket nehmen (siehe tools/build_filter.py)
+import sys
+sys.path.insert(0, SPECPATH)
+from tools.build_filter import soll_behalten
+
+a.datas = [d for d in a.datas if soll_behalten(d[0])]
+a.binaries = [b for b in a.binaries if soll_behalten(b[0])]
+
 pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)
 
 exe = EXE(
@@ -89,7 +94,7 @@ exe = EXE(
     strip=False,
     upx=False,  # UPX-Kompression mit QtWebEngine hat oefter Probleme verursacht
     icon="src/icons/app.ico",
-    console=False,  # TEMPORÄR für Fehlersuche
+    console=False,  # kein Konsolenfenster
     disable_windowed_traceback=False,
 )
 
