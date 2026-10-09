@@ -14,7 +14,7 @@ The program now speaks English. / Das Programm gibt es jetzt auch auf Englisch.
 
 **Note:** unofficial tool, not affiliated with Urban Games. The English game terms used in the interface (for example for the import in the map editor) are being checked against the English game; please report anything that does not match.
 
-SHA-256: (will be added after the build)
+SHA-256: `d4690e1ad398722deea4fad26d1ee85584bada5bf2b14bcf1ae278f6c9c39d6e`
 
 ## Deutsch
 
@@ -26,4 +26,4 @@ SHA-256: (will be added after the build)
 
 **Download:** `TPF3-Map-Studio-v0.1.1-win64.zip`, **komplett** entpacken, `TPF3-Map-Studio.exe` starten. Beim ersten Start warnt Windows ("Weitere Informationen" → "Trotzdem ausführen").
 
-Prüfsumme (SHA-256): (wird nach dem Build eingetragen)
+Prüfsumme (SHA-256): `d4690e1ad398722deea4fad26d1ee85584bada5bf2b14bcf1ae278f6c9c39d6e`
