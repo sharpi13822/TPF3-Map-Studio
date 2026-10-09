@@ -9,6 +9,7 @@ Diese Tests sorgen dafuer, dass
 """
 
 import ast
+import re
 import os
 import string
 import tempfile
@@ -40,7 +41,11 @@ SAME_IN_BOTH = {
 
 # Texte, die nicht als tr("...") im Quelltext stehen, sondern zur Laufzeit
 # uebersetzt werden (Layer.label ruft tr(self.value) auf).
-DYNAMIC_FILES = {"map/layer.py"}
+DYNAMIC_FILES = {"map/layer.py", "gui/feature_overview_dialog.py"}
+
+# Tabellen, deren Texte erst beim Aufbau des Fensters durch tr() laufen:
+# Datei -> Namen der Konstanten.
+TABLE_CONSTANTS = {"gui/feature_overview_dialog.py": ("FEATURE_GROUPS",)}
 
 
 def _module_constants(tree):
@@ -87,7 +92,21 @@ def collect_keys():
                 keys.setdefault(constants[arg.id], []).append(relative)
             elif relative not in DYNAMIC_FILES:
                 unresolved.append(f"{relative}:{node.lineno}")
+    for relative, names in TABLE_CONSTANTS.items():
+        tree = ast.parse((SRC / relative).read_text(encoding="utf-8"))
+        for node in tree.body:
+            if isinstance(node, ast.Assign) and getattr(node.targets[0], "id", "") in names:
+                for leaf in _string_leaves(ast.literal_eval(node.value)):
+                    keys.setdefault(leaf, []).append(relative)
     return keys, unresolved
+
+
+def _string_leaves(value):
+    if isinstance(value, str):
+        yield value
+    elif isinstance(value, (tuple, list)):
+        for item in value:
+            yield from _string_leaves(item)
 
 
 def placeholders(text):
@@ -297,6 +316,24 @@ class CatalogTest(unittest.TestCase):
                 self.assertEqual(german.count("\n"), english.count("\n"), german)
             self.assertEqual(german.endswith("..."), english.endswith("..."), german)
             self.assertEqual(german.endswith(":"), english.endswith(":"), german)
+
+    def test_html_structure_matches(self):
+        """Die Tags (Ueberschriften, Listen, Tabellen) sind in beiden Sprachen gleich."""
+        tag = re.compile(r"<\s*(/?)\s*([a-zA-Z0-9]+)([^>]*)>")
+
+        def structure(text):
+            return [
+                (m.group(1), m.group(2).lower(), re.sub(r"\s+", " ", m.group(3)).strip())
+                for m in tag.finditer(text)
+            ]
+
+        checked = 0
+        for german, english in CATALOG.items():
+            if "<" not in german:
+                continue
+            checked += 1
+            self.assertEqual(structure(german), structure(english), german[:60])
+        self.assertGreaterEqual(checked, 3)
 
 
 class FormatCallsTest(unittest.TestCase):

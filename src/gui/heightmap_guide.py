@@ -12,6 +12,8 @@ from PySide6.QtWidgets import (
     QVBoxLayout,
 )
 
+from src.i18n import tr
+
 GUIDE_HTML = """
 <h2>Heightmap vom Studio nach Transport Fever 3</h2>
 <p>Schritt für Schritt von der leeren Karte bis zur importierten Heightmap.
@@ -254,7 +256,7 @@ class HeightmapGuideDialog(QDialog):
 
         super().__init__(parent)
 
-        self.setWindowTitle("Anleitung: Heightmap für TPF3")
+        self.setWindowTitle(tr("Anleitung: Heightmap für TPF3"))
 
         self.resize(760, 680)
 
@@ -262,14 +264,14 @@ class HeightmapGuideDialog(QDialog):
 
         browser = QTextBrowser()
         browser.setOpenExternalLinks(False)
-        browser.setHtml(GUIDE_HTML)
+        browser.setHtml(tr(GUIDE_HTML))
 
         layout.addWidget(browser, 1)
 
         row = QHBoxLayout()
         row.addStretch(1)
 
-        close_button = QPushButton("Schließen")
+        close_button = QPushButton(tr("Schließen"))
         close_button.clicked.connect(self.accept)
         row.addWidget(close_button)
 

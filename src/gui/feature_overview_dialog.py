@@ -9,8 +9,12 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import Qt
 
+from src.i18n import tr
+
 
 # (Menüpfad, [(Feature-Name, Beschreibung), ...])
+# Die Texte stehen hier unuebersetzt; beim Aufbau des Fensters laufen sie durch
+# tr(). Die Uebersetzungen stehen in src/i18n_en.py.
 FEATURE_GROUPS = (
     (
         "Datei-Menü",
@@ -370,14 +374,16 @@ class FeatureOverviewDialog(QDialog):
     def __init__(self, parent):
         super().__init__(parent)
 
-        self.setWindowTitle("Funktionsübersicht")
+        self.setWindowTitle(tr("Funktionsübersicht"))
         self.setMinimumSize(760, 640)
 
         outer_layout = QVBoxLayout(self)
 
         intro = QLabel(
-            "Übersicht der Funktionen des Studios, gruppiert nach dem "
-            "Menü oder Dialog, in dem sie zu finden sind."
+            tr(
+                "Übersicht der Funktionen des Studios, gruppiert nach dem "
+                "Menü oder Dialog, in dem sie zu finden sind."
+            )
         )
         intro.setWordWrap(True)
         outer_layout.addWidget(intro)
@@ -392,16 +398,16 @@ class FeatureOverviewDialog(QDialog):
 
         for menu_name, features in FEATURE_GROUPS:
 
-            group = QGroupBox(menu_name)
+            group = QGroupBox(tr(menu_name))
             group_layout = QVBoxLayout(group)
 
             for feature_name, description in features:
 
-                name_label = QLabel(feature_name)
+                name_label = QLabel(tr(feature_name))
                 name_label.setStyleSheet("font-weight: bold;")
                 group_layout.addWidget(name_label)
 
-                desc_label = QLabel(description)
+                desc_label = QLabel(tr(description))
                 desc_label.setWordWrap(True)
                 desc_label.setTextInteractionFlags(
                     Qt.TextSelectableByMouse

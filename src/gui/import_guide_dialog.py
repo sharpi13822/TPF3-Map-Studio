@@ -15,6 +15,7 @@ from PySide6.QtWidgets import (
     QDialogButtonBox,
     QApplication,
 )
+from src.i18n import tr
 
 
 SETTINGS_PATH = Path.home() / ".tpf2_map_studio" / "import_guide_settings.json"
@@ -23,20 +24,20 @@ SETTINGS_PATH = Path.home() / ".tpf2_map_studio" / "import_guide_settings.json"
 # res/scripts/osm_importer/README.md des OSM-TPF2-Importer-Projekts,
 # Abschnitt "Options for Step 3".
 OPTION_FIELDS = (
-    ("build_streets", "Straßen bauen (inkl. Fußwege/Bäche)", True),
-    ("build_tracks", "Gleise bauen", True),
-    ("build_subwaytracks", "U-Bahn-/Stadtbahn-Gleise (subway/light_rail)", True),
-    ("build_tramtracks", "Straßenbahn als eigene Gleise (statt auf Straßen)", False),
-    ("build_bridges", "Brücken bauen", True),
-    ("build_tunnels", "Tunnel bauen (Ergebnis oft unbefriedigend)", False),
-    ("build_signals", "Signale bauen (nur deutsche Signale)", True),
-    ("build_autobahn", "Autobahnen bauen", True),
-    ("build_streets_street_types", "Normale Straßentypen bauen", True),
-    ("build_streets_footway_types", "Fuß-/Radwege bauen", True),
-    ("build_streets_water", "Wasserstraßen für Bäche/kleine Flüsse", True),
-    ("build_streets_airport", "Flughafen-Straßen (braucht Airport-Roads-Mod)", True),
-    ("skip_nodes_outofbounds", "Knoten außerhalb der Kartengrenzen überspringen", True),
-    ("crash_type_not_found", "Bei fehlendem Mod-Typ abbrechen (empfohlen zum Testen)", True),
+    ("build_streets", tr("Straßen bauen (inkl. Fußwege/Bäche)"), True),
+    ("build_tracks", tr("Gleise bauen"), True),
+    ("build_subwaytracks", tr("U-Bahn-/Stadtbahn-Gleise (subway/light_rail)"), True),
+    ("build_tramtracks", tr("Straßenbahn als eigene Gleise (statt auf Straßen)"), False),
+    ("build_bridges", tr("Brücken bauen"), True),
+    ("build_tunnels", tr("Tunnel bauen (Ergebnis oft unbefriedigend)"), False),
+    ("build_signals", tr("Signale bauen (nur deutsche Signale)"), True),
+    ("build_autobahn", tr("Autobahnen bauen"), True),
+    ("build_streets_street_types", tr("Normale Straßentypen bauen"), True),
+    ("build_streets_footway_types", tr("Fuß-/Radwege bauen"), True),
+    ("build_streets_water", tr("Wasserstraßen für Bäche/kleine Flüsse"), True),
+    ("build_streets_airport", tr("Flughafen-Straßen (braucht Airport-Roads-Mod)"), True),
+    ("skip_nodes_outofbounds", tr("Knoten außerhalb der Kartengrenzen überspringen"), True),
+    ("crash_type_not_found", tr("Bei fehlendem Mod-Typ abbrechen (empfohlen zum Testen)"), True),
 )
 
 STEP_0_COMMAND = 'require "osm_importer.main"'
@@ -70,7 +71,7 @@ class ImportGuideDialog(QDialog):
     def __init__(self, parent):
         super().__init__(parent)
 
-        self.setWindowTitle("Import-Anleitung (OSM-TPF2-Importer)")
+        self.setWindowTitle(tr("Import-Anleitung (OSM-TPF2-Importer)"))
         self.setMinimumSize(760, 640)
 
         outer_layout = QVBoxLayout(self)
@@ -84,10 +85,10 @@ class ImportGuideDialog(QDialog):
         scroll.setWidget(content)
 
         intro = QLabel(
-            "Alle Schritte müssen in dieser Reihenfolge ausgeführt werden. "
+            tr("Alle Schritte müssen in dieser Reihenfolge ausgeführt werden. "
             "Die Karte muss vorher komplett leer sein (keine Straßen/Gleise/"
             "Vegetation, nur Terrain). Am besten zuerst mit einem kleinen "
-            "Testausschnitt üben."
+            "Testausschnitt üben.")
         )
         intro.setWordWrap(True)
         layout.addWidget(intro)
@@ -97,10 +98,10 @@ class ImportGuideDialog(QDialog):
         # -------------------------------------------------
 
         layout.addWidget(self._make_step_group(
-            "Schritt 0: Initialisierung",
-            "Spiel pausieren. In UG Console UND Script Thread eingeben "
+            tr("Schritt 0: Initialisierung"),
+            tr("Spiel pausieren. In UG Console UND Script Thread eingeben "
             "(Workaround für Script Thread ohne CommonAPI2: "
-            'm.scriptevent.ScriptEvent("require-osm_importer.main")):',
+            'm.scriptevent.ScriptEvent("require-osm_importer.main")):'),
             STEP_0_COMMAND,
         ))
 
@@ -109,11 +110,11 @@ class ImportGuideDialog(QDialog):
         # -------------------------------------------------
 
         layout.addWidget(self._make_step_group(
-            "Schritt 1: Stadtnamen",
-            "In der UG Console, Zeile für Zeile. Bekannter Absturz "
+            tr("Schritt 1: Stadtnamen"),
+            tr("In der UG Console, Zeile für Zeile. Bekannter Absturz "
             "('proposalData.errorState.Empty()'): tritt auf, wenn eine "
             "Stadt zu nah an Wasser liegt - betroffene Stadt dann aus "
-            "osmdata.lua entfernen.",
+            "osmdata.lua entfernen."),
             STEP_1_COMMAND,
         ))
 
@@ -122,11 +123,11 @@ class ImportGuideDialog(QDialog):
         # -------------------------------------------------
 
         layout.addWidget(self._make_step_group(
-            "Schritt 2: Flächen (Wälder/Oberflächen)",
-            "Im Script Thread (Workaround ohne CommonAPI2, in UG Console: "
+            tr("Schritt 2: Flächen (Wälder/Oberflächen)"),
+            tr("Im Script Thread (Workaround ohne CommonAPI2, in UG Console: "
             'm.scriptevent.ScriptEvent("areas.buildAreas")). Braucht '
             "Forester-Mod (Version 1.4 Interface!) und Paver-Mod. Kann "
-            "eine Weile dauern.",
+            "eine Weile dauern."),
             STEP_2_COMMAND,
         ))
 
@@ -134,16 +135,16 @@ class ImportGuideDialog(QDialog):
         # Schritt 3 - Optionen-Tabelle
         # -------------------------------------------------
 
-        step3_group = QGroupBox("Schritt 3: Straßen/Gleise (der lange Schritt)")
+        step3_group = QGroupBox(tr("Schritt 3: Straßen/Gleise (der lange Schritt)"))
         step3_layout = QVBoxLayout(step3_group)
 
         step3_note = QLabel(
-            "In der UG Console zuerst die Optionen-Tabelle einfügen, DANACH "
+            tr("In der UG Console zuerst die Optionen-Tabelle einfügen, DANACH "
             "den Aufruf. Dauer grob schätzbar: Anzahl Edges / 5 Sekunden "
             "(siehe Converter-Log), bei großen Karten mehrere Stunden. "
             "Bekannter Fallstrick ('Already called, reload osm_importer "
             "before use again'): Workaround ist, beides in einer Zeile "
-            "auszuführen: asdf=1; " + STEP_3_CALL
+            "auszuführen: asdf=1; ") + STEP_3_CALL
         )
         step3_note.setWordWrap(True)
         step3_layout.addWidget(step3_note)
@@ -166,7 +167,7 @@ class ImportGuideDialog(QDialog):
         self.options_output.setStyleSheet("font-family: Consolas, monospace;")
         step3_layout.addWidget(self.options_output)
 
-        step3_copy_button = QPushButton("Optionen-Tabelle + Aufruf kopieren")
+        step3_copy_button = QPushButton(tr("Optionen-Tabelle + Aufruf kopieren"))
         step3_copy_button.clicked.connect(
             lambda: self._copy(self.options_output.toPlainText())
         )
@@ -179,9 +180,9 @@ class ImportGuideDialog(QDialog):
         # -------------------------------------------------
 
         layout.addWidget(self._make_step_group(
-            "Schritt 4: Objekte",
-            "In der UG Console. Muss NACH Schritt 3 kommen, da er Höhen "
-            "verändert. Baut Einzelbäume, Brunnen, Poller, Litfaßsäulen.",
+            tr("Schritt 4: Objekte"),
+            tr("In der UG Console. Muss NACH Schritt 3 kommen, da er Höhen "
+            "verändert. Baut Einzelbäume, Brunnen, Poller, Litfaßsäulen."),
             STEP_4_COMMAND,
         ))
 
@@ -189,11 +190,11 @@ class ImportGuideDialog(QDialog):
         # Allgemeine Hinweise
         # -------------------------------------------------
 
-        hints_group = QGroupBox("Allgemeine Hinweise")
+        hints_group = QGroupBox(tr("Allgemeine Hinweise"))
         hints_layout = QVBoxLayout(hints_group)
 
         hints_label = QLabel(
-            "• Alle 4 Schritte sollten in derselben Sitzung direkt "
+            tr("• Alle 4 Schritte sollten in derselben Sitzung direkt "
             "hintereinander laufen, nicht über mehrere Tage verteilt.\n"
             "• Bei Änderungen an osmdata.lua oder den Skripten: m.reload() "
             "nötig (Spielstand neu laden reicht nicht).\n"
@@ -201,7 +202,7 @@ class ImportGuideDialog(QDialog):
             "• Nach Schritt 3: im Log nach 'WARNING' und 'ERROR' suchen "
             "(stdout.txt), auch wenn der Prozess nicht abgebrochen ist.\n"
             "• Alle Schritte auf einer bereits bebauten Fläche können zu "
-            "Problemen führen - die Karte muss vorher leer sein."
+            "Problemen führen - die Karte muss vorher leer sein.")
         )
         hints_label.setWordWrap(True)
         hints_layout.addWidget(hints_label)
@@ -240,7 +241,7 @@ class ImportGuideDialog(QDialog):
         output.setStyleSheet("font-family: Consolas, monospace;")
         group_layout.addWidget(output)
 
-        copy_button = QPushButton("Kopieren")
+        copy_button = QPushButton(tr("Kopieren"))
         copy_button.clicked.connect(lambda: self._copy(command))
         group_layout.addWidget(copy_button)
 
