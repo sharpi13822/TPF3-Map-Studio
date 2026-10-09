@@ -20,6 +20,7 @@ from PySide6.QtWidgets import (
 )
 
 from src.heightmap.dgm1_dem import MIN_REQUEST_INTERVAL_S, Dgm1FetchJob
+from src.i18n import tr
 
 
 class Dgm1FetchDialog(QDialog):
@@ -31,7 +32,7 @@ class Dgm1FetchDialog(QDialog):
         selection,
         cache_dir: Path,
         job=None,
-        title: str = "DGM1-Kacheln laden",
+        title: str = tr("DGM1-Kacheln laden"),
         note: str | None = None,
         seconds_per_tile: float = MIN_REQUEST_INTERVAL_S,
     ):
@@ -53,7 +54,7 @@ class Dgm1FetchDialog(QDialog):
 
         layout = QVBoxLayout(self)
 
-        self.label = QLabel("Starte...")
+        self.label = QLabel(tr("Starte..."))
         layout.addWidget(self.label)
 
         self.bar = QProgressBar()
@@ -64,9 +65,9 @@ class Dgm1FetchDialog(QDialog):
             note
             if note is not None
             else (
-                "Der Dienst hoehendaten.de erlaubt etwa 20 Kacheln pro Minute. "
+                tr("Der Dienst hoehendaten.de erlaubt etwa 20 Kacheln pro Minute. "
                 "Bereits geladene Kacheln werden übersprungen. Du kannst jederzeit "
-                "abbrechen und später weitermachen."
+                "abbrechen und später weitermachen.")
             )
         )
         self.note.setWordWrap(True)
@@ -75,7 +76,7 @@ class Dgm1FetchDialog(QDialog):
         row = QHBoxLayout()
         row.addStretch(1)
 
-        self.cancel_button = QPushButton("Abbrechen")
+        self.cancel_button = QPushButton(tr("Abbrechen"))
         self.cancel_button.clicked.connect(self._on_cancel)
         row.addWidget(self.cancel_button)
 
@@ -97,7 +98,7 @@ class Dgm1FetchDialog(QDialog):
 
     def _on_cancel(self):
         self.cancel_button.setEnabled(False)
-        self.label.setText("Breche ab...")
+        self.label.setText(tr("Breche ab..."))
         self._job.cancel()
 
     def reject(self):
@@ -125,7 +126,7 @@ class Dgm1FetchDialog(QDialog):
             self.bar.setValue(int(job.done * 100 / job.total))
             remaining_min = (job.total - job.done) * self._seconds_per_tile / 60.0
             self.label.setText(
-                f"{job.text}  (höchstens noch etwa {remaining_min:.0f} Min.)"
+                tr("{text}  (höchstens noch etwa {remaining_min:.0f} Min.)").format(text=job.text, remaining_min=remaining_min)
             )
         else:
             self.label.setText(job.text)

@@ -30,6 +30,11 @@ SAME_IN_BOTH = {
     "Parks",
     "Vegetation",
     "Heightmap",
+    "JSON (*.json)",
+    "PNG (*.png)",
+    "Lua (*.lua)",
+    "Mod",
+    "Status",
     "Marker: {id} | {lat:.6f}, {lon:.6f}",
 }
 

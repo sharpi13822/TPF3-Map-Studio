@@ -35,12 +35,13 @@ from src.heightmap.biome_mask import (
     save_biome_png,
 )
 from src.heightmap.tpf3_paths import find_tpf3_heightmaps_folder
+from src.i18n import tr
 
 # Anzeige -> Meter pro Pixel
 _RESOLUTIONS = (
-    ("16 m pro Pixel (klein, schnell)", 16.0),
-    ("8 m pro Pixel (Standard)", 8.0),
-    ("4 m pro Pixel (wie die Heightmap)", 4.0),
+    (tr("16 m pro Pixel (klein, schnell)"), 16.0),
+    (tr("8 m pro Pixel (Standard)"), 8.0),
+    (tr("4 m pro Pixel (wie die Heightmap)"), 4.0),
 )
 
 _PREVIEW_HEIGHT = 480
@@ -55,16 +56,16 @@ class BiomeMaskDialog(QDialog):
         self.osm = osm
         self._index: np.ndarray | None = None
 
-        self.setWindowTitle("Biome-Maske aus OSM")
+        self.setWindowTitle(tr("Biome-Maske aus OSM"))
 
         layout = QVBoxLayout(self)
 
         info = QLabel(
-            "Erzeugt aus der geladenen OSM-Landnutzung eine Maske für den "
+            tr("Erzeugt aus der geladenen OSM-Landnutzung eine Maske für den "
             "Biome-Tab im Karteneditor. Wähle für jede Art von Fläche das "
             "Biom. Alles andere, auch Wasser, bekommt Biom 0. Die "
             "Voreinstellung ist ein Vorschlag nach dem Aussehen der Biome "
-            "und im Spiel noch nicht geprüft."
+            "und im Spiel noch nicht geprüft.")
         )
         info.setWordWrap(True)
         layout.addWidget(info)
@@ -77,7 +78,7 @@ class BiomeMaskDialog(QDialog):
         for key, label, _rules in CATEGORIES:
 
             box = QComboBox()
-            box.addItem("nicht verwenden", None)
+            box.addItem(tr("nicht verwenden"), None)
 
             for number, name in enumerate(BIOME_NAMES):
                 box.addItem(name, number)
@@ -97,9 +98,9 @@ class BiomeMaskDialog(QDialog):
 
         self.resolution_box.setCurrentIndex(1)
 
-        form.addRow("Auflösung:", self.resolution_box)
+        form.addRow(tr("Auflösung:"), self.resolution_box)
 
-        self.preview_label = QLabel("Noch keine Vorschau.")
+        self.preview_label = QLabel(tr("Noch keine Vorschau."))
         self.preview_label.setAlignment(Qt.AlignCenter)
         layout.addWidget(self.preview_label)
 
@@ -110,16 +111,16 @@ class BiomeMaskDialog(QDialog):
         row = QHBoxLayout()
         layout.addLayout(row)
 
-        self.preview_button = QPushButton("Vorschau")
+        self.preview_button = QPushButton(tr("Vorschau"))
         self.preview_button.clicked.connect(self._make_preview)
         row.addWidget(self.preview_button)
 
-        self.export_button = QPushButton("Exportieren...")
+        self.export_button = QPushButton(tr("Exportieren..."))
         self.export_button.setEnabled(False)
         self.export_button.clicked.connect(self._export)
         row.addWidget(self.export_button)
 
-        close_button = QPushButton("Schließen")
+        close_button = QPushButton(tr("Schließen"))
         close_button.clicked.connect(self.reject)
         row.addWidget(close_button)
 
@@ -139,8 +140,8 @@ class BiomeMaskDialog(QDialog):
         if all(value is None for value in assignment.values()):
             QMessageBox.information(
                 self,
-                "Biome-Maske",
-                "Es ist keine Fläche einem Biom zugeordnet.",
+                tr("Biome-Maske"),
+                tr("Es ist keine Fläche einem Biom zugeordnet."),
             )
             return
 
@@ -150,7 +151,7 @@ class BiomeMaskDialog(QDialog):
             self.selection, meters_per_pixel
         )
 
-        self.status_label.setText("Berechne Maske ...")
+        self.status_label.setText(tr("Berechne Maske ..."))
         self.repaint()
 
         try:
@@ -161,8 +162,8 @@ class BiomeMaskDialog(QDialog):
             self.status_label.setText("")
             QMessageBox.warning(
                 self,
-                "Biome-Maske",
-                f"Die Maske konnte nicht berechnet werden:\n{error}",
+                tr("Biome-Maske"),
+                tr("Die Maske konnte nicht berechnet werden:\n{error}").format(error=error),
             )
             return
 
@@ -194,7 +195,7 @@ class BiomeMaskDialog(QDialog):
         ]
 
         self.status_label.setText(
-            f"Maske {w_px} x {h_px} Pixel. " + ", ".join(parts)
+            tr("Maske {w_px} x {h_px} Pixel. ").format(w_px=w_px, h_px=h_px) + ", ".join(parts)
         )
 
         self.export_button.setEnabled(True)
@@ -216,9 +217,9 @@ class BiomeMaskDialog(QDialog):
 
         path, _ = QFileDialog.getSaveFileName(
             self,
-            "Biome-Maske speichern",
+            tr("Biome-Maske speichern"),
             str(self._default_folder() / "biome_osm.png"),
-            "PNG (*.png)",
+            tr("PNG (*.png)"),
         )
 
         if not path:
@@ -229,16 +230,13 @@ class BiomeMaskDialog(QDialog):
         except OSError as error:
             QMessageBox.warning(
                 self,
-                "Biome-Maske",
-                f"Die Datei konnte nicht gespeichert werden:\n{error}",
+                tr("Biome-Maske"),
+                tr("Die Datei konnte nicht gespeichert werden:\n{error}").format(error=error),
             )
             return
 
         QMessageBox.information(
             self,
-            "Biome-Maske",
-            f"Gespeichert:\n{path}\n\n"
-            "Im Spiel: Karteneditor → Heightmap importieren → Reiter "
-            "Biome → bei \"Biome\" diese Datei wählen, Berge und Flüsse "
-            "leer lassen → Anwenden.",
+            tr("Biome-Maske"),
+            tr("Gespeichert:\n{path}\n\nIm Spiel: Karteneditor → Heightmap importieren → Reiter Biome → bei \"Biome\" diese Datei wählen, Berge und Flüsse leer lassen → Anwenden.").format(path=path),
         )

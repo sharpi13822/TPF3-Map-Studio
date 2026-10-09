@@ -692,4 +692,474 @@ guide of the heightmap dialog (F1).</p>
         'Heightmap saved to:\n{filename}\n\n',
     'Schnellvorschau fehlgeschlagen: {error}':
         'Quick preview failed: {error}',
+    '\n\nKeine Wege gefunden. Sind Straßen und Gleise geladen (Werkzeuge → OSM laden) und die Haken oben gesetzt?':
+        '\n\nNo ways found. Are roads and tracks loaded (Tools → Load OSM) and are the checkboxes above ticked?',
+    '  davon Straßenbahn (Tram) einschließen':
+        '  including tram',
+    '(keine)':
+        '(none)',
+    ', {population} Einwohner':
+        ', {population} inhabitants',
+    '.osm-Datei (Arg 1):':
+        '.osm file (arg 1):',
+    '.osm-Datei wählen':
+        'Choose .osm file',
+    '16 m pro Pixel (klein, schnell)':
+        '16 m per pixel (small, fast)',
+    '4 m pro Pixel (wie die Heightmap)':
+        '4 m per pixel (like the heightmap)',
+    '8 m pro Pixel (Standard)':
+        '8 m per pixel (default)',
+    'Abbrechen':
+        'Cancel',
+    'Abstand zu Wasser:':
+        'Distance to water:',
+    'Abstand zum Kartenrand:':
+        'Distance to map edge:',
+    'Achtung: Diese Auswahl ist gedreht - der Converter kennt keine Drehung und erwartet eine einfache, achsenparallele Bounding Box. Die hier berechnete Box ist die umschließende Box des gedrehten Bands und passt NICHT exakt zu dessen tatsächlicher Form.':
+        'Warning: This selection is rotated - the converter does not know about rotation and expects a simple, axis-aligned bounding box. The box calculated here is the enclosing box of the rotated band and does NOT exactly match its actual shape.',
+    'Aktualisieren':
+        'Refresh',
+    'Alle Arten an':
+        'All types on',
+    'Alle Arten aus':
+        'All types off',
+    'Alle auswählen':
+        'Select all',
+    'Als Vorlage speichern':
+        'Save as template',
+    'Analysieren':
+        'Analyse',
+    'Auf längeren Kanten werden Knoten eingefügt (auf der Linie). Zwischen zwei Knoten verläuft die Höhe im Spiel geradlinig; bei Kanten von mehreren hundert Metern schweben die Gleise über dem Hang oder stecken im Einschnitt. 80 m passt zur Gleisterrasse der Heightmap. 0 = aus.':
+        'Nodes are inserted on longer edges (on the line). Between two nodes the height runs in a straight line in the game; on edges of several hundred metres the tracks float above the slope or sit inside the cutting. 80 m matches the track terrace of the heightmap. 0 = off.',
+    'Auflösung:':
+        'Resolution:',
+    'Ausführen über:':
+        'Run via:',
+    'Ausgewähltes Projekt öffnen':
+        'Open selected project',
+    'Ausschnitt Kantenlänge (0 = alles):':
+        'Section edge length (0 = everything):',
+    'Ausschnitt Mitte x (Ost):':
+        'Section centre x (east):',
+    'Ausschnitt Mitte y (Nord):':
+        'Section centre y (north):',
+    'Autobahn (motorway)':
+        'Motorway (motorway)',
+    'Autobahn-Ab-/Auffahrten':
+        'Motorway slip roads',
+    'Autobahn-Auffahrten (motorway_link)':
+        'Motorway slip roads (motorway_link)',
+    'Bahnhöfe konnten nicht auf der Karte angezeigt werden: {error}':
+        'Stations could not be shown on the map: {error}',
+    'Bahnhöfe speichern':
+        'Save stations',
+    'Bahnhöfe speichern...':
+        'Save stations...',
+    'Berechne Maske ...':
+        'Calculating mask ...',
+    'Biome-Maske aus OSM':
+        'Biome mask from OSM',
+    'Biome-Maske speichern':
+        'Save biome mask',
+    'Bitte einen Namen für die Vorlage eingeben.':
+        'Please enter a name for the template.',
+    'Breche ab...':
+        'Cancelling...',
+    'Brücken bauen (bridge=*)':
+        'Build bridges (bridge=*)',
+    'Brücken nutzen':
+        'Use bridges',
+    'Brücken, die kürzer sind, werden als gewöhnliche Straße oder gewöhnliches Gleis gebaut. Im Spiel scheiterten alle Gleisbrücken zwischen 4 und 20 m Länge.':
+        'Bridges shorter than this are built as ordinary road or track. In the game, all track bridges between 4 and 20 m in length failed.',
+    'Bundesstraße (primary)':
+        'Primary road (primary)',
+    'Bundesstraßen-Auffahrten (primary_link)':
+        'Primary road slip roads (primary_link)',
+    'Bundesstraßen-Verbindungen':
+        'Primary road connections',
+    'Converter-Befehl':
+        'Converter command',
+    'DGM1-Kacheln laden':
+        'Load DGM1 tiles',
+    'Das Netz konnte nicht berechnet werden:\n{error}':
+        'The network could not be calculated:\n{error}',
+    'Datei fehlerhaft: {error}':
+        'File is faulty: {error}',
+    'Der Dienst hoehendaten.de erlaubt etwa 20 Kacheln pro Minute. Bereits geladene Kacheln werden übersprungen. Du kannst jederzeit abbrechen und später weitermachen.':
+        'The hoehendaten.de service allows about 20 tiles per minute. Tiles that have already been loaded are skipped. You can cancel at any time and continue later.',
+    'Der Mod konnte nicht geschrieben werden:\n{error}':
+        'The mod could not be written:\n{error}',
+    'Die Bahnhöfe konnten nicht gelesen werden:\n{error}':
+        'The stations could not be read:\n{error}',
+    'Die Datei konnte nicht gespeichert werden:\n{error}':
+        'The file could not be saved:\n{error}',
+    'Die Dateien konnten nicht geschrieben werden:\n{error}':
+        'The files could not be written:\n{error}',
+    'Die Maske konnte nicht berechnet werden:\n{error}':
+        'The mask could not be calculated:\n{error}',
+    'Doppelt gezeichnete Gleise entfernen (im Spiel ungetestet)':
+        'Remove doubled tracks (untested in the game)',
+    'Drehwinkel:':
+        'Rotation angle:',
+    'Durchsuchen...':
+        'Browse...',
+    'Einbahnstraßen mit schmaler Einbahn-Vorlage bauen (empfohlen)':
+        'Build one-way roads with the narrow one-way template (recommended)',
+    'Einmündungen und Wegenden, die näher beieinander liegen, werden zu einem Knoten. Die Straßen im Spiel sind 14 bis 30 m breit, dichter liegende Einmündungen lassen sich dort nicht bauen. 0 = aus. Im Spiel noch nicht getestet.':
+        'Junctions and way ends that lie closer together are merged into one node. Roads in the game are 14 to 30 m wide; junctions closer together cannot be built there. 0 = off. Not tested in the game yet.',
+    'Einmündungen zusammenlegen bis:':
+        'Merge junctions up to:',
+    'Einstellungen geändert. Bitte „Netz berechnen“ erneut ausführen.':
+        'Settings changed. Please run “Calculate network” again.',
+    'Eisenbahn (rail)':
+        'Railway (rail)',
+    'Elektrifizierte Gleise im Gebiet':
+        'Electrified tracks in the area',
+    'Ergebnis':
+        'Result',
+    'Erzeugt aus den geladenen OSM-Objekten eine Industrien-Datei für den Ordner towns_industries. Der Nullpunkt ist die Kartenmitte. Im Spiel beim Import "Städte behalten: Ja" wählen, die Datei enthält keine Städte. Die Zuordnung ist ein Vorschlag, ob das Spiel jede Position annimmt, ist ungeprüft.':
+        'Creates an industries file for the towns_industries folder from the loaded OSM objects. The origin is the map centre. When importing in the game, choose "Keep towns: Yes", the file contains no towns. The assignment is a suggestion; whether the game accepts every position has not been tested.',
+    'Erzeugt aus den geladenen OSM-Orten eine Städte-Datei für den Ordner towns_industries. Der Nullpunkt ist die Kartenmitte. Die Anfangsgröße der Stadt im Spiel wird aus der OSM-Einwohnerzahl abgeleitet: Faktor = Maßstab × Wurzel(Einwohner). Faktor 1 sind im Spiel etwa 100 Einwohner. Große Städte starten größer, kleine Dörfer kleiner. Industrien werden noch nicht erzeugt.':
+        'Creates a towns file for the towns_industries folder from the loaded OSM places. The origin is the map centre. The initial size of the town in the game is derived from the OSM population: factor = scale × square root(population). A factor of 1 is about 100 inhabitants in the game. Large cities start larger, small villages smaller. Industries are not created yet.',
+    'Erzeugt aus den geladenen OSM-Wegen einen Mod für Transport Fever 3. Der Mod baut im Spiel Straßen, Gleise, Brücken und Tunnel auf die geladene Heightmap. Die Höhen der Strecken plant der Mod selbst (aus dem Gelände, mit Steigungsgrenze). Nullpunkt ist die Kartenmitte, wie bei den Städten.':
+        'Creates a mod for Transport Fever 3 from the loaded OSM ways. In the game, the mod builds roads, tracks, bridges and tunnels onto the loaded heightmap. The mod plans the heights of the routes itself (from the terrain, with a gradient limit). The origin is the map centre, as with the towns.',
+    'Erzeugt aus der geladenen OSM-Landnutzung eine Maske für den Biome-Tab im Karteneditor. Wähle für jede Art von Fläche das Biom. Alles andere, auch Wasser, bekommt Biom 0. Die Voreinstellung ist ein Vorschlag nach dem Aussehen der Biome und im Spiel noch nicht geprüft.':
+        'Creates a mask for the Biomes tab in the map editor from the loaded OSM land use. Choose the biome for each type of area. Everything else, including water, gets biome 0. The preset is a suggestion based on the look of the biomes and has not been checked in the game yet.',
+    'Es ist keine Fläche einem Biom zugeordnet.':
+        'No area is assigned to a biome.',
+    'Es sind keine OSM-Daten geladen.':
+        'No OSM data is loaded.',
+    "Es sind keine OSM-Daten geladen. Zuerst 'OSM laden' ausführen.":
+        "No OSM data is loaded. Run 'Load OSM' first.",
+    'Faktor 1 sind etwa 100 Einwohner. Getestet: 0,2 gibt etwa 19 Einwohner. Werte darunter sind ungeprüft.':
+        'A factor of 1 is about 100 inhabitants. Tested: 0.2 gives about 19 inhabitants. Values below that are untested.',
+    'Faktor 30 ergab im Test 2892 Einwohner, Faktor 100 nur 4476. Höher als 30 ist ungetestet.':
+        'In testing, a factor of 30 gave 2892 inhabitants, a factor of 100 only 4476. Anything higher than 30 is untested.',
+    'Faktor = Maßstab × Wurzel(Einwohner). Bei 0,03 bekommt Koblenz (110 000) etwa Faktor 10, ein Dorf mit 300 etwa 0,5.':
+        'Factor = scale × square root(population). At 0.03, Koblenz (110,000) gets a factor of about 10, a village of 300 about 0.5.',
+    'Fertiger Befehl ({exe_name} im Converter-Ordner ausführen):':
+        'Finished command (run {exe_name} in the converter folder):',
+    'Flächennutzung':
+        'Land use',
+    'Formpunkte, die die Linie um weniger als diesen Wert verändern, entfallen. Kreuzungen und Wegenden bleiben immer. Weniger Punkte bedeuten ein kleineres Netz im Spiel.':
+        'Shape points that change the line by less than this value are dropped. Junctions and way ends are always kept. Fewer points mean a smaller network in the game.',
+    'Formpunkte, die näher als dieser Wert am Nachbarn liegen, entfallen. Sehr kurze Kanten sind in TPF2 oft gescheitert.':
+        'Shape points that are closer to their neighbour than this value are dropped. Very short edges often failed in TPF2.',
+    'Forst ab Größe:':
+        'Forest from size:',
+    'Genutzte Importer-Funktionen (bestimmt, welche Mod-Kategorien geprüft werden)':
+        'Importer features used (determines which mod categories are checked)',
+    'Gespeichert ({count} Industrien):\n{path}\n\nIm Spiel: Karteneditor → Reiter Städte/Industrien → Import → diese Datei wählen, "Städte behalten" auf Ja, "Industrien behalten" auf Nein → Import.':
+        'Saved ({count} industries):\n{path}\n\nIn the game: Map editor → Towns/Industries tab → Import → choose this file, "Keep towns" set to Yes, "Keep industries" set to No → Import.',
+    'Gespeichert ({count} Städte):\n{path}\n\nIm Spiel: Karteneditor → Reiter Städte/Industrien → Import → diese Datei wählen → Import.':
+        'Saved ({count} towns):\n{path}\n\nIn the game: Map editor → Towns/Industries tab → Import → choose this file → Import.',
+    'Gespeichert:\n{path}\n\nIm Spiel: Karteneditor → Heightmap importieren → Reiter Biome → bei "Biome" diese Datei wählen, Berge und Flüsse leer lassen → Anwenden.':
+        'Saved:\n{path}\n\nIn the game: Map editor → Import heightmap → Biomes tab → choose this file under "Biomes", leave Mountains and Rivers empty → Apply.',
+    'Gewässer':
+        'Waters',
+    'Geändert':
+        'Modified',
+    'Gleichartige Industrien müssen mindestens so weit auseinander liegen.':
+        'Industries of the same type must be at least this far apart.',
+    'Gleise':
+        'Tracks',
+    'Gleise, die fast deckungsgleich auf einem anderen Gleis liegen (z. B. Servicegleis auf der Hauptstrecke), entfallen.':
+        'Tracks that lie almost exactly on top of another track (e.g. a service track on the main line) are dropped.',
+    'Gleistypen':
+        'Track types',
+    'Gruben: höchster Höhenunterschied:':
+        'Pits: maximum height difference:',
+    'Größe aus der OSM-Einwohnerzahl ableiten':
+        'Derive size from the OSM population',
+    'Größter Faktor:':
+        'Largest factor:',
+    'Größter Knotenabstand:':
+        'Largest node spacing:',
+    'Hinweis':
+        'Note',
+    'Hinweis: Es sind keine Höhendaten geladen. Hang- und Wasserprüfung sind aus. Zuerst im Heightmap-Dialog die Höhendaten herunterladen.':
+        'Note: No elevation data is loaded. The slope and water checks are off. First download the elevation data in the heightmap dialog.',
+    'Höchstens je Art:':
+        'Maximum per type:',
+    'Höchstens so viele Industrien je Art, die größten zuerst.':
+        'At most this many industries per type, the largest first.',
+    'Höchster Höhenunterschied (150 m):':
+        'Maximum height difference (150 m):',
+    'Höchster Höhenunterschied im Umkreis von 150 m. Industrien auf steileren Hängen werden aussortiert. 0 = nicht prüfen.':
+        'Maximum height difference within a radius of 150 m. Industries on steeper slopes are sorted out. 0 = do not check.',
+    'In Zwischenablage kopieren':
+        'Copy to clipboard',
+    'In den geladenen OSM-Daten wurden keine Bahnhöfe oder Haltepunkte gefunden.\n\nMöglicherweise lädt die OSM-Abfrage des Studios Bahnhofsdaten nicht mit. Dann müsste die Abfrage um railway=station/halt/platform und building=train_station erweitert werden.':
+        "No stations or halts were found in the loaded OSM data.\n\nThe Studio's OSM query may not load station data. In that case the query would have to be extended by railway=station/halt/platform and building=train_station.",
+    'In den geladenen OSM-Daten wurden keine Bahnhöfe oder Haltepunkte gefunden.\n\nZuerst Werkzeuge → OSM laden ausführen und die Ebene Eisenbahn laden. Bleibt es leer, lädt die OSM-Abfrage Bahnhofsdaten (railway=station/halt/platform, building=train_station) möglicherweise nicht mit.':
+        'No stations or halts were found in the loaded OSM data.\n\nFirst run Tools → Load OSM and load the Railways layer. If it stays empty, the OSM query may not load station data (railway=station/halt/platform, building=train_station).',
+    'Industrie-Objekte (Sägewerk, Ziegelei, ...)':
+        'Industry objects (sawmill, brickworks, ...)',
+    'Industrien speichern':
+        'Save industries',
+    'JSON (*.json)':
+        'JSON (*.json)',
+    'Kartengröße:':
+        'Map size:',
+    'Kategorien':
+        'Categories',
+    'Kein Kartenausschnitt gesetzt (Rechteck-Tool verwenden).':
+        'No map section set (use the rectangle tool).',
+    'Kein Name':
+        'No name',
+    'Keine Kategorie ausgewählt':
+        'No category selected',
+    'Keine Orte gefunden. Entweder enthalten die geladenen OSM-Daten keine Ortsknoten (die Overpass-Abfrage muss place=city/town/village mitladen) oder der Filter ist zu streng.':
+        'No places found. Either the loaded OSM data contains no place nodes (the Overpass query must also load place=city/town/village) or the filter is too strict.',
+    'Keine auswählen':
+        'Select none',
+    'Keine passenden Objekte gefunden. Entweder fehlen sie in den geladenen OSM-Daten (im Overpass-Baukasten den Haken "Industrie-Objekte" und für Steinbrüche "Siedlung, Heide, Moor, Fels" setzen, dann neu laden) oder die Filter sind zu streng.':
+        'No matching objects found. Either they are missing from the loaded OSM data (in the Overpass builder tick "Industry objects" and, for quarries, "Settlement, heath, bog, rock", then reload) or the filters are too strict.',
+    'Keine sicher entfernbaren Formpunkte gefunden.':
+        'No shape points found that can be removed safely.',
+    'Kleinster Faktor:':
+        'Smallest factor:',
+    'Kleinster Punktabstand:':
+        'Smallest point spacing:',
+    'Kreisstraße (tertiary)':
+        'Tertiary road (tertiary)',
+    'Kreisstraßen-Auffahrten (tertiary_link)':
+        'Tertiary road slip roads (tertiary_link)',
+    'Kreisstraßen-Verbindungen':
+        'Tertiary road connections',
+    'Kurze Verbindungssegmente':
+        'Short connecting segments',
+    'Kürzeste Brücke:':
+        'Shortest bridge:',
+    'Laden':
+        'Load',
+    'Landesstraße (secondary)':
+        'Secondary road (secondary)',
+    'Landesstraßen-Auffahrten (secondary_link)':
+        'Secondary road slip roads (secondary_link)',
+    'Landstraßen-Verbindungen':
+        'Secondary road connections',
+    'Liest Bahnhöfe, Haltepunkte, Bahnsteige, Bahnhofsgebäude und Haltepositionen aus den geladenen OSM-Daten und speichert sie als .json (alles) und .csv (eine Zeile je Bahnhof). Es wird nichts im Spiel gebaut.':
+        'Reads stations, halts, platforms, station buildings and stop positions from the loaded OSM data and saves them as .json (everything) and .csv (one row per station). Nothing is built in the game.',
+    'Lokaler mod-Ordner nicht gefunden: {local_path}':
+        'Local mod folder not found: {local_path}',
+    'Lokaler mod-Ordner:':
+        'Local mod folder:',
+    'Lua (*.lua)':
+        'Lua (*.lua)',
+    'Länge':
+        'Length',
+    'Maske {w_px} x {h_px} Pixel. ':
+        'Mask {w_px} x {h_px} pixels. ',
+    'Maßstab:':
+        'Scale:',
+    'Mindestabstand Straße–Gleis:':
+        'Minimum distance road–track:',
+    'Mindestabstand je Art:':
+        'Minimum distance per type:',
+    'Mindestabstand zu Gewässern. 0 = nicht prüfen.':
+        'Minimum distance to waters. 0 = do not check.',
+    'Mindestabstand zum Kartenrand. Felder und Hecken einer Industrie ragen sonst über den Rand hinaus.':
+        'Minimum distance to the map edge. Otherwise the fields and hedges of an industry would extend beyond the edge.',
+    'Mindestabstand zwischen Straße und Gleis (Mittellinie zu Mittellinie). Die Straße ist 14 m breit, das Gleis mit Masten rund 7 m. Standard 9 m: Die Ränder berühren sich nicht, die Straße bleibt nah an ihrer OSM-Lage, aber es bleibt kein freier Streifen dazwischen (dort geht im Spiel weder Gelände anheben noch Pflanzen setzen). 14 m lassen rund 3,5 m frei, verschieben die Straße aber bis zu 5 m von ihrer Lage. Übergänge und kreuzende Straßen bleiben. 0 = aus.':
+        'Minimum distance between road and track (centre line to centre line). The road is 14 m wide, the track with masts about 7 m. Default 9 m: the edges do not touch and the road stays close to its OSM position, but no free strip remains in between (where in the game neither raising terrain nor placing plants is possible). 14 m leaves about 3.5 m free but moves the road up to 5 m from its position. Crossings and crossing roads are kept. 0 = off.',
+    'Mindestens Einwohner:':
+        'Minimum inhabitants:',
+    'Mindestens einen Straßentyp auswählen.':
+        'Select at least one road type.',
+    'Mittelpunkt Breite (lat):':
+        'Centre latitude (lat):',
+    'Mittelpunkt Länge (lon):':
+        'Centre longitude (lon):',
+    'Mod':
+        'Mod',
+    'Mod geschrieben:\n{root}\n\nIm Spiel:\n1. Mod „Map Studio Import“ im Mod-Menü aktivieren und das Spiel neu starten.\n2. Karte mit der Heightmap laden, warten bis „Map is ready“ in der Konsole steht, Spielstand speichern, Pause ausschalten.\n3. In der Konsole eingeben:\n{START_COMMAND}\n4. Warten bis „Import fertig“ in der Konsole steht.':
+        'Mod written:\n{root}\n\nIn the game:\n1. Activate the mod “Map Studio Import” in the mod menu and restart the game.\n2. Load the map with the heightmap, wait until “Map is ready” appears in the console, save the game, switch off pause.\n3. Enter in the console:\n{START_COMMAND}\n4. Wait until “Import fertig” appears in the console (the mod prints this text in German).',
+    'Mod schreiben...':
+        'Write mod...',
+    'Mod-Checker':
+        'Mod checker',
+    'Name für neue Vorlage':
+        'Name for new template',
+    'Nebenstraße (unclassified)':
+        'Minor road (unclassified)',
+    'Netz berechnen':
+        'Calculate network',
+    'Nichts zu vereinfachen':
+        'Nothing to simplify',
+    'Nimmt die Haken bei Wohnstraße, Verkehrsberuhigt, Nebenstraße und Zufahrten heraus. Für einen ersten Test sinnvoll: weniger Wege, weniger Überschneidungen.':
+        'Unticks the boxes for residential, living street, minor road and service roads. Useful for a first test: fewer ways, fewer overlaps.',
+    'Noch keine Vorschau.':
+        'No preview yet.',
+    'Noch nicht analysiert':
+        'Not analysed yet',
+    'Noch nicht analysiert.':
+        'Not analysed yet.',
+    'Noch nicht berechnet. „Netz berechnen“ zeigt, wie viele Wege und Knoten entstehen.':
+        'Not calculated yet. “Calculate network” shows how many ways and nodes will be created.',
+    'Nur Hauptstrecken (ohne Wohn- und Nebenstraßen)':
+        'Main routes only (without residential and minor roads)',
+    'Nur Wege in diesem Quadrat (Mitte in Metern ab Kartenmitte). 0 = ganze Karte. Für große Karten: erst einen Ausschnitt von 6000 bis 8000 m testen.':
+        'Only ways inside this square (centre in metres from the map centre). 0 = whole map. For large maps: first test a section of 6000 to 8000 m.',
+    'OSM-Daten':
+        'OSM data',
+    'OSM-Importer-Ordnername:':
+        'OSM importer folder name:',
+    'Ordner wählen':
+        'Choose folder',
+    'Ordner „mods“ von Transport Fever 3 wählen':
+        'Choose the “mods” folder of Transport Fever 3',
+    'Ordnername unter .../mod/, z.B. osm_tpf2_importer':
+        'Folder name under .../mod/, e.g. osm_tpf2_importer',
+    'Orte (Städte, Dörfer)':
+        'Places (cities, villages)',
+    'Overpass-Abfrage':
+        'Overpass query',
+    'PNG (*.png)':
+        'PNG (*.png)',
+    'Parallele Richtungsfahrbahnen (je ein OSM-Weg mit oneway=yes) würden sich sonst als zwei zweispurige Straßen überlagern. Autobahnen bleiben unverändert (es gibt keine Einbahn-Vorlage dafür).':
+        'Otherwise parallel carriageways (one OSM way each with oneway=yes) would overlap as two two-lane roads. Motorways remain unchanged (there is no one-way template for them).',
+    'Parks / Gärten':
+        'Parks / gardens',
+    'Paver / Bodentexturen nutzen':
+        'Use pavers / ground textures',
+    'Pfade':
+        'Paths',
+    'Projekt-Dashboard':
+        'Project dashboard',
+    'Projekte-Ordner wählen':
+        'Choose projects folder',
+    'Projekte-Ordner:':
+        'Projects folder:',
+    'Prüfen':
+        'Check',
+    'Prüfpunkt':
+        'Check item',
+    'Prüft, ob sehr kurze Segmente bei Ab-/Auffahrten-Straßentypen vorkommen. Eine Analyse eines echten Baulaufs zeigte: fehlgeschlagene secondary_link-Kanten waren im Median ~6,9 m lang, erfolgreiche ~23,1 m - das ist eine beobachtete Korrelation, kein bewiesener Grund. Die Vereinfachung entfernt ausschließlich Formpunkte, die garantiert zu keiner echten Kreuzung gehören - Kreuzungen bleiben immer unangetastet.':
+        'Checks whether very short segments occur in slip-road types. An analysis of a real build run showed: failed secondary_link edges had a median length of ~6.9 m, successful ones ~23.1 m - this is an observed correlation, not a proven cause. The simplification only removes shape points that are guaranteed not to belong to a real junction - junctions are always left untouched.',
+    'Prüfung der aktuell geladenen OSM-Daten, bevor du Heightmap, Städte, Industrien und weitere Dateien erzeugst:':
+        'Check of the currently loaded OSM data before you create the heightmap, towns, industries and other files:',
+    'Richtungsfahrbahnen zusammenfassen (im Spiel ungetestet)':
+        'Merge carriageways (untested in the game)',
+    'S-Bahn (light_rail)':
+        'Light rail (light_rail)',
+    'Schnellstraße (trunk)':
+        'Trunk road (trunk)',
+    'Schnellstraßen-Ab-/Auffahrten':
+        'Trunk road slip roads',
+    'Schnellstraßen-Auffahrten (trunk_link)':
+        'Trunk road slip roads (trunk_link)',
+    'Schwellenwert:':
+        'Threshold:',
+    'Sicherheitsrand (für Downloads):':
+        'Safety margin (for downloads):',
+    'Siedlung, Heide, Moor, Fels (für Biome)':
+        'Settlement, heath, bog, rock (for biomes)',
+    'Signale nutzen':
+        'Use signals',
+    'Starte...':
+        'Starting...',
+    'Status':
+        'Status',
+    'Steam-Workshop-Ordner:':
+        'Steam Workshop folder:',
+    'Straßen und Gleise für das Spiel':
+        'Roads and tracks for the game',
+    'Straßenbahn (tram) – im Spiel noch ungetestet':
+        'Tram (tram) – not yet tested in the game',
+    'Straßenobjekte nutzen':
+        'Use road objects',
+    'Straßentypen':
+        'Road types',
+    'Städte speichern':
+        'Save towns',
+    'Tunnel bauen (tunnel=yes)':
+        'Build tunnels (tunnel=yes)',
+    'Typ':
+        'Type',
+    'Vegetation (Wald, Baumreihen)':
+        'Vegetation (forest, tree rows)',
+    'Vereinfachen bis:':
+        'Simplify up to:',
+    'Vereinfacht als .osm exportieren...':
+        'Export simplified as .osm...',
+    'Vereinfachte OSM-Datei exportieren':
+        'Export simplified OSM file',
+    'Vereinfachte OSM-Datei gespeichert unter:\n{filename}\n\n{count} Formpunkte entfernt (nur nicht-Kreuzungs-Knoten). Das ursprüngliche Projekt im Studio ist unverändert.':
+        'Simplified OSM file saved to:\n{filename}\n\n{count} shape points removed (non-junction nodes only). The original project in the Studio is unchanged.',
+    'Verkehrsberuhigt (living_street)':
+        'Living street (living_street)',
+    'Vorab-Prüfung':
+        'Pre-check',
+    'Vorlage':
+        'Template',
+    'Vorschau':
+        'Preview',
+    'Vorschau der resultierenden Abfrage:':
+        'Preview of the resulting query:',
+    'Wald-Import nutzen':
+        'Use forest import',
+    'Weg-ID':
+        'Way ID',
+    'Wege werden so weit vor dem Kartenrand abgeschnitten.':
+        'Ways are cut off this far before the map edge.',
+    'Wie "Höchster Höhenunterschied", aber für Gruben und Minen (Stein, Lehm, Sand, Kohle, Eisenerz). Sie liegen in OSM meist am Hang, das Spiel schneidet sie als große Grube hinein. 0 = nicht prüfen.':
+        'Like "Maximum height difference", but for pits and mines (stone, clay, sand, coal, iron ore). In OSM they mostly lie on a slope, and the game cuts them in as a large pit. 0 = do not check.',
+    'Wohnstraße (residential)':
+        'Residential road (residential)',
+    'Workshop-Ordner nicht gefunden: {workshop_path}':
+        'Workshop folder not found: {workshop_path}',
+    "Zuerst auf 'Analysieren' klicken.":
+        "First click 'Analyse'.",
+    'Zufahrten und Wirtschaftswege (service)':
+        'Service and farm tracks (service)',
+    'Zwei parallele Einbahn-Wege gegenläufiger Richtung werden zu einem zweispurigen Weg in der Mitte. Autobahnen bleiben unverändert.':
+        'Two parallel one-way ways in opposite directions become one two-lane way in the middle. Motorways remain unchanged.',
+    'exportiert ({item})':
+        'exported ({item})',
+    'fehlt noch':
+        'still missing',
+    'gefunden als: {found_display_name}':
+        'found as: {found_display_name}',
+    'keine OSM-Daten':
+        'no OSM data',
+    'main.exe (vorkompiliert, aus den Releases)':
+        'main.exe (precompiled, from the releases)',
+    'main.py über venv (Python-Installation nötig)':
+        'main.py via venv (Python installation required)',
+    'nicht verwenden':
+        'do not use',
+    "z.B. map.osm (mit 'OSM als .osm exportieren...' erzeugt)":
+        "e.g. map.osm (created with 'Export OSM as .osm...')",
+    '{count} Objekte gefunden, {chosen} ausgewählt. Nur die angehakten werden exportiert.':
+        '{count} objects found, {chosen} selected. Only the ticked ones are exported.',
+    '{count} Orte gefunden, {chosen} ausgewählt. Nur die angehakten Orte werden exportiert.':
+        '{count} places found, {chosen} selected. Only the ticked places are exported.',
+    '{count} kurze Segmente in {count2} Wegen gefunden. {count3} Formpunkte könnten sicher entfernt werden (keine Kreuzungen darunter).':
+        '{count} short segments found in {count2} ways. {count3} shape points could be removed safely (no junctions among them).',
+    '{name} ({kind}{population})  Faktor {factor:g}  x {x:.0f} m, y {y:.0f} m':
+        '{name} ({kind}{population})  factor {factor:g}  x {x:.0f} m, y {y:.0f} m',
+    '{station_summary}\n\nGespeichert:\n{json_path}\n{csv_path}':
+        '{station_summary}\n\nSaved:\n{json_path}\n{csv_path}',
+    '{summary}\n\nGespeichert:\n{json_path}\n{csv_path}':
+        '{summary}\n\nSaved:\n{json_path}\n{csv_path}',
+    '{text}  (höchstens noch etwa {remaining_min:.0f} Min.)':
+        '{text}  (at most about {remaining_min:.0f} min. left)',
+    '{way_count} Wege':
+        '{way_count} ways',
+    '⚠ Bekannter Problem-Mod gefunden: {description} ({path})':
+        '⚠ Known problem mod found: {description} ({path})',
+    '⚠ OSM-TPF2-Importer scheint mehrfach installiert zu sein: {locations}':
+        '⚠ OSM-TPF2-Importer seems to be installed more than once: {locations}',
+    '✅ gefunden (Workshop)':
+        '✅ found (Workshop)',
+    '✅ gefunden (lokal)':
+        '✅ found (local)',
+    '❌ fehlt':
+        '❌ missing',
+    '❓ nicht automatisch prüfbar':
+        '❓ cannot be checked automatically',
+    '➖ übersprungen (Funktion nicht genutzt)':
+        '➖ skipped (feature not used)',
 }

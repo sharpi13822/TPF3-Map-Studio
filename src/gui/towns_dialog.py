@@ -38,6 +38,7 @@ from src.heightmap.towns_export import (
     write_towns_lua,
 )
 from src.heightmap.tpf3_paths import find_tpf3_heightmaps_folder
+from src.i18n import tr
 
 
 class TownsDialog(QDialog):
@@ -50,19 +51,19 @@ class TownsDialog(QDialog):
         self._places = []
         self._unchecked: set[tuple] = set()
 
-        self.setWindowTitle("Städte aus OSM")
+        self.setWindowTitle(tr("Städte aus OSM"))
         self.setMinimumWidth(520)
         self.resize(560, 640)
 
         layout = QVBoxLayout(self)
 
         info = QLabel(
-            "Erzeugt aus den geladenen OSM-Orten eine Städte-Datei für den "
+            tr("Erzeugt aus den geladenen OSM-Orten eine Städte-Datei für den "
             "Ordner towns_industries. Der Nullpunkt ist die Kartenmitte. "
             "Die Anfangsgröße der Stadt im Spiel wird aus der OSM-Einwohnerzahl "
             "abgeleitet: Faktor = Maßstab × Wurzel(Einwohner). Faktor 1 sind "
             "im Spiel etwa 100 Einwohner. Große Städte starten größer, "
-            "kleine Dörfer kleiner. Industrien werden noch nicht erzeugt."
+            "kleine Dörfer kleiner. Industrien werden noch nicht erzeugt.")
         )
         info.setWordWrap(True)
         layout.addWidget(info)
@@ -81,7 +82,7 @@ class TownsDialog(QDialog):
         population_row = QHBoxLayout()
         layout.addLayout(population_row)
 
-        population_row.addWidget(QLabel("Mindestens Einwohner:"))
+        population_row.addWidget(QLabel(tr("Mindestens Einwohner:")))
 
         self.population_spin = QSpinBox()
         self.population_spin.setRange(0, 10_000_000)
@@ -93,7 +94,7 @@ class TownsDialog(QDialog):
         population_row.addStretch(1)
 
         self.size_checkbox = QCheckBox(
-            "Größe aus der OSM-Einwohnerzahl ableiten"
+            tr("Größe aus der OSM-Einwohnerzahl ableiten")
         )
         self.size_checkbox.setChecked(True)
         self.size_checkbox.stateChanged.connect(self._refresh)
@@ -102,7 +103,7 @@ class TownsDialog(QDialog):
         scale_row = QHBoxLayout()
         layout.addLayout(scale_row)
 
-        scale_row.addWidget(QLabel("Maßstab:"))
+        scale_row.addWidget(QLabel(tr("Maßstab:")))
 
         self.scale_spin = QDoubleSpinBox()
         self.scale_spin.setRange(0.01, 1.0)
@@ -111,8 +112,8 @@ class TownsDialog(QDialog):
         self.scale_spin.setValue(DEFAULT_SCALE)
         self.scale_spin.setMinimumWidth(130)
         self.scale_spin.setToolTip(
-            "Faktor = Maßstab × Wurzel(Einwohner). Bei 0,03 bekommt "
-            "Koblenz (110 000) etwa Faktor 10, ein Dorf mit 300 etwa 0,5."
+            tr("Faktor = Maßstab × Wurzel(Einwohner). Bei 0,03 bekommt "
+            "Koblenz (110 000) etwa Faktor 10, ein Dorf mit 300 etwa 0,5.")
         )
         self.scale_spin.valueChanged.connect(self._refresh)
         scale_row.addWidget(self.scale_spin)
@@ -122,7 +123,7 @@ class TownsDialog(QDialog):
         min_row = QHBoxLayout()
         layout.addLayout(min_row)
 
-        min_row.addWidget(QLabel("Kleinster Faktor:"))
+        min_row.addWidget(QLabel(tr("Kleinster Faktor:")))
 
         self.min_factor_spin = QDoubleSpinBox()
         self.min_factor_spin.setRange(0.2, 1.0)
@@ -131,8 +132,8 @@ class TownsDialog(QDialog):
         self.min_factor_spin.setValue(DEFAULT_MIN_FACTOR)
         self.min_factor_spin.setMinimumWidth(130)
         self.min_factor_spin.setToolTip(
-            "Faktor 1 sind etwa 100 Einwohner. Getestet: 0,2 gibt etwa 19 "
-            "Einwohner. Werte darunter sind ungeprüft."
+            tr("Faktor 1 sind etwa 100 Einwohner. Getestet: 0,2 gibt etwa 19 "
+            "Einwohner. Werte darunter sind ungeprüft.")
         )
         self.min_factor_spin.valueChanged.connect(self._refresh)
         min_row.addWidget(self.min_factor_spin)
@@ -142,15 +143,15 @@ class TownsDialog(QDialog):
         factor_row = QHBoxLayout()
         layout.addLayout(factor_row)
 
-        factor_row.addWidget(QLabel("Größter Faktor:"))
+        factor_row.addWidget(QLabel(tr("Größter Faktor:")))
 
         self.max_factor_spin = QSpinBox()
         self.max_factor_spin.setRange(1, 100)
         self.max_factor_spin.setValue(int(DEFAULT_MAX_FACTOR))
         self.max_factor_spin.setMinimumWidth(130)
         self.max_factor_spin.setToolTip(
-            "Faktor 30 ergab im Test 2892 Einwohner, Faktor 100 nur 4476. "
-            "Höher als 30 ist ungetestet."
+            tr("Faktor 30 ergab im Test 2892 Einwohner, Faktor 100 nur 4476. "
+            "Höher als 30 ist ungetestet.")
         )
         self.max_factor_spin.valueChanged.connect(self._refresh)
         factor_row.addWidget(self.max_factor_spin)
@@ -164,11 +165,11 @@ class TownsDialog(QDialog):
         select_row = QHBoxLayout()
         layout.addLayout(select_row)
 
-        all_button = QPushButton("Alle auswählen")
+        all_button = QPushButton(tr("Alle auswählen"))
         all_button.clicked.connect(lambda: self._set_all(True))
         select_row.addWidget(all_button)
 
-        none_button = QPushButton("Keine auswählen")
+        none_button = QPushButton(tr("Keine auswählen"))
         none_button.clicked.connect(lambda: self._set_all(False))
         select_row.addWidget(none_button)
 
@@ -179,11 +180,11 @@ class TownsDialog(QDialog):
         row = QHBoxLayout()
         layout.addLayout(row)
 
-        self.export_button = QPushButton("Exportieren...")
+        self.export_button = QPushButton(tr("Exportieren..."))
         self.export_button.clicked.connect(self._export)
         row.addWidget(self.export_button)
 
-        close_button = QPushButton("Schließen")
+        close_button = QPushButton(tr("Schließen"))
         close_button.clicked.connect(self.reject)
         row.addWidget(close_button)
 
@@ -210,7 +211,7 @@ class TownsDialog(QDialog):
         for place in self._places:
 
             population = (
-                f", {place.population} Einwohner" if place.population else ""
+                tr(", {population} Einwohner").format(population=place.population) if place.population else ""
             )
 
             factor = size_factor(
@@ -222,9 +223,7 @@ class TownsDialog(QDialog):
             )
 
             item = QListWidgetItem(
-                f"{place.name} ({place.kind}{population})  "
-                f"Faktor {factor:g}  "
-                f"x {place.x:.0f} m, y {place.y:.0f} m"
+                tr("{name} ({kind}{population})  Faktor {factor:g}  x {x:.0f} m, y {y:.0f} m").format(name=place.name, kind=place.kind, population=population, factor=factor, x=place.x, y=place.y)
             )
             item.setFlags(item.flags() | Qt.ItemIsUserCheckable)
             item.setCheckState(
@@ -241,10 +240,10 @@ class TownsDialog(QDialog):
             self._update_status()
         else:
             self.status_label.setText(
-                "Keine Orte gefunden. Entweder enthalten die geladenen "
+                tr("Keine Orte gefunden. Entweder enthalten die geladenen "
                 "OSM-Daten keine Ortsknoten (die Overpass-Abfrage muss "
                 "place=city/town/village mitladen) oder der Filter ist zu "
-                "streng."
+                "streng.")
             )
 
         self.export_button.setEnabled(bool(self._selected_places()))
@@ -270,8 +269,7 @@ class TownsDialog(QDialog):
         chosen = len(self._selected_places())
 
         self.status_label.setText(
-            f"{len(self._places)} Orte gefunden, {chosen} ausgewählt. "
-            "Nur die angehakten Orte werden exportiert."
+            tr("{count} Orte gefunden, {chosen} ausgewählt. Nur die angehakten Orte werden exportiert.").format(count=len(self._places), chosen=chosen)
         )
 
         self.export_button.setEnabled(chosen > 0)
@@ -328,9 +326,9 @@ class TownsDialog(QDialog):
 
         path, _ = QFileDialog.getSaveFileName(
             self,
-            "Städte speichern",
+            tr("Städte speichern"),
             str(self._default_folder() / "staedte_osm.lua"),
-            "Lua (*.lua)",
+            tr("Lua (*.lua)"),
         )
 
         if not path:
@@ -348,15 +346,13 @@ class TownsDialog(QDialog):
         except OSError as error:
             QMessageBox.warning(
                 self,
-                "Städte aus OSM",
-                f"Die Datei konnte nicht gespeichert werden:\n{error}",
+                tr("Städte aus OSM"),
+                tr("Die Datei konnte nicht gespeichert werden:\n{error}").format(error=error),
             )
             return
 
         QMessageBox.information(
             self,
-            "Städte aus OSM",
-            f"Gespeichert ({len(places)} Städte):\n{path}\n\n"
-            "Im Spiel: Karteneditor → Reiter Städte/Industrien → Import → "
-            "diese Datei wählen → Import.",
+            tr("Städte aus OSM"),
+            tr("Gespeichert ({count} Städte):\n{path}\n\nIm Spiel: Karteneditor → Reiter Städte/Industrien → Import → diese Datei wählen → Import.").format(count=len(places), path=path),
         )

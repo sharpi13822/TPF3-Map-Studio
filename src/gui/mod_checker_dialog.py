@@ -19,6 +19,7 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import Qt
 
 from src.mods.mod_checker import run_check
+from src.i18n import tr
 
 
 SETTINGS_PATH = Path.home() / ".tpf2_map_studio" / "mod_checker_settings.json"
@@ -31,20 +32,20 @@ DEFAULT_LOCAL_PATH = str(
 )
 
 TOGGLES = (
-    ("bruecken", "Brücken nutzen"),
-    ("signale", "Signale nutzen"),
-    ("wald_import", "Wald-Import nutzen"),
-    ("objekte", "Straßenobjekte nutzen"),
-    ("paver", "Paver / Bodentexturen nutzen"),
-    ("elektrifizierte_gleise", "Elektrifizierte Gleise im Gebiet"),
+    ("bruecken", tr("Brücken nutzen")),
+    ("signale", tr("Signale nutzen")),
+    ("wald_import", tr("Wald-Import nutzen")),
+    ("objekte", tr("Straßenobjekte nutzen")),
+    ("paver", tr("Paver / Bodentexturen nutzen")),
+    ("elektrifizierte_gleise", tr("Elektrifizierte Gleise im Gebiet")),
 )
 
 STATUS_LABELS = {
-    "found_workshop": "✅ gefunden (Workshop)",
-    "found_local": "✅ gefunden (lokal)",
-    "missing": "❌ fehlt",
-    "manual": "❓ nicht automatisch prüfbar",
-    "skipped": "➖ übersprungen (Funktion nicht genutzt)",
+    "found_workshop": tr("✅ gefunden (Workshop)"),
+    "found_local": tr("✅ gefunden (lokal)"),
+    "missing": tr("❌ fehlt"),
+    "manual": tr("❓ nicht automatisch prüfbar"),
+    "skipped": tr("➖ übersprungen (Funktion nicht genutzt)"),
 }
 
 
@@ -62,7 +63,7 @@ class ModCheckerDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
 
-        self.setWindowTitle("Mod-Checker")
+        self.setWindowTitle(tr("Mod-Checker"))
         self.setMinimumSize(720, 560)
 
         layout = QVBoxLayout(self)
@@ -71,28 +72,28 @@ class ModCheckerDialog(QDialog):
         # Pfade
         # -------------------------------------------------
 
-        paths_group = QGroupBox("Pfade")
+        paths_group = QGroupBox(tr("Pfade"))
         paths_form = QFormLayout(paths_group)
 
         self.workshop_input = QLineEdit()
         self.local_input = QLineEdit()
         self.importer_input = QLineEdit()
         self.importer_input.setPlaceholderText(
-            "Ordnername unter .../mod/, z.B. osm_tpf2_importer"
+            tr("Ordnername unter .../mod/, z.B. osm_tpf2_importer")
         )
 
         paths_form.addRow(
-            "Steam-Workshop-Ordner:",
+            tr("Steam-Workshop-Ordner:"),
             self._path_row(self.workshop_input),
         )
 
         paths_form.addRow(
-            "Lokaler mod-Ordner:",
+            tr("Lokaler mod-Ordner:"),
             self._path_row(self.local_input),
         )
 
         paths_form.addRow(
-            "OSM-Importer-Ordnername:",
+            tr("OSM-Importer-Ordnername:"),
             self.importer_input,
         )
 
@@ -103,8 +104,8 @@ class ModCheckerDialog(QDialog):
         # -------------------------------------------------
 
         options_group = QGroupBox(
-            "Genutzte Importer-Funktionen "
-            "(bestimmt, welche Mod-Kategorien geprüft werden)"
+            tr("Genutzte Importer-Funktionen "
+            "(bestimmt, welche Mod-Kategorien geprüft werden)")
         )
         options_layout = QHBoxLayout(options_group)
 
@@ -125,7 +126,7 @@ class ModCheckerDialog(QDialog):
         # Prüfen-Button
         # -------------------------------------------------
 
-        check_button = QPushButton("Prüfen")
+        check_button = QPushButton(tr("Prüfen"))
         check_button.clicked.connect(self._run_check)
         layout.addWidget(check_button)
 
@@ -145,7 +146,7 @@ class ModCheckerDialog(QDialog):
         # -------------------------------------------------
 
         self.result_tree = QTreeWidget()
-        self.result_tree.setHeaderLabels(["Mod", "Status", "Hinweis"])
+        self.result_tree.setHeaderLabels([tr("Mod"), tr("Status"), tr("Hinweis")])
         self.result_tree.setColumnWidth(0, 340)
         self.result_tree.setColumnWidth(1, 170)
         layout.addWidget(self.result_tree)
@@ -171,7 +172,7 @@ class ModCheckerDialog(QDialog):
 
         container.addWidget(line_edit)
 
-        browse_button = QPushButton("Durchsuchen...")
+        browse_button = QPushButton(tr("Durchsuchen..."))
 
         browse_button.clicked.connect(
             lambda: self._browse_for(line_edit)
@@ -192,7 +193,7 @@ class ModCheckerDialog(QDialog):
 
         chosen = QFileDialog.getExistingDirectory(
             self,
-            "Ordner wählen",
+            tr("Ordner wählen"),
             start_dir,
         )
 
@@ -292,17 +293,17 @@ class ModCheckerDialog(QDialog):
 
         if not report.workshop_path_ok:
             warnings.append(
-                f"Workshop-Ordner nicht gefunden: {workshop_path}"
+                tr("Workshop-Ordner nicht gefunden: {workshop_path}").format(workshop_path=workshop_path)
             )
 
         if not report.local_path_ok:
             warnings.append(
-                f"Lokaler mod-Ordner nicht gefunden: {local_path}"
+                tr("Lokaler mod-Ordner nicht gefunden: {local_path}").format(local_path=local_path)
             )
 
         for description, path in report.crash_mods_found:
             warnings.append(
-                f"⚠ Bekannter Problem-Mod gefunden: {description} ({path})"
+                tr("⚠ Bekannter Problem-Mod gefunden: {description} ({path})").format(description=description, path=path)
             )
 
         if report.importer_duplicate:
@@ -312,8 +313,7 @@ class ModCheckerDialog(QDialog):
             )
 
             warnings.append(
-                f"⚠ OSM-TPF2-Importer scheint mehrfach installiert zu sein: "
-                f"{locations}"
+                tr("⚠ OSM-TPF2-Importer scheint mehrfach installiert zu sein: {locations}").format(locations=locations)
             )
 
         self.warning_label.setText("\n".join(warnings))
@@ -348,7 +348,7 @@ class ModCheckerDialog(QDialog):
                 note_parts.append(result.mod.note)
 
             if result.found_display_name:
-                note_parts.append(f"gefunden als: {result.found_display_name}")
+                note_parts.append(tr("gefunden als: {found_display_name}").format(found_display_name=result.found_display_name))
 
             item = QTreeWidgetItem([
                 result.mod.name,

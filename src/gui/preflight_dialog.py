@@ -8,6 +8,7 @@ from PySide6.QtWidgets import (
 )
 
 from src.osm.preflight_check import run_preflight_check, STATUS_ICONS
+from src.i18n import tr
 
 
 STATUS_COLORS = {
@@ -30,21 +31,21 @@ class PreflightCheckDialog(QDialog):
 
         self.controller = controller
 
-        self.setWindowTitle("Vorab-Prüfung")
+        self.setWindowTitle(tr("Vorab-Prüfung"))
         self.setMinimumSize(620, 480)
 
         layout = QVBoxLayout(self)
 
         layout.addWidget(
             QLabel(
-                "Prüfung der aktuell geladenen OSM-Daten, bevor du "
+                tr("Prüfung der aktuell geladenen OSM-Daten, bevor du "
                 "Heightmap, Städte, Industrien und weitere Dateien "
-                "erzeugst:"
+                "erzeugst:")
             )
         )
 
         self.tree = QTreeWidget()
-        self.tree.setHeaderLabels(["", "Prüfpunkt", "Ergebnis"])
+        self.tree.setHeaderLabels(["", tr("Prüfpunkt"), tr("Ergebnis")])
         self.tree.setColumnWidth(0, 28)
         self.tree.setColumnWidth(1, 160)
         layout.addWidget(self.tree)

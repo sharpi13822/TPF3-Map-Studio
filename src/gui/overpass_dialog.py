@@ -20,20 +20,21 @@ from src.osm.overpass_query_builder import (
     save_template,
     delete_template,
 )
+from src.i18n import tr
 
 
 CATEGORY_LABELS = (
-    ("railways", "Gleistypen"),
-    ("include_tram", "  davon Straßenbahn (Tram) einschließen"),
-    ("highways", "Straßentypen"),
-    ("buildings", "Gebäude"),
-    ("parks", "Parks / Gärten"),
-    ("landuse", "Flächennutzung"),
-    ("vegetation", "Vegetation (Wald, Baumreihen)"),
-    ("water", "Gewässer"),
-    ("places", "Orte (Städte, Dörfer)"),
-    ("biome_areas", "Siedlung, Heide, Moor, Fels (für Biome)"),
-    ("industry", "Industrie-Objekte (Sägewerk, Ziegelei, ...)"),
+    ("railways", tr("Gleistypen")),
+    ("include_tram", tr("  davon Straßenbahn (Tram) einschließen")),
+    ("highways", tr("Straßentypen")),
+    ("buildings", tr("Gebäude")),
+    ("parks", tr("Parks / Gärten")),
+    ("landuse", tr("Flächennutzung")),
+    ("vegetation", tr("Vegetation (Wald, Baumreihen)")),
+    ("water", tr("Gewässer")),
+    ("places", tr("Orte (Städte, Dörfer)")),
+    ("biome_areas", tr("Siedlung, Heide, Moor, Fels (für Biome)")),
+    ("industry", tr("Industrie-Objekte (Sägewerk, Ziegelei, ...)")),
 )
 
 
@@ -50,7 +51,7 @@ class OverpassQueryDialog(QDialog):
 
         self.controller = controller
 
-        self.setWindowTitle("Overpass-Abfrage")
+        self.setWindowTitle(tr("Overpass-Abfrage"))
         self.setMinimumSize(560, 700)
 
         layout = QVBoxLayout(self)
@@ -59,26 +60,26 @@ class OverpassQueryDialog(QDialog):
         # Vorlagen
         # -------------------------------------------------
 
-        templates_group = QGroupBox("Vorlage")
+        templates_group = QGroupBox(tr("Vorlage"))
         templates_layout = QHBoxLayout(templates_group)
 
         self.template_combo = QComboBox()
-        self.template_combo.addItem("(keine)")
+        self.template_combo.addItem(tr("(keine)"))
         templates_layout.addWidget(self.template_combo)
 
-        load_button = QPushButton("Laden")
+        load_button = QPushButton(tr("Laden"))
         load_button.clicked.connect(self._load_selected_template)
         templates_layout.addWidget(load_button)
 
         self.template_name_input = QLineEdit()
-        self.template_name_input.setPlaceholderText("Name für neue Vorlage")
+        self.template_name_input.setPlaceholderText(tr("Name für neue Vorlage"))
         templates_layout.addWidget(self.template_name_input)
 
-        save_button = QPushButton("Als Vorlage speichern")
+        save_button = QPushButton(tr("Als Vorlage speichern"))
         save_button.clicked.connect(self._save_as_template)
         templates_layout.addWidget(save_button)
 
-        delete_button = QPushButton("Löschen")
+        delete_button = QPushButton(tr("Löschen"))
         delete_button.clicked.connect(self._delete_selected_template)
         templates_layout.addWidget(delete_button)
 
@@ -88,7 +89,7 @@ class OverpassQueryDialog(QDialog):
         # Kategorien
         # -------------------------------------------------
 
-        categories_group = QGroupBox("Kategorien")
+        categories_group = QGroupBox(tr("Kategorien"))
         categories_layout = QVBoxLayout(categories_group)
 
         self.checkboxes: dict[str, QCheckBox] = {}
@@ -111,7 +112,7 @@ class OverpassQueryDialog(QDialog):
         # Vorschau
         # -------------------------------------------------
 
-        layout.addWidget(QLabel("Vorschau der resultierenden Abfrage:"))
+        layout.addWidget(QLabel(tr("Vorschau der resultierenden Abfrage:")))
 
         self.preview = QPlainTextEdit()
         self.preview.setReadOnly(True)
@@ -191,7 +192,7 @@ class OverpassQueryDialog(QDialog):
     def _refresh_template_list(self):
 
         self.template_combo.clear()
-        self.template_combo.addItem("(keine)")
+        self.template_combo.addItem(tr("(keine)"))
 
         for name in sorted(load_templates()):
             self.template_combo.addItem(name)
@@ -200,7 +201,7 @@ class OverpassQueryDialog(QDialog):
 
         name = self.template_combo.currentText()
 
-        if name == "(keine)":
+        if name == tr("(keine)"):
             return
 
         templates = load_templates()
@@ -221,8 +222,8 @@ class OverpassQueryDialog(QDialog):
 
             QMessageBox.warning(
                 self,
-                "Kein Name",
-                "Bitte einen Namen für die Vorlage eingeben.",
+                tr("Kein Name"),
+                tr("Bitte einen Namen für die Vorlage eingeben."),
             )
 
             return
@@ -242,7 +243,7 @@ class OverpassQueryDialog(QDialog):
 
         name = self.template_combo.currentText()
 
-        if name == "(keine)":
+        if name == tr("(keine)"):
             return
 
         delete_template(name)

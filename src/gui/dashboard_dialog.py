@@ -16,6 +16,7 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import Qt
 
 from src.core.project_summary import scan_projects_folder
+from src.i18n import tr
 
 
 SETTINGS_PATH = Path.home() / ".tpf2_map_studio" / "dashboard_settings.json"
@@ -37,7 +38,7 @@ class ProjectDashboardDialog(QDialog):
         # ausgewaehlten Projekts ueber dessen _load_project_file().
         self.window = window
 
-        self.setWindowTitle("Projekt-Dashboard")
+        self.setWindowTitle(tr("Projekt-Dashboard"))
         self.setMinimumSize(820, 480)
 
         layout = QVBoxLayout(self)
@@ -48,16 +49,16 @@ class ProjectDashboardDialog(QDialog):
 
         folder_row = QHBoxLayout()
 
-        folder_row.addWidget(QLabel("Projekte-Ordner:"))
+        folder_row.addWidget(QLabel(tr("Projekte-Ordner:")))
 
         self.folder_input = QLineEdit()
         folder_row.addWidget(self.folder_input)
 
-        browse_button = QPushButton("Durchsuchen...")
+        browse_button = QPushButton(tr("Durchsuchen..."))
         browse_button.clicked.connect(self._browse_folder)
         folder_row.addWidget(browse_button)
 
-        refresh_button = QPushButton("Aktualisieren")
+        refresh_button = QPushButton(tr("Aktualisieren"))
         refresh_button.clicked.connect(self._refresh)
         folder_row.addWidget(refresh_button)
 
@@ -69,7 +70,7 @@ class ProjectDashboardDialog(QDialog):
 
         self.tree = QTreeWidget()
         self.tree.setHeaderLabels([
-            "Projekt", "Auswahl", "OSM-Daten", "Heightmap", "Geändert", "Datei",
+            tr("Projekt"), tr("Auswahl"), tr("OSM-Daten"), tr("Heightmap"), tr("Geändert"), tr("Datei"),
         ])
         self.tree.setColumnWidth(0, 160)
         self.tree.setColumnWidth(1, 200)
@@ -85,7 +86,7 @@ class ProjectDashboardDialog(QDialog):
 
         button_row = QHBoxLayout()
 
-        open_button = QPushButton("Ausgewähltes Projekt öffnen")
+        open_button = QPushButton(tr("Ausgewähltes Projekt öffnen"))
         open_button.clicked.connect(self._open_selected)
         button_row.addWidget(open_button)
 
@@ -111,7 +112,7 @@ class ProjectDashboardDialog(QDialog):
 
         chosen = QFileDialog.getExistingDirectory(
             self,
-            "Projekte-Ordner wählen",
+            tr("Projekte-Ordner wählen"),
             start_dir,
         )
 
@@ -173,7 +174,7 @@ class ProjectDashboardDialog(QDialog):
 
                 item = QTreeWidgetItem([
                     summary.name,
-                    f"Datei fehlerhaft: {summary.error}",
+                    tr("Datei fehlerhaft: {error}").format(error=summary.error),
                     "", "", "",
                     str(summary.file_path),
                 ])
@@ -183,15 +184,15 @@ class ProjectDashboardDialog(QDialog):
                 continue
 
             osm_text = (
-                f"{summary.way_count} Wege"
+                tr("{way_count} Wege").format(way_count=summary.way_count)
                 if summary.has_osm
-                else "keine OSM-Daten"
+                else tr("keine OSM-Daten")
             )
 
             heightmap_text = (
-                f"exportiert ({summary.heightmap_exported_at[:10]})"
+                tr("exportiert ({item})").format(item=summary.heightmap_exported_at[:10])
                 if summary.heightmap_exported
-                else "fehlt noch"
+                else tr("fehlt noch")
             )
 
             item = QTreeWidgetItem([

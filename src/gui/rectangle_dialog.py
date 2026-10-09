@@ -9,6 +9,7 @@ from PySide6.QtWidgets import (
 )
 
 from src.gui.map_size_presets import ALL_MAP_SIZES, get_by_label
+from src.i18n import tr
 
 
 class RectangleToolDialog(QDialog):
@@ -21,7 +22,7 @@ class RectangleToolDialog(QDialog):
     def __init__(self, parent=None, initial_center=None, initial_selection=None):
         super().__init__(parent)
 
-        self.setWindowTitle("Rechteck-Tool")
+        self.setWindowTitle(tr("Rechteck-Tool"))
 
         layout = QVBoxLayout(self)
         form = QFormLayout()
@@ -75,8 +76,8 @@ class RectangleToolDialog(QDialog):
             self.center_lat_input.setValue(lat)
             self.center_lon_input.setValue(lon)
 
-        form.addRow("Mittelpunkt Breite (lat):", self.center_lat_input)
-        form.addRow("Mittelpunkt Länge (lon):", self.center_lon_input)
+        form.addRow(tr("Mittelpunkt Breite (lat):"), self.center_lat_input)
+        form.addRow(tr("Mittelpunkt Länge (lon):"), self.center_lon_input)
 
         # -------------------------------------------------
         # Kartengröße
@@ -112,7 +113,7 @@ class RectangleToolDialog(QDialog):
 
         self.size_combo.currentTextChanged.connect(self._update_size_label)
 
-        form.addRow("Kartengröße:", self.size_combo)
+        form.addRow(tr("Kartengröße:"), self.size_combo)
 
         self.size_label = QLabel()
         form.addRow("", self.size_label)
@@ -131,7 +132,7 @@ class RectangleToolDialog(QDialog):
         if prefill_rotation is not None:
             self.rotation_input.setValue(prefill_rotation)
 
-        form.addRow("Drehwinkel:", self.rotation_input)
+        form.addRow(tr("Drehwinkel:"), self.rotation_input)
 
         # -------------------------------------------------
         # Sicherheitsrand (fuer nachgelagerte Downloads)
@@ -144,7 +145,7 @@ class RectangleToolDialog(QDialog):
         self.margin_input.setValue(500.0)
         self.margin_input.setSuffix(" m")
 
-        form.addRow("Sicherheitsrand (für Downloads):", self.margin_input)
+        form.addRow(tr("Sicherheitsrand (für Downloads):"), self.margin_input)
 
         # -------------------------------------------------
         # Buttons

@@ -12,8 +12,9 @@ from pathlib import Path
 from PySide6.QtWidgets import QFileDialog, QMessageBox
 
 from src.heightmap.station_export import collect_stations, summary, write_stations
+from src.i18n import tr
 
-TITLE = "Bahnhöfe aus OSM"
+TITLE = tr("Bahnhöfe aus OSM")
 
 
 def _show_on_map(parent, data) -> None:
@@ -33,7 +34,7 @@ def _show_on_map(parent, data) -> None:
                 return
             widget = widget.parent() if callable(getattr(widget, "parent", None)) else None
     except Exception as error:  # noqa: BLE001
-        print(f"Bahnhöfe konnten nicht auf der Karte angezeigt werden: {error}")
+        print(tr("Bahnhöfe konnten nicht auf der Karte angezeigt werden: {error}").format(error=error))
 
 
 def save_stations_dialog(parent, selection, osm) -> bool:
@@ -45,17 +46,17 @@ def save_stations_dialog(parent, selection, osm) -> bool:
     try:
         data = collect_stations(osm, selection)
     except Exception as error:  # noqa: BLE001 - dem Nutzer melden, nicht abstuerzen
-        QMessageBox.warning(parent, TITLE, f"Die Bahnhöfe konnten nicht gelesen werden:\n{error}")
+        QMessageBox.warning(parent, TITLE, tr("Die Bahnhöfe konnten nicht gelesen werden:\n{error}").format(error=error))
         return False
 
     if not data["stations"]:
         QMessageBox.information(
             parent,
             TITLE,
-            "In den geladenen OSM-Daten wurden keine Bahnhöfe oder Haltepunkte gefunden.\n\n"
+            tr("In den geladenen OSM-Daten wurden keine Bahnhöfe oder Haltepunkte gefunden.\n\n"
             "Zuerst Werkzeuge → OSM laden ausführen und die Ebene Eisenbahn laden. Bleibt es leer, "
             "lädt die OSM-Abfrage Bahnhofsdaten (railway=station/halt/platform, "
-            "building=train_station) möglicherweise nicht mit.",
+            "building=train_station) möglicherweise nicht mit."),
         )
         return False
 
@@ -65,7 +66,7 @@ def save_stations_dialog(parent, selection, osm) -> bool:
         parent,
         TITLE,
         str(Path.home() / "bahnhoefe.json"),
-        "JSON (*.json)",
+        tr("JSON (*.json)"),
     )
 
     if not chosen:
@@ -74,13 +75,13 @@ def save_stations_dialog(parent, selection, osm) -> bool:
     try:
         json_path, csv_path = write_stations(data, chosen)
     except OSError as error:
-        QMessageBox.warning(parent, TITLE, f"Die Dateien konnten nicht geschrieben werden:\n{error}")
+        QMessageBox.warning(parent, TITLE, tr("Die Dateien konnten nicht geschrieben werden:\n{error}").format(error=error))
         return False
 
     QMessageBox.information(
         parent,
         TITLE,
-        f"{summary(data)}\n\nGespeichert:\n{json_path}\n{csv_path}",
+        tr("{summary}\n\nGespeichert:\n{json_path}\n{csv_path}").format(summary=summary(data), json_path=json_path, csv_path=csv_path),
     )
 
     return True

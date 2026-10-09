@@ -23,14 +23,15 @@ from src.osm.short_edge_simplifier import (
 )
 from src.export.osm_xml_exporter import export_osm_xml
 from src.features import VACUUMTUBE_IMPORTER
+from src.i18n import tr
 
 
 LINK_TYPE_LABELS = (
-    ("motorway_link", "Autobahn-Ab-/Auffahrten"),
-    ("trunk_link", "Schnellstraßen-Ab-/Auffahrten"),
-    ("primary_link", "Bundesstraßen-Verbindungen"),
-    ("secondary_link", "Landstraßen-Verbindungen"),
-    ("tertiary_link", "Kreisstraßen-Verbindungen"),
+    ("motorway_link", tr("Autobahn-Ab-/Auffahrten")),
+    ("trunk_link", tr("Schnellstraßen-Ab-/Auffahrten")),
+    ("primary_link", tr("Bundesstraßen-Verbindungen")),
+    ("secondary_link", tr("Landstraßen-Verbindungen")),
+    ("tertiary_link", tr("Kreisstraßen-Verbindungen")),
 )
 
 
@@ -53,19 +54,19 @@ class ShortSegmentDialog(QDialog):
         self.controller = controller
         self.last_report = None
 
-        self.setWindowTitle("Kurze Verbindungssegmente")
+        self.setWindowTitle(tr("Kurze Verbindungssegmente"))
         self.setMinimumSize(720, 560)
 
         layout = QVBoxLayout(self)
 
         intro = QLabel(
-            "Prüft, ob sehr kurze Segmente bei Ab-/Auffahrten-Straßentypen "
+            tr("Prüft, ob sehr kurze Segmente bei Ab-/Auffahrten-Straßentypen "
             "vorkommen. Eine Analyse eines echten Baulaufs zeigte: "
             "fehlgeschlagene secondary_link-Kanten waren im Median ~6,9 m "
             "lang, erfolgreiche ~23,1 m - das ist eine beobachtete "
             "Korrelation, kein bewiesener Grund. Die Vereinfachung entfernt "
             "ausschließlich Formpunkte, die garantiert zu keiner echten "
-            "Kreuzung gehören - Kreuzungen bleiben immer unangetastet."
+            "Kreuzung gehören - Kreuzungen bleiben immer unangetastet.")
         )
         intro.setWordWrap(True)
         layout.addWidget(intro)
@@ -76,7 +77,7 @@ class ShortSegmentDialog(QDialog):
 
         settings_row = QHBoxLayout()
 
-        settings_row.addWidget(QLabel("Schwellenwert:"))
+        settings_row.addWidget(QLabel(tr("Schwellenwert:")))
 
         self.threshold_input = QDoubleSpinBox()
         self.threshold_input.setRange(1.0, 200.0)
@@ -103,7 +104,7 @@ class ShortSegmentDialog(QDialog):
 
         layout.addLayout(types_row)
 
-        analyze_button = QPushButton("Analysieren")
+        analyze_button = QPushButton(tr("Analysieren"))
         analyze_button.clicked.connect(self._analyze)
         layout.addWidget(analyze_button)
 
@@ -111,18 +112,18 @@ class ShortSegmentDialog(QDialog):
         # Ergebnis
         # -------------------------------------------------
 
-        self.summary_label = QLabel("Noch nicht analysiert.")
+        self.summary_label = QLabel(tr("Noch nicht analysiert."))
         layout.addWidget(self.summary_label)
 
         self.tree = QTreeWidget()
-        self.tree.setHeaderLabels(["Weg-ID", "Typ", "Länge"])
+        self.tree.setHeaderLabels([tr("Weg-ID"), tr("Typ"), tr("Länge")])
         layout.addWidget(self.tree)
 
         # Der .osm-Export gehoert zum Importer von VacuumTube (src/features.py).
         if VACUUMTUBE_IMPORTER:
 
             export_button = QPushButton(
-                "Vereinfacht als .osm exportieren..."
+                tr("Vereinfacht als .osm exportieren...")
             )
             export_button.clicked.connect(self._export_simplified)
             layout.addWidget(export_button)
@@ -156,9 +157,9 @@ class ShortSegmentDialog(QDialog):
 
             QMessageBox.warning(
                 self,
-                "Keine OSM-Daten",
-                "Es sind keine OSM-Daten geladen. Zuerst 'OSM laden' "
-                "ausführen."
+                tr("Keine OSM-Daten"),
+                tr("Es sind keine OSM-Daten geladen. Zuerst 'OSM laden' "
+                "ausführen.")
             )
 
             return
@@ -169,8 +170,8 @@ class ShortSegmentDialog(QDialog):
 
             QMessageBox.warning(
                 self,
-                "Keine Kategorie ausgewählt",
-                "Mindestens einen Straßentyp auswählen."
+                tr("Keine Kategorie ausgewählt"),
+                tr("Mindestens einen Straßentyp auswählen.")
             )
 
             return
@@ -182,10 +183,7 @@ class ShortSegmentDialog(QDialog):
         )
 
         self.summary_label.setText(
-            f"{len(self.last_report.short_segments)} kurze Segmente in "
-            f"{len(self.last_report.affected_way_ids)} Wegen gefunden. "
-            f"{len(self.last_report.removable_nodes)} Formpunkte könnten "
-            f"sicher entfernt werden (keine Kreuzungen darunter)."
+            tr("{count} kurze Segmente in {count2} Wegen gefunden. {count3} Formpunkte könnten sicher entfernt werden (keine Kreuzungen darunter).").format(count=len(self.last_report.short_segments), count2=len(self.last_report.affected_way_ids), count3=len(self.last_report.removable_nodes))
         )
 
         self.tree.clear()
@@ -215,8 +213,8 @@ class ShortSegmentDialog(QDialog):
 
             QMessageBox.warning(
                 self,
-                "Noch nicht analysiert",
-                "Zuerst auf 'Analysieren' klicken."
+                tr("Noch nicht analysiert"),
+                tr("Zuerst auf 'Analysieren' klicken.")
             )
 
             return
@@ -225,8 +223,8 @@ class ShortSegmentDialog(QDialog):
 
             QMessageBox.information(
                 self,
-                "Nichts zu vereinfachen",
-                "Keine sicher entfernbaren Formpunkte gefunden."
+                tr("Nichts zu vereinfachen"),
+                tr("Keine sicher entfernbaren Formpunkte gefunden.")
             )
 
             return
@@ -240,9 +238,9 @@ class ShortSegmentDialog(QDialog):
 
         filename, _ = QFileDialog.getSaveFileName(
             self,
-            "Vereinfachte OSM-Datei exportieren",
+            tr("Vereinfachte OSM-Datei exportieren"),
             "map_simplified.osm",
-            "OSM-Dateien (*.osm)"
+            tr("OSM-Dateien (*.osm)")
         )
 
         if not filename:
@@ -271,7 +269,7 @@ class ShortSegmentDialog(QDialog):
 
             QMessageBox.critical(
                 self,
-                "Export fehlgeschlagen",
+                tr("Export fehlgeschlagen"),
                 str(exc)
             )
 
@@ -279,9 +277,6 @@ class ShortSegmentDialog(QDialog):
 
         QMessageBox.information(
             self,
-            "Export abgeschlossen",
-            f"Vereinfachte OSM-Datei gespeichert unter:\n{filename}\n\n"
-            f"{len(self.last_report.removable_nodes)} Formpunkte entfernt "
-            f"(nur nicht-Kreuzungs-Knoten). Das ursprüngliche Projekt im "
-            f"Studio ist unverändert."
+            tr("Export abgeschlossen"),
+            tr("Vereinfachte OSM-Datei gespeichert unter:\n{filename}\n\n{count} Formpunkte entfernt (nur nicht-Kreuzungs-Knoten). Das ursprüngliche Projekt im Studio ist unverändert.").format(filename=filename, count=len(self.last_report.removable_nodes))
         )

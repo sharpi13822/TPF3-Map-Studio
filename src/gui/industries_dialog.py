@@ -35,6 +35,7 @@ from src.heightmap.industries_export import (
     write_industries_lua,
 )
 from src.heightmap.tpf3_paths import find_tpf3_heightmaps_folder
+from src.i18n import tr
 
 
 class IndustriesDialog(QDialog):
@@ -48,18 +49,18 @@ class IndustriesDialog(QDialog):
         self._items = []
         self._unchecked: set[tuple] = set()
 
-        self.setWindowTitle("Industrien aus OSM")
+        self.setWindowTitle(tr("Industrien aus OSM"))
         self.setMinimumWidth(640)
         self.resize(720, 820)
 
         layout = QVBoxLayout(self)
 
         info = QLabel(
-            "Erzeugt aus den geladenen OSM-Objekten eine Industrien-Datei "
+            tr("Erzeugt aus den geladenen OSM-Objekten eine Industrien-Datei "
             "für den Ordner towns_industries. Der Nullpunkt ist die "
             "Kartenmitte. Im Spiel beim Import \"Städte behalten: Ja\" "
             "wählen, die Datei enthält keine Städte. Die Zuordnung ist ein "
-            "Vorschlag, ob das Spiel jede Position annimmt, ist ungeprüft."
+            "Vorschlag, ob das Spiel jede Position annimmt, ist ungeprüft.")
         )
         info.setWordWrap(True)
         layout.addWidget(info)
@@ -81,11 +82,11 @@ class IndustriesDialog(QDialog):
         types_row = QHBoxLayout()
         layout.addLayout(types_row)
 
-        all_types = QPushButton("Alle Arten an")
+        all_types = QPushButton(tr("Alle Arten an"))
         all_types.clicked.connect(lambda: self._set_all_types(True))
         types_row.addWidget(all_types)
 
-        no_types = QPushButton("Alle Arten aus")
+        no_types = QPushButton(tr("Alle Arten aus"))
         no_types.clicked.connect(lambda: self._set_all_types(False))
         types_row.addWidget(no_types)
 
@@ -97,7 +98,7 @@ class IndustriesDialog(QDialog):
         self.forest_spin.setSuffix(" ha")
         self.forest_spin.setMinimumWidth(130)
         self.forest_spin.valueChanged.connect(self._refresh)
-        layout.addLayout(self._row("Forst ab Größe:", self.forest_spin))
+        layout.addLayout(self._row(tr("Forst ab Größe:"), self.forest_spin))
 
         self.distance_spin = QSpinBox()
         self.distance_spin.setRange(0, 20000)
@@ -106,12 +107,12 @@ class IndustriesDialog(QDialog):
         self.distance_spin.setSuffix(" m")
         self.distance_spin.setMinimumWidth(130)
         self.distance_spin.setToolTip(
-            "Gleichartige Industrien müssen mindestens so weit auseinander "
-            "liegen."
+            tr("Gleichartige Industrien müssen mindestens so weit auseinander "
+            "liegen.")
         )
         self.distance_spin.valueChanged.connect(self._refresh)
         layout.addLayout(
-            self._row("Mindestabstand je Art:", self.distance_spin)
+            self._row(tr("Mindestabstand je Art:"), self.distance_spin)
         )
 
         self.max_spin = QSpinBox()
@@ -119,10 +120,10 @@ class IndustriesDialog(QDialog):
         self.max_spin.setValue(20)
         self.max_spin.setMinimumWidth(130)
         self.max_spin.setToolTip(
-            "Höchstens so viele Industrien je Art, die größten zuerst."
+            tr("Höchstens so viele Industrien je Art, die größten zuerst.")
         )
         self.max_spin.valueChanged.connect(self._refresh)
-        layout.addLayout(self._row("Höchstens je Art:", self.max_spin))
+        layout.addLayout(self._row(tr("Höchstens je Art:"), self.max_spin))
 
         self.relief_spin = QSpinBox()
         self.relief_spin.setRange(0, 200)
@@ -130,12 +131,12 @@ class IndustriesDialog(QDialog):
         self.relief_spin.setSuffix(" m")
         self.relief_spin.setMinimumWidth(130)
         self.relief_spin.setToolTip(
-            "Höchster Höhenunterschied im Umkreis von 150 m. Industrien auf "
-            "steileren Hängen werden aussortiert. 0 = nicht prüfen."
+            tr("Höchster Höhenunterschied im Umkreis von 150 m. Industrien auf "
+            "steileren Hängen werden aussortiert. 0 = nicht prüfen.")
         )
         self.relief_spin.valueChanged.connect(self._refresh)
         layout.addLayout(
-            self._row("Höchster Höhenunterschied (150 m):", self.relief_spin)
+            self._row(tr("Höchster Höhenunterschied (150 m):"), self.relief_spin)
         )
 
         self.pit_relief_spin = QSpinBox()
@@ -144,14 +145,14 @@ class IndustriesDialog(QDialog):
         self.pit_relief_spin.setSuffix(" m")
         self.pit_relief_spin.setMinimumWidth(130)
         self.pit_relief_spin.setToolTip(
-            "Wie \"Höchster Höhenunterschied\", aber für Gruben und Minen "
+            tr("Wie \"Höchster Höhenunterschied\", aber für Gruben und Minen "
             "(Stein, Lehm, Sand, Kohle, Eisenerz). Sie liegen in OSM meist "
             "am Hang, das Spiel schneidet sie als große Grube hinein. "
-            "0 = nicht prüfen."
+            "0 = nicht prüfen.")
         )
         self.pit_relief_spin.valueChanged.connect(self._refresh)
         layout.addLayout(
-            self._row("Gruben: höchster Höhenunterschied:", self.pit_relief_spin)
+            self._row(tr("Gruben: höchster Höhenunterschied:"), self.pit_relief_spin)
         )
 
         self.water_spin = QSpinBox()
@@ -161,10 +162,10 @@ class IndustriesDialog(QDialog):
         self.water_spin.setSuffix(" m")
         self.water_spin.setMinimumWidth(130)
         self.water_spin.setToolTip(
-            "Mindestabstand zu Gewässern. 0 = nicht prüfen."
+            tr("Mindestabstand zu Gewässern. 0 = nicht prüfen.")
         )
         self.water_spin.valueChanged.connect(self._refresh)
-        layout.addLayout(self._row("Abstand zu Wasser:", self.water_spin))
+        layout.addLayout(self._row(tr("Abstand zu Wasser:"), self.water_spin))
 
         self.edge_spin = QSpinBox()
         self.edge_spin.setRange(0, 3000)
@@ -173,17 +174,17 @@ class IndustriesDialog(QDialog):
         self.edge_spin.setSuffix(" m")
         self.edge_spin.setMinimumWidth(130)
         self.edge_spin.setToolTip(
-            "Mindestabstand zum Kartenrand. Felder und Hecken einer "
-            "Industrie ragen sonst über den Rand hinaus."
+            tr("Mindestabstand zum Kartenrand. Felder und Hecken einer "
+            "Industrie ragen sonst über den Rand hinaus.")
         )
         self.edge_spin.valueChanged.connect(self._refresh)
-        layout.addLayout(self._row("Abstand zum Kartenrand:", self.edge_spin))
+        layout.addLayout(self._row(tr("Abstand zum Kartenrand:"), self.edge_spin))
 
         if self.terrain is None:
             note = QLabel(
-                "Hinweis: Es sind keine Höhendaten geladen. Hang- und "
+                tr("Hinweis: Es sind keine Höhendaten geladen. Hang- und "
                 "Wasserprüfung sind aus. Zuerst im Heightmap-Dialog die "
-                "Höhendaten herunterladen."
+                "Höhendaten herunterladen.")
             )
             note.setWordWrap(True)
             layout.addWidget(note)
@@ -198,11 +199,11 @@ class IndustriesDialog(QDialog):
         select_row = QHBoxLayout()
         layout.addLayout(select_row)
 
-        all_button = QPushButton("Alle auswählen")
+        all_button = QPushButton(tr("Alle auswählen"))
         all_button.clicked.connect(lambda: self._set_all(True))
         select_row.addWidget(all_button)
 
-        none_button = QPushButton("Keine auswählen")
+        none_button = QPushButton(tr("Keine auswählen"))
         none_button.clicked.connect(lambda: self._set_all(False))
         select_row.addWidget(none_button)
 
@@ -213,11 +214,11 @@ class IndustriesDialog(QDialog):
         row = QHBoxLayout()
         layout.addLayout(row)
 
-        self.export_button = QPushButton("Exportieren...")
+        self.export_button = QPushButton(tr("Exportieren..."))
         self.export_button.clicked.connect(self._export)
         row.addWidget(self.export_button)
 
-        close_button = QPushButton("Schließen")
+        close_button = QPushButton(tr("Schließen"))
         close_button.clicked.connect(self.reject)
         row.addWidget(close_button)
 
@@ -309,16 +310,15 @@ class IndustriesDialog(QDialog):
 
         if self._items:
             self.status_label.setText(
-                f"{len(self._items)} Objekte gefunden, {chosen} "
-                "ausgewählt. Nur die angehakten werden exportiert."
+                tr("{count} Objekte gefunden, {chosen} ausgewählt. Nur die angehakten werden exportiert.").format(count=len(self._items), chosen=chosen)
             )
         else:
             self.status_label.setText(
-                "Keine passenden Objekte gefunden. Entweder fehlen sie in "
+                tr("Keine passenden Objekte gefunden. Entweder fehlen sie in "
                 "den geladenen OSM-Daten (im Overpass-Baukasten den Haken "
                 "\"Industrie-Objekte\" und für Steinbrüche \"Siedlung, "
                 "Heide, Moor, Fels\" setzen, dann neu laden) oder die "
-                "Filter sind zu streng."
+                "Filter sind zu streng.")
             )
 
         self.export_button.setEnabled(chosen > 0)
@@ -375,9 +375,9 @@ class IndustriesDialog(QDialog):
 
         path, _ = QFileDialog.getSaveFileName(
             self,
-            "Industrien speichern",
+            tr("Industrien speichern"),
             str(self._default_folder() / "industrien_osm.lua"),
-            "Lua (*.lua)",
+            tr("Lua (*.lua)"),
         )
 
         if not path:
@@ -388,16 +388,13 @@ class IndustriesDialog(QDialog):
         except OSError as error:
             QMessageBox.warning(
                 self,
-                "Industrien aus OSM",
-                f"Die Datei konnte nicht gespeichert werden:\n{error}",
+                tr("Industrien aus OSM"),
+                tr("Die Datei konnte nicht gespeichert werden:\n{error}").format(error=error),
             )
             return
 
         QMessageBox.information(
             self,
-            "Industrien aus OSM",
-            f"Gespeichert ({len(items)} Industrien):\n{path}\n\n"
-            "Im Spiel: Karteneditor → Reiter Städte/Industrien → Import → "
-            "diese Datei wählen, \"Städte behalten\" auf Ja, "
-            "\"Industrien behalten\" auf Nein → Import.",
+            tr("Industrien aus OSM"),
+            tr("Gespeichert ({count} Industrien):\n{path}\n\nIm Spiel: Karteneditor → Reiter Städte/Industrien → Import → diese Datei wählen, \"Städte behalten\" auf Ja, \"Industrien behalten\" auf Nein → Import.").format(count=len(items), path=path),
         )

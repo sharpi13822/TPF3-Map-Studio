@@ -16,13 +16,14 @@ from PySide6.QtWidgets import (
 )
 
 from src.osm.converter_command import build_converter_command
+from src.i18n import tr
 
 
 SETTINGS_PATH = Path.home() / ".tpf2_map_studio" / "converter_command_settings.json"
 
 EXE_OPTIONS = (
-    ("main.exe", "main.exe (vorkompiliert, aus den Releases)"),
-    (r"venv\Scripts\python main.py", "main.py über venv (Python-Installation nötig)"),
+    ("main.exe", tr("main.exe (vorkompiliert, aus den Releases)")),
+    (r"venv\Scripts\python main.py", tr("main.py über venv (Python-Installation nötig)")),
 )
 
 
@@ -39,7 +40,7 @@ class ConverterCommandDialog(QDialog):
 
         self.controller = controller
 
-        self.setWindowTitle("Converter-Befehl")
+        self.setWindowTitle(tr("Converter-Befehl"))
         self.setMinimumSize(640, 300)
 
         layout = QVBoxLayout(self)
@@ -57,7 +58,7 @@ class ConverterCommandDialog(QDialog):
 
         exe_row = QHBoxLayout()
 
-        exe_row.addWidget(QLabel("Ausführen über:"))
+        exe_row.addWidget(QLabel(tr("Ausführen über:")))
 
         self.exe_combo = QComboBox()
 
@@ -75,16 +76,16 @@ class ConverterCommandDialog(QDialog):
 
         osm_row = QHBoxLayout()
 
-        osm_row.addWidget(QLabel(".osm-Datei (Arg 1):"))
+        osm_row.addWidget(QLabel(tr(".osm-Datei (Arg 1):")))
 
         self.osm_path_input = QLineEdit()
         self.osm_path_input.setPlaceholderText(
-            "z.B. map.osm (mit 'OSM als .osm exportieren...' erzeugt)"
+            tr("z.B. map.osm (mit 'OSM als .osm exportieren...' erzeugt)")
         )
         self.osm_path_input.textChanged.connect(self._update_command)
         osm_row.addWidget(self.osm_path_input)
 
-        browse_button = QPushButton("Durchsuchen...")
+        browse_button = QPushButton(tr("Durchsuchen..."))
         browse_button.clicked.connect(self._browse_osm_file)
         osm_row.addWidget(browse_button)
 
@@ -105,7 +106,7 @@ class ConverterCommandDialog(QDialog):
         )
         layout.addWidget(self.command_output)
 
-        copy_button = QPushButton("In Zwischenablage kopieren")
+        copy_button = QPushButton(tr("In Zwischenablage kopieren"))
         copy_button.clicked.connect(self._copy_to_clipboard)
         layout.addWidget(copy_button)
 
@@ -125,9 +126,9 @@ class ConverterCommandDialog(QDialog):
 
         filename, _ = QFileDialog.getOpenFileName(
             self,
-            ".osm-Datei wählen",
+            tr(".osm-Datei wählen"),
             "",
-            "OSM-Dateien (*.osm)"
+            tr("OSM-Dateien (*.osm)")
         )
 
         if filename:
@@ -177,7 +178,7 @@ class ConverterCommandDialog(QDialog):
         exe_name = self.exe_combo.currentData()
 
         self.command_label.setText(
-            f"Fertiger Befehl ({exe_name} im Converter-Ordner ausführen):"
+            tr("Fertiger Befehl ({exe_name} im Converter-Ordner ausführen):").format(exe_name=exe_name)
         )
 
         selection = self.controller.project.selection
@@ -187,7 +188,7 @@ class ConverterCommandDialog(QDialog):
             self.command_output.setPlainText("")
 
             self.warning_label.setText(
-                "Kein Kartenausschnitt gesetzt (Rechteck-Tool verwenden)."
+                tr("Kein Kartenausschnitt gesetzt (Rechteck-Tool verwenden).")
             )
 
             return
@@ -209,11 +210,11 @@ class ConverterCommandDialog(QDialog):
         if result.is_rotated:
 
             self.warning_label.setText(
-                "Achtung: Diese Auswahl ist gedreht - der Converter kennt "
+                tr("Achtung: Diese Auswahl ist gedreht - der Converter kennt "
                 "keine Drehung und erwartet eine einfache, achsenparallele "
                 "Bounding Box. Die hier berechnete Box ist die umschließende "
                 "Box des gedrehten Bands und passt NICHT exakt zu dessen "
-                "tatsächlicher Form."
+                "tatsächlicher Form.")
             )
 
         else:
