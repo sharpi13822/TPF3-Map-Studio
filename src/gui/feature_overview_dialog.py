@@ -212,6 +212,16 @@ FEATURE_GROUPS = (
                 "ragen (weiße Flächen). Die Hänge werden dabei flacher.",
             ),
             (
+                "Höhenzonen in der Vorschau",
+                "Zeigt in der Vorschau grün, Fels und Schnee nach der Höhe "
+                "über dem Wasserspiegel. Felsgrenze und Schneegrenze stellst "
+                "du mit Feld oder Schieber ein (Schätzwerte, nur für die "
+                "Vorschau, nicht für den Export). Darunter stehen das Maximum "
+                "und die Flächenanteile. Der Schieber unter 'Höhen stauchen "
+                "auf' rechnet beim Loslassen neu. Echter Fels hängt im Spiel "
+                "zusätzlich an der Neigung.",
+            ),
+            (
                 "Höhenfenster begrenzen",
                 "Der Karteneditor von TPF3 nimmt nur Höhen von -20 bis 3177 m "
                 "an. Mit dem Haken legst du das Gelände in ein Fenster (Felder "

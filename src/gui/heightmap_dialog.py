@@ -22,6 +22,12 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtGui import QKeySequence, QPixmap, QShortcut
 from PySide6.QtCore import QEvent, QObject, Qt
+from src.heightmap.height_zones import (
+    DEFAULT_ROCK_M,
+    DEFAULT_SNOW_M,
+    normalize_limits,
+    zone_shares,
+)
 
 from src.i18n import tr
 from src.gui.biome_dialog import BiomeMaskDialog
@@ -423,6 +429,24 @@ class HeightmapDialog(QDialog):
 
         smooth_row.addStretch(1)
         layout.addLayout(smooth_row)
+
+        # Schieber zum Stauchen: rechnet erst beim Loslassen neu (die ganze
+        # Karte wird dabei neu verarbeitet).
+        self.compress_slider = QSlider(Qt.Horizontal)
+        self.compress_slider.setRange(5, 100)
+        self.compress_slider.setValue(100)
+        self.compress_slider.setTracking(False)
+        self.compress_slider.setEnabled(False)
+        self.compress_slider.setToolTip(self.compress_input.toolTip())
+        self.compress_slider.valueChanged.connect(
+            lambda value: self.compress_input.setValue(float(value))
+        )
+        self.compress_input.valueChanged.connect(
+            lambda value: self._sync_slider(self.compress_slider, value)
+        )
+        layout.addWidget(self.compress_slider)
+
+        self._build_zone_controls(layout)
 
         self.flatten_checkbox = QCheckBox(tr("Trassen und Siedlungen einebnen"))
         self.flatten_checkbox.setToolTip(
@@ -1267,6 +1291,15 @@ class HeightmapDialog(QDialog):
         self.smooth_checkbox.setEnabled(True)
         self.smooth_sigma_input.setEnabled(self.smooth_checkbox.isChecked())
         self.compress_input.setEnabled(True)
+        self.compress_slider.setEnabled(True)
+        self.zones_checkbox.setEnabled(True)
+        for zone_widget in (
+            self.rock_input,
+            self.rock_slider,
+            self.snow_input,
+            self.snow_slider,
+        ):
+            zone_widget.setEnabled(True)
         self.clip_checkbox.setEnabled(True)
 
         self.enforce_checkbox.blockSignals(True)
@@ -2502,6 +2535,79 @@ class HeightmapDialog(QDialog):
     # Vorschau
     # ---------------------------------------------------------
 
+    def _build_zone_controls(self, layout):
+        self.zones_checkbox = QCheckBox(
+            tr("Höhenzonen in der Vorschau zeigen (grün, Fels, Schnee)")
+        )
+        self.zones_checkbox.setEnabled(False)
+        self.zones_checkbox.toggled.connect(self._update_preview)
+        layout.addWidget(self.zones_checkbox)
+
+        self.rock_input, self.rock_slider = self._zone_row(
+            layout, tr("Felsgrenze:"), DEFAULT_ROCK_M
+        )
+        self.snow_input, self.snow_slider = self._zone_row(
+            layout, tr("Schneegrenze:"), DEFAULT_SNOW_M
+        )
+
+        self.zone_info_label = QLabel("")
+        self.zone_info_label.setWordWrap(True)
+        layout.addWidget(self.zone_info_label)
+
+        zone_note = QLabel(
+            tr("Echter Fels hängt zusätzlich an der Neigung. Das Overlay "
+               "zeigt nur die Höhenzonen. Die Grenzen (Meter über dem "
+               "Wasserspiegel) sind Schätzwerte und gelten nur für die "
+               "Vorschau, nicht für den Export.")
+        )
+        zone_note.setWordWrap(True)
+        layout.addWidget(zone_note)
+
+    def _zone_row(self, layout, label, default_m):
+        row = QHBoxLayout()
+        row.addWidget(QLabel(label))
+
+        spin = QDoubleSpinBox()
+        spin.setRange(0.0, 1000.0)
+        spin.setDecimals(0)
+        spin.setSuffix(" m")
+        spin.setValue(default_m)
+        spin.setMinimumWidth(110)
+        spin.setKeyboardTracking(False)
+        spin.setEnabled(False)
+
+        slider = QSlider(Qt.Horizontal)
+        slider.setRange(0, 1000)
+        slider.setValue(int(default_m))
+        slider.setEnabled(False)
+
+        slider.valueChanged.connect(lambda value: spin.setValue(float(value)))
+        spin.valueChanged.connect(
+            lambda value: self._sync_slider(slider, value)
+        )
+        spin.valueChanged.connect(self._on_zone_limit_changed)
+
+        row.addWidget(spin)
+        row.addWidget(slider, 1)
+        layout.addLayout(row)
+        return spin, slider
+
+    def _sync_slider(self, slider, value):
+        slider.blockSignals(True)
+        slider.setValue(int(round(value)))
+        slider.blockSignals(False)
+
+    def _on_zone_limit_changed(self, *_args):
+        rock = self.rock_input.value()
+        snow = self.snow_input.value()
+        _rock, fixed_snow = normalize_limits(rock, snow)
+        if fixed_snow != snow:
+            # Schneegrenze nie unter der Felsgrenze; setValue loest diese
+            # Methode erneut aus und aktualisiert die Vorschau.
+            self.snow_input.setValue(fixed_snow)
+            return
+        self._update_preview()
+
     def _update_preview(self):
 
         # Waehrend eine Voreinstellung die Haken setzt, nicht nach jedem
@@ -2529,8 +2635,34 @@ class HeightmapDialog(QDialog):
 
         self.game_values_label.setText(self._game_values_text())
 
+        zone_limits = None
+        if self.zones_checkbox.isChecked():
+            zone_limits = normalize_limits(
+                self.rock_input.value(), self.snow_input.value()
+            )
+            shares = zone_shares(
+                array[::4, ::4],
+                self.water_level_input.value(),
+                zone_limits[0],
+                zone_limits[1],
+            )
+            self.zone_info_label.setText(
+                tr(
+                    "Maximum {max_m:.0f} m über Wasser. Anteile: grün "
+                    "{green:.1f} %, Fels {rock:.1f} %, Schnee {snow:.1f} %"
+                ).format(
+                    max_m=shares["max_above_m"],
+                    green=shares["green"],
+                    rock=shares["rock"],
+                    snow=shares["snow"],
+                )
+            )
+        else:
+            self.zone_info_label.setText("")
+
         image = render_preview(
             array,
+            zone_limits=zone_limits,
             water_level_m=self.water_level_input.value(),
             range_min_m=range_min,
             range_max_m=range_max,

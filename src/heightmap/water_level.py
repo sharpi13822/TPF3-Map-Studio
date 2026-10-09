@@ -172,6 +172,7 @@ def render_preview(
     max_size_px: int = 900,
     pixel_size_m: float | None = None,
     original_heightmap: np.ndarray | None = None,
+    zone_limits: tuple | None = None,
 ):
     """Vorschau wie im TPF2-Importfenster: graues Gelaende-Relief,
     Wasserflaeche blau eingefaerbt, mit Min/Max und Wasserhoehe als
@@ -203,6 +204,20 @@ def render_preview(
 
     water_mask = small <= water_level_m
     rgb[water_mask] = [40, 90, 120]
+
+    if zone_limits is not None:
+        from src.heightmap.height_zones import zone_overlay_rgba
+
+        zone_rgba = zone_overlay_rgba(
+            small, water_level_m, zone_limits[0], zone_limits[1], alpha=150
+        )
+        zone_alpha = zone_rgba[..., 3:4].astype(np.float32) / 255.0
+        zone_mix = (
+            rgb.astype(np.float32) * (1.0 - zone_alpha)
+            + zone_rgba[..., :3].astype(np.float32) * zone_alpha
+        )
+        land = ~water_mask
+        rgb[land] = zone_mix[land].astype(np.uint8)
 
     if original_heightmap is not None:
         original_small = original_heightmap[::step, ::step]

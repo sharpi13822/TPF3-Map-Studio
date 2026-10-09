@@ -1298,6 +1298,20 @@ guide of the heightmap dialog (F1).</p>
         'Water level',
     "Das Spiel kennt nur eine Wasserhöhe. Der Dialog schlägt einen Wert aus der Fläche vor und erkennt Ausreißer wie Bergbau-Restlöcher. Dann lässt sich der Höhenbereich ohne sie darstellen ('Ausreißer ausschließen', standardmäßig aus). 'Wasserhöhe aus den OSM-Gewässern vorschlagen' liest die Höhen des Hauptflusses und setzt den Wert in die Mitte zwischen tiefstem und höchstem Punkt.":
         "The game knows only one water level. The dialog suggests a value from the area and detects outliers such as mining pits. The elevation range can then be shown without them ('Exclude outliers', off by default). 'Suggest water level from the OSM waters' reads the elevations of the main river and sets the value halfway between its lowest and highest point.",
+    'Felsgrenze:':
+        'Rock limit:',
+    'Schneegrenze:':
+        'Snow limit:',
+    'Höhenzonen in der Vorschau zeigen (grün, Fels, Schnee)':
+        'Show elevation zones in the preview (green, rock, snow)',
+    'Maximum {max_m:.0f} m über Wasser. Anteile: grün {green:.1f} %, Fels {rock:.1f} %, Schnee {snow:.1f} %':
+        'Maximum {max_m:.0f} m above water. Shares: green {green:.1f} %, rock {rock:.1f} %, snow {snow:.1f} %',
+    'Echter Fels hängt zusätzlich an der Neigung. Das Overlay zeigt nur die Höhenzonen. Die Grenzen (Meter über dem Wasserspiegel) sind Schätzwerte und gelten nur für die Vorschau, nicht für den Export.':
+        'Real rock also depends on the slope. The overlay shows only the elevation zones. The limits (metres above the water level) are estimates and apply to the preview only, not to the export.',
+    'Höhenzonen in der Vorschau':
+        'Elevation zones in the preview',
+    "Zeigt in der Vorschau grün, Fels und Schnee nach der Höhe über dem Wasserspiegel. Felsgrenze und Schneegrenze stellst du mit Feld oder Schieber ein (Schätzwerte, nur für die Vorschau, nicht für den Export). Darunter stehen das Maximum und die Flächenanteile. Der Schieber unter 'Höhen stauchen auf' rechnet beim Loslassen neu. Echter Fels hängt im Spiel zusätzlich an der Neigung.":
+        "Shows green, rock and snow in the preview according to the height above the water level. You set the rock limit and snow limit with the field or the slider (estimates, for the preview only, not for the export). Below it are the maximum and the area shares. The slider under 'Compress elevations to:' recalculates when you release it. In the game, real rock also depends on the slope.",
     'Gelände glätten und Höhen stauchen':
         'Smooth terrain and compress elevations',
     'Glätten gegen Treppenstufen und Kristallflächen an Hängen (das Copernicus-Modell hat nur etwa 30 m pro Pixel). Höhen stauchen drückt alle Höhen über dem Wasserspiegel auf einen Anteil, falls Hochflächen im Spiel über die Schneegrenze ragen (weiße Flächen). Die Hänge werden dabei flacher.':
