@@ -10,6 +10,8 @@
 Ein freies Werkzeug für Windows, das echte Kartendaten für den Bau realer Karten in **Transport Fever 3** vorbereitet: Kartenausschnitt wählen, OpenStreetMap-Daten und Höhendaten laden und daraus Heightmap, Biome-Maske, Städte, Industrien und eine Bahnhofsliste für den Import im Editor des Spiels erzeugen.
 
 > Inoffizielles Werkzeug. Es steht in keiner Verbindung zu Urban Games oder dem Herausgeber von Transport Fever.
+>
+> **Sprache:** Das Programm gibt es auf Deutsch und Englisch. Beim ersten Start richtet es sich nach der Windows-Sprache, im Menü **Sprache / Language** lässt sie sich ändern (wirkt nach einem Neustart).
 
 ## Download und Start
 
@@ -172,9 +174,9 @@ Zum Weitergeben packst du den **ganzen Ordner** `dist\TPF3-Map-Studio` in eine Z
 
 Das Skript `tools\make_release.ps1` baut die `.exe`, prüft, dass die Symbole im Paket liegen, legt `START-HIER.txt`, `LICENSE` und `THIRD_PARTY_NOTICES.md` neben die `.exe` und packt den ganzen Ordner in eine ZIP-Datei samt Prüfsumme. Mit vorhandener `.venv` im Projektordner:
 ```
-powershell -ExecutionPolicy Bypass -File tools\make_release.ps1 -Version 0.1.0
+powershell -ExecutionPolicy Bypass -File tools\make_release.ps1 -Version 0.1.1
 ```
-Die ZIP heißt dann `TPF3-Map-Studio-v0.1.0-win64.zip`. Sie gehört nicht ins Git-Repository, sondern als Datei an ein Release auf GitHub (siehe unten).
+Die ZIP heißt dann `TPF3-Map-Studio-v0.1.1-win64.zip`. Sie gehört nicht ins Git-Repository, sondern als Datei an ein Release auf GitHub (siehe unten).
 
 ### 9. Prüfen
 
@@ -187,7 +189,7 @@ Die ZIP heißt dann `TPF3-Map-Studio-v0.1.0-win64.zip`. Sie gehört nicht ins Gi
 ### 10. Als Release auf GitHub veröffentlichen (für Projektbetreuer)
 
 1. Auf GitHub **Releases → Draft a new release**
-2. Einen neuen Tag anlegen, zum Beispiel `v0.1.0` (auf `master`)
+2. Einen neuen Tag anlegen, zum Beispiel `v0.1.1` (auf `master`)
 3. Die ZIP-Datei bei **Assets** anhängen, die Prüfsumme aus `…sha256.txt` in die Beschreibung schreiben und veröffentlichen
 
 Der Link „Download für Windows" oben im README führt danach automatisch zur neuesten Version.

@@ -12,7 +12,7 @@ class ReleaseScriptTest(unittest.TestCase):
 
     def test_script_exists_and_takes_version(self):
         self.assertIn("param(", self.text)
-        self.assertIn('[string]$Version = "0.1.0"', self.text)
+        self.assertIn('[string]$Version = "0.1.1"', self.text)
 
     def test_build_steps(self):
         for needle in ("-m PyInstaller build.spec --noconfirm", "$LASTEXITCODE", "dist\\TPF3-Map-Studio",
