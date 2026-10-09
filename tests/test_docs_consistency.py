@@ -113,7 +113,7 @@ class HeightmapDialogDocumentedTest(unittest.TestCase):
     @unittest.skipUnless((ROOT / "src" / "gui" / "heightmap_dialog.py").exists(), "heightmap_dialog.py fehlt")
     def test_every_dialog_control_is_known_and_documented(self):
         dialog = _read("src", "gui", "heightmap_dialog.py")
-        labels = [m.group(2) for m in re.finditer(r'(QPushButton|QCheckBox)\(\s*\n?\s*"([^"]+)"', dialog)]
+        labels = [m.group(2) for m in re.finditer(r'(QPushButton|QCheckBox)\(\s*\n?\s*(?:tr\(\s*)?"([^"]+)"', dialog)]
         self.assertGreaterEqual(len(labels), 10)
         groups = _assigned(_read("src", "gui", "feature_overview_dialog.py"), "FEATURE_GROUPS")
         overview = " ".join(f"{name} {text}" for _menu, features in groups for name, text in features)

@@ -434,4 +434,262 @@ heightmap dialog you create the elevation model, biomes, towns,
 industries and a list of stations. The steps are described in the
 guide of the heightmap dialog (F1).</p>
 """,
+    'Heightmap':
+        'Heightmap',
+    'Noch nicht geladen.':
+        'Not loaded yet.',
+    'Copernicus: weltweit, aber nur 30 m fein und mit Baumkronen. DGM1 Deutschland: 1-m-Geländemodell der Bundesländer, die Kacheln werden über den Webdienst hoehendaten.de geladen (etwa 20 Kacheln pro Minute, danach liegen sie im Zwischenspeicher). Eigene Kacheln: GeoTIFF-Dateien (1-km-Raster), die du selbst bei einem Landesportal heruntergeladen hast. swissALTI3D Schweiz: Geländemodell von swisstopo für die Schweiz und Liechtenstein (2 m), die Kacheln werden von data.geo.admin.ch geladen und liegen danach im Zwischenspeicher. Nur bei Karten in der Schweiz wählbar.':
+        'Copernicus: worldwide, but only 30 m resolution and including tree canopy. DGM1 Germany: 1 m terrain model of the German federal states; the tiles are loaded through the web service hoehendaten.de (about 20 tiles per minute, afterwards they are kept in the cache). Own tiles: GeoTIFF files (1 km grid) that you downloaded yourself from a state portal. swissALTI3D Switzerland: terrain model from swisstopo for Switzerland and Liechtenstein (2 m); the tiles are loaded from data.geo.admin.ch and kept in the cache afterwards. Only selectable for maps in Switzerland.',
+    'Schnellvorschau (niedrige Auflösung, vor dem echten Download)':
+        'Quick preview (low resolution, before the real download)',
+    'Die Schnellvorschau nutzt immer Copernicus (schnell, weltweit), auch wenn unten eine DGM1-Quelle gewählt ist.':
+        'The quick preview always uses Copernicus (fast, worldwide), even if a DGM1 source is selected below.',
+    'Höhendaten herunterladen':
+        'Download elevation data',
+    'Original: alle Optionen aus, die echten Höhen. Empfohlen: hängt von der Höhenquelle ab. Copernicus: Gelände glätten, Trassen und Siedlungen einebnen und Wasser nur dort, wo OpenStreetMap Wasser hat, mit den Standardwerten. DGM1 und swissALTI3D: Glätten aus (das Modell ist schon genau), Einebnen 10 m, Wasser nach OSM mit Böschung 10 m. Optionen, die OSM-Daten brauchen, bleiben ohne geladene OSM-Daten aus.':
+        'Original: all options off, the real elevations. Recommended: depends on the elevation source. Copernicus: smooth terrain, flatten routes and settlements and water only where OpenStreetMap has water, with the default values. DGM1 and swissALTI3D: smoothing off (the model is already accurate), flattening 10 m, water from OSM with a 10 m bank slope. Options that need OSM data stay off while no OSM data is loaded.',
+    'Höhenbereich:':
+        'Elevation range:',
+    'Ausreißer aus Höhenbereich ausschließen (mehr Präzision fürs eigentliche Gelände)':
+        'Exclude outliers from the elevation range (more precision for the actual terrain)',
+    'Wasserhöhe:':
+        'Water level:',
+    'Wasserhöhe aus den OSM-Gewässern vorschlagen':
+        'Suggest water level from the OSM waters',
+    'Liest die Höhen des Hauptflusses (aus OpenStreetMap) und setzt die Wasserhöhe in die Mitte zwischen tiefstem und höchstem Punkt. So wird der Fluss an beiden Enden um etwa gleich viel korrigiert. Braucht geladene OSM-Daten.':
+        'Reads the elevations of the main river (from OpenStreetMap) and sets the water level halfway between its lowest and highest point. This way the river is corrected by about the same amount at both ends. Needs loaded OSM data.',
+    'Gelände glätten':
+        'Smooth terrain',
+    'Gegen Treppenstufen und Kristallflächen an Hängen: das Höhenmodell hat nur etwa 30 m pro Pixel, das Spiel 4 m.':
+        'Against stair steps and crystal-like facets on slopes: the elevation model has only about 30 m per pixel, the game 4 m.',
+    'Breite der Glättung. 15 m entfernt die gröbsten Stufen, 30 m glättet stärker, flacht aber Gipfel und Kämme leicht ab.':
+        'Width of the smoothing. 15 m removes the coarsest steps, 30 m smooths more strongly but slightly flattens peaks and ridges.',
+    'Staucht alle Höhen über dem Wasserspiegel auf diesen Anteil. 100 % = unverändert. Hilft, wenn Hochflächen im Spiel über die Schneegrenze ragen (weiße Flächen). Die Hänge werden dabei flacher.':
+        'Compresses all elevations above the water level to this proportion. 100 % = unchanged. Helps when plateaus rise above the snow line in the game (white areas). The slopes become flatter as a result.',
+    'Trassen und Siedlungen einebnen':
+        'Flatten routes and settlements',
+    'Bahnstrecken, größere Straßen und Gebäude aus OpenStreetMap: das Gelände dort wird abgeflacht, damit im Spiel weniger Rampen nötig sind. Braucht geladene OSM-Daten.':
+        'Railway lines, major roads and buildings from OpenStreetMap: the terrain there is flattened so that fewer ramps are needed in the game. Needs loaded OSM data.',
+    'Je größer, desto ebener wird das Gelände entlang der Trassen und in den Ortschaften. Einschnitte und Dämme verschwinden.':
+        'The larger the value, the flatter the terrain along the routes and in the settlements. Cuttings and embankments disappear.',
+    'Gefälle ausgleichen':
+        'Equalise river gradient',
+    'Legt Flüsse und Seen auf eine gemeinsame Ebene und zieht das Gelände relativ dazu mit. Das Relief über dem jeweiligen Wasserspiegel bleibt erhalten, die absoluten Höhen ü. NN stimmen danach aber nicht mehr.':
+        'Puts rivers and lakes on a common level and pulls the terrain along relative to it. The relief above the respective water level is preserved, but the absolute elevations above sea level are no longer correct afterwards.',
+    ' m über Wasserspiegel':
+        ' m above water level',
+    'Nur Gewässer, die höchstens so hoch über dem Wasserspiegel liegen, dienen als Bezug. Höher gelegene Nebenflüsse und Bergseen werden ignoriert, sonst würde ihr Tal überflutet.':
+        'Only waters that lie at most this high above the water level serve as a reference. Tributaries and mountain lakes at higher elevations are ignored, otherwise their valley would be flooded.',
+    'Wasser nur dort, wo OpenStreetMap Wasser hat (empfohlen)':
+        'Water only where OpenStreetMap has water (recommended)',
+    'Gewässer bekommen ein festes Bett, alles andere Land liegt knapp über dem Wasserspiegel: keine überfluteten Auen und Tümpel. Ersetzt die sanfte Anpassung unten.':
+        'Waters get a fixed bed, all other land lies just above the water level: no flooded floodplains and ponds. Replaces the gentle adjustment below.',
+    'Böschung:':
+        'Bank slope:',
+    'Breite der Böschung zwischen Flussbett und Land. Breiter = flacheres Ufer, aber auch etwas breiteres Wasser.':
+        'Width of the slope between riverbed and land. Wider = flatter bank, but also slightly wider water.',
+    'Tiefe am Ufer:':
+        'Depth at the bank:',
+    'Tiefe des Flussbetts direkt am Ufer. Zur Mitte hin wird es tiefer (Fahrrinne), das ergibt einen natürlichen Querschnitt.':
+        'Depth of the riverbed right at the bank. It gets deeper towards the middle (channel), which gives a natural cross-section.',
+    'Tiefe in der Mitte:':
+        'Depth in the middle:',
+    'Tiefe des Flussbetts unter dem Wasserspiegel.':
+        'Depth of the riverbed below the water level.',
+    'Ufer über Wasser:':
+        'Bank above water:',
+    'So hoch liegt Land am Ufer mindestens über dem Wasserspiegel. Alles darunter wird angehoben und kann nicht überflutet werden.':
+        'Land at the bank lies at least this high above the water level. Everything below is raised and cannot be flooded.',
+    'Nur Gewässer bis':
+        'Only waters up to',
+    'Gewässer, die von Natur aus höher liegen (Bäche in den Bergen, Bergseen), bleiben unverändert.':
+        'Waters that naturally lie higher (mountain streams, mountain lakes) remain unchanged.',
+    'Terrain sanft ans Wasserniveau anpassen':
+        'Gently adjust terrain to the water level',
+    'Verhindert trockenfallende Flüsse und Seen, weicht dafür geringfügig von den echten Höhendaten ab. Sehr kleine Einzelgewässer werden ausgenommen, um Krater zu vermeiden. Das Gelände unterhalb des Wasserspiegels wird zusätzlich weichgezeichnet.':
+        'Prevents rivers and lakes from running dry, at the cost of deviating slightly from the real elevation data. Very small individual waters are excluded to avoid craters. The terrain below the water level is additionally softened.',
+    'Gewässer, die von Natur aus höher liegen (Bäche in den Bergen, Bergseen), bleiben unverändert und werden nicht zu Schluchten.':
+        'Waters that naturally lie higher (mountain streams, mountain lakes) remain unchanged and do not turn into gorges.',
+    'Der Karteneditor von TPF3 nimmt nur Höhen in diesem Bereich an. Liegt das Gelände (zum Beispiel in den Alpen) darüber oder darunter, wird es hier in ein Fenster gelegt. Die Vorschau färbt betroffene Stellen ein: rot = tiefer gesetzt (oben gekappt oder gestaucht), hellblau = höher gesetzt (unten abgeschnitten). Das Fenster gilt in Eintragswerten, also mit dem Haken unten bezogen auf die Wasserhöhe.':
+        'The TPF3 map editor only accepts elevations within this range. If the terrain (for example in the Alps) lies above or below it, it is placed into a window here. The preview colours affected areas: red = lowered (clipped at the top or compressed), light blue = raised (cut off at the bottom). The window applies to entry values, so with the checkbox below it is relative to the water level.',
+    'Oben kappen: Alles über dem Fenster wird flach auf die Obergrenze gesetzt, das Fenster liegt zunächst an der tiefsten Stelle. Unten abschneiden: Alles unter dem Fenster wird flach auf die Untergrenze gesetzt, das Fenster liegt zunächst an der höchsten Stelle. Stauchen: das ganze Gelände wird ins Fenster gedrückt, die Wasserhöhe bleibt dabei erhalten. Die Fensterbreite bestimmen die Felder darunter, der Schieberegler verschiebt das Fenster.':
+        'Clip top: everything above the window is set flat to the upper limit; the window initially sits at the lowest point. Cut off bottom: everything below the window is set flat to the lower limit; the window initially sits at the highest point. Compress: the whole terrain is squeezed into the window, and the water level is preserved. The fields below set the window width, the slider moves the window.',
+    'Werte auf Wasserhöhe 0 beziehen':
+        'Relate values to water level 0',
+    'Empfehlung des TPF3-Wikis für Biome und Materialien. Die Mindesthöhe kann dabei negativ werden.':
+        'Recommendation of the TPF3 wiki for biomes and materials. The minimum height can become negative this way.',
+    'Anleitung (F1)':
+        'Guide (F1)',
+    'Exportieren...':
+        'Export...',
+    'Biome-Maske aus OSM...':
+        'Biome mask from OSM...',
+    'Erzeugt aus der geladenen OSM-Landnutzung eine Maske für den Biome-Tab im Karteneditor. Braucht geladene OSM-Daten.':
+        'Creates a mask for the Biomes tab in the map editor from the loaded OSM land use. Needs loaded OSM data.',
+    'Städte aus OSM...':
+        'Towns from OSM...',
+    'Erzeugt aus den geladenen OSM-Orten eine Städte-Datei für den Ordner towns_industries. Braucht geladene OSM-Daten.':
+        'Creates a towns file for the towns_industries folder from the loaded OSM places. Needs loaded OSM data.',
+    'Industrien aus OSM...':
+        'Industries from OSM...',
+    'Erzeugt aus geladenen OSM-Objekten (Höfe, Steinbrüche, Sägewerke, ...) eine Industrien-Datei für den Ordner towns_industries. Braucht geladene OSM-Daten.':
+        'Creates an industries file for the towns_industries folder from loaded OSM objects (farms, quarries, sawmills, ...). Needs loaded OSM data.',
+    'Bahnhöfe aus OSM...':
+        'Stations from OSM...',
+    'Liest Bahnhöfe, Haltepunkte, Bahnsteige, Bahnhofsgebäude und Haltepositionen aus den geladenen OSM-Daten und speichert sie als .json (alles) und .csv (eine Zeile je Bahnhof). Braucht geladene OSM-Daten.':
+        'Reads stations, halts, platforms, station buildings and stop positions from the loaded OSM data and saves them as .json (everything) and .csv (one row per station). Needs loaded OSM data.',
+    'Straßen und Gleise...':
+        'Roads and tracks...',
+    'Erzeugt aus den geladenen OSM-Wegen einen Mod, der im Spiel Straßen, Gleise, Brücken und Tunnel baut. Braucht geladene OSM-Daten.':
+        'Creates a mod from the loaded OSM ways that builds roads, tracks, bridges and tunnels in the game. Needs loaded OSM data.',
+    'Schließen':
+        'Close',
+    'Ordner mit DGM1-GeoTIFF-Kacheln wählen':
+        'Choose folder with DGM1 GeoTIFF tiles',
+    'Lade Höhendaten... (kann je nach Kartengröße etwas dauern)':
+        'Loading elevation data... (may take a while depending on the map size)',
+    'Lade Schnellvorschau...':
+        'Loading quick preview...',
+    '\nAchtung: Die Wasserhöhe liegt außerhalb des Fensters, die Flüsse wären im Spiel trocken oder die ganze Karte läge unter Wasser.':
+        '\nWarning: The water level lies outside the window; the rivers would be dry in the game or the whole map would be under water.',
+    'Heightmap exportieren':
+        'Export heightmap',
+    'PNG-Bilder (*.png)':
+        'PNG images (*.png)',
+    'Export abgeschlossen':
+        'Export complete',
+    'Höhenquelle:':
+        'Elevation source:',
+    'Copernicus (weltweit, 30 m)':
+        'Copernicus (worldwide, 30 m)',
+    'DGM1 Deutschland (1 m, über hoehendaten.de)':
+        'DGM1 Germany (1 m, via hoehendaten.de)',
+    'DGM1 aus eigenen GeoTIFF-Kacheln (Ordner)':
+        'DGM1 from own GeoTIFF tiles (folder)',
+    'swissALTI3D Schweiz (2 m, über data.geo.admin.ch)':
+        'swissALTI3D Switzerland (2 m, via data.geo.admin.ch)',
+    'Voreinstellung:':
+        'Preset:',
+    'Eigene Einstellungen':
+        'Custom settings',
+    'Original (1:1, unverändert)':
+        'Original (1:1, unchanged)',
+    'Empfohlen (Glätten, Einebnen, Wasser nach OSM)':
+        'Recommended (smoothing, flattening, water from OSM)',
+    'Glättung:':
+        'Smoothing:',
+    'Höhen stauchen auf:':
+        'Compress elevations to:',
+    'Stärke:':
+        'Strength:',
+    'Bezug: Gewässer bis':
+        'Reference: waters up to',
+    'Übergangsbreite:':
+        'Transition width:',
+    'Werte außerhalb:':
+        'Values outside:',
+    'Oben kappen (Gipfel planieren)':
+        'Clip top (level off peaks)',
+    'Unten abschneiden (Tiefen planieren)':
+        'Cut off bottom (level off depths)',
+    'Stauchen (alles ins Fenster drücken)':
+        'Compress (squeeze everything into the window)',
+    'Fenster von:':
+        'Window from:',
+    'bis:':
+        'to:',
+    'Fenster verschieben:':
+        'Move window:',
+    'Biome-Maske':
+        'Biome mask',
+    'Keine OSM-Daten geladen. Zuerst Werkzeuge → OSM laden ausführen und die Ebenen Landnutzung/Vegetation laden.':
+        'No OSM data loaded. First run Tools → Load OSM and load the Land use/Vegetation layers.',
+    'Städte aus OSM':
+        'Towns from OSM',
+    'Keine OSM-Daten geladen. Zuerst Werkzeuge → OSM laden ausführen.':
+        'No OSM data loaded. First run Tools → Load OSM.',
+    'Bahnhöfe aus OSM':
+        'Stations from OSM',
+    'Keine OSM-Daten geladen. Zuerst Werkzeuge → OSM laden ausführen und die Ebene Eisenbahn laden.':
+        'No OSM data loaded. First run Tools → Load OSM and load the Railways layer.',
+    'Straßen und Gleise':
+        'Roads and tracks',
+    'Keine OSM-Daten geladen. Zuerst Werkzeuge → OSM laden ausführen und die Ebenen Straßen und Eisenbahn laden.':
+        'No OSM data loaded. First run Tools → Load OSM and load the Roads and Railways layers.',
+    'Industrien aus OSM':
+        'Industries from OSM',
+    'Berechne Höhenraster...':
+        'Calculating elevation grid...',
+    'Achtung: Ein größerer Teil der Fläche stammt aus Copernicus. An den Nahtstellen kann es kleine Höhenstufen geben.':
+        'Warning: A larger part of the area comes from Copernicus. There may be small height steps at the seams.',
+    "Keine OSM-Daten geladen - für die Terrain-Anpassung werden die Wasserflächen aus 'OSM laden' benötigt.":
+        "No OSM data loaded - the terrain adjustment needs the water areas from 'Load OSM'.",
+    "Keine OSM-Daten geladen - der Gefälle-Ausgleich braucht die Gewässer aus 'OSM laden'.":
+        "No OSM data loaded - the gradient equalisation needs the waters from 'Load OSM'.",
+    'In diesem Kartenausschnitt wurden keine Seen oder größeren Flüsse als Bezug gefunden - der Gefälle-Ausgleich hat hier keine Wirkung.':
+        'No lakes or larger rivers were found as a reference in this map area - the gradient equalisation has no effect here.',
+    'Als Bezug dienen Seen und Wasserflächen sowie Flüsse und Kanäle bis zur eingestellten Höhe über dem Wasserspiegel; Bäche, Gräben und höher gelegene Gewässer zählen dafür nicht.':
+        'Lakes and water areas as well as rivers and canals up to the set height above the water level serve as a reference; streams, ditches and waters at higher elevations do not count.',
+    'Keine Gewässer':
+        'No waters',
+    'In diesem Kartenausschnitt wurden keine Wasserflächen oder -wege gefunden. Zuerst OSM-Daten laden (Werkzeuge → OSM laden).':
+        'No water areas or waterways were found in this map area. Load OSM data first (Tools → Load OSM).',
+    'Hauptfluss liegt zwischen {low:.0f} und {high:.0f} m. Wasserhöhe auf {middle:.0f} m gesetzt (Mitte). Die Wasseroberfläche wird am oberen Ende um bis zu {lowered:.0f} m abgesenkt und am unteren um bis zu {raised:.0f} m angehoben.':
+        'The main river lies between {low:.0f} and {high:.0f} m. Water level set to {middle:.0f} m (middle). The water surface is lowered by up to {lowered:.0f} m at the upper end and raised by up to {raised:.0f} m at the lower end.',
+    ' oder ':
+        ' or ',
+    'Höhenfenster begrenzen (Editor nimmt nur {low:.0f} bis {high:.0f} m)':
+        'Limit elevation window (editor only accepts {low:.0f} to {high:.0f} m)',
+    ' ({name}, {percent:.1f} % der Fläche aus Copernicus ergänzt)':
+        ' ({name}, {percent:.1f} % of the area supplemented from Copernicus)',
+    'Quelle: © swisstopo (Bundesamt für Landestopografie swisstopo), swissALTI3D':
+        'Source: © swisstopo (Federal Office of Topography swisstopo), swissALTI3D',
+    'Quelle: DGM1 der Landesvermessung (Quellenvermerk des Landes beachten)':
+        'Source: DGM1 of the state survey (observe the state’s attribution notice)',
+    "Schnellvorschau ({width} x {height} Pixel, niedrige Auflösung - noch nicht exportierbar). Sieht das plausibel aus? Dann jetzt 'Höhendaten herunterladen' für die volle Auflösung.":
+        "Quick preview ({width} x {height} pixels, low resolution - not exportable yet). Does it look plausible? Then click 'Download elevation data' now for the full resolution.",
+    'Wassermaske fehlgeschlagen':
+        'Water mask failed',
+    ' Die Grenze „Nur Gewässer bis“ wurde auf {value} m erhöht.':
+        ' The limit “Only waters up to” was raised to {value} m.',
+    'In diesem Kartenausschnitt wurden keine Wasserflächen oder -wege gefunden - die Einstellung hat keine Wirkung. Zuerst OSM-Daten laden (Werkzeuge → OSM laden).':
+        'No water areas or waterways were found in this map area - the setting has no effect. Load OSM data first (Tools → Load OSM).',
+    'In diesem Kartenausschnitt wurden keine Wasserflächen/-wege gefunden - die Anpassung hat hier keine Wirkung.':
+        'No water areas/waterways were found in this map area - the adjustment has no effect here.',
+    '\n\nHinweis: Die {count} als Ausreißer erkannten Pixel liegen außerhalb dieses Bereichs und wurden dadurch auf den Rand geklemmt (0 bzw. 65535) - deren echte Höhe geht im Export verloren.':
+        '\n\nNote: The {count} pixels detected as outliers lie outside this range and were therefore clamped to the edge (0 or 65535) - their real height is lost in the export.',
+    '\n\nGefälle-Ausgleich aktiv (Stärke {strength:.0f} %, Glättung {smoothing:.0f} m): Flüsse und Seen wurden auf eine gemeinsame Ebene gelegt, das Gelände relativ dazu angepasst - die absoluten Höhen ü. NN stimmen dadurch nicht mehr.':
+        '\n\nGradient equalisation active (strength {strength:.0f} %, smoothing {smoothing:.0f} m): rivers and lakes were put on a common level and the terrain adjusted relative to it - the absolute elevations above sea level are therefore no longer correct.',
+    '\n\nTrassen und Siedlungen eingeebnet ({sigma:.0f} m).':
+        '\n\nRoutes and settlements flattened ({sigma:.0f} m).',
+    '\n\nHöhen über dem Wasserspiegel auf {percent:.0f} % gestaucht.':
+        '\n\nElevations above the water level compressed to {percent:.0f} %.',
+    '\n\nGelände geglättet ({sigma:.0f} m).':
+        '\n\nTerrain smoothed ({sigma:.0f} m).',
+    '\n\nWasser nur dort, wo OpenStreetMap Wasser hat: Flussbett {edge:.0f} m (Ufer) bis {depth:.0f} m (Mitte) unter dem Wasserspiegel, Land mindestens {bank:.1f} m darüber, Böschung {transition:.0f} m.':
+        '\n\nWater only where OpenStreetMap has water: riverbed {edge:.0f} m (bank) to {depth:.0f} m (middle) below the water level, land at least {bank:.1f} m above it, bank slope {transition:.0f} m.',
+    '\n\nDas Terrain wurde um Gewässer herum (Übergang {transition:.0f} m) sanft ans Wasserniveau angepasst - weicht dort geringfügig von den echten Höhendaten ab.':
+        '\n\nThe terrain around waters (transition {transition:.0f} m) was gently adjusted to the water level - it deviates slightly from the real elevation data there.',
+    '\n\nHöhenfenster {low:.0f} bis {high:.0f} m: {report}':
+        '\n\nElevation window {low:.0f} to {high:.0f} m: {report}',
+    'Abgebrochen.':
+        'Cancelled.',
+    'swissALTI3D-Kacheln laden':
+        'Load swissALTI3D tiles',
+    'Die Kacheln kommen von data.geo.admin.ch (swisstopo). Bereits geladene Kacheln werden übersprungen. Du kannst jederzeit abbrechen und später weitermachen.':
+        'The tiles come from data.geo.admin.ch (swisstopo). Tiles that have already been loaded are skipped. You can cancel at any time and continue later.',
+    'Quelle: {sources}':
+        'Source: {sources}',
+    '{count} Kacheln ohne {source}-Daten im Ausschnitt (dort Copernicus).':
+        '{count} tiles without {source} data in the area (Copernicus there).',
+    'Ausreißer aus Höhenbereich ausschließen ({count} Pixel, {percent:.2f}% der Fläche erkannt)':
+        'Exclude outliers from the elevation range ({count} pixels, {percent:.2f}% of the area detected)',
+    'Im TPF3-Import eintragen: Mindesthöhe {low:.0f}, Maximalhöhe {high:.0f}, Wasserhöhe {water:.0f}':
+        'Enter in the TPF3 import: minimum height {low:.0f}, maximum height {high:.0f}, water level {water:.0f}',
+    'Kartengröße und -format im Spiel: {size}':
+        'Map size and format in the game: {size}',
+    'Heightmap gespeichert unter:\n{filename}\n\n':
+        'Heightmap saved to:\n{filename}\n\n',
+    'Schnellvorschau fehlgeschlagen: {error}':
+        'Quick preview failed: {error}',
 }

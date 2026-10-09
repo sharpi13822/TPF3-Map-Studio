@@ -23,6 +23,7 @@ from PySide6.QtWidgets import (
 from PySide6.QtGui import QKeySequence, QPixmap, QShortcut
 from PySide6.QtCore import QEvent, QObject, Qt
 
+from src.i18n import tr
 from src.gui.biome_dialog import BiomeMaskDialog
 from src.gui.heightmap_guide import HeightmapGuideDialog
 from src.gui.industries_dialog import IndustriesDialog
@@ -183,7 +184,7 @@ class HeightmapDialog(QDialog):
         self._clip_array = None
         self._clip_window_set = False
 
-        self.setWindowTitle("Heightmap")
+        self.setWindowTitle(tr("Heightmap"))
         self.setMinimumWidth(420)
 
         # Aeusserer Rahmen: oben die Scrollflaeche mit allen Einstellungen,
@@ -205,22 +206,22 @@ class HeightmapDialog(QDialog):
         # -------------------------------------------------
 
         self.status_label = QLabel(
-            "Noch nicht geladen."
+            tr("Noch nicht geladen.")
         )
         layout.addWidget(self.status_label)
 
         source_row = QHBoxLayout()
-        source_row.addWidget(QLabel("Höhenquelle:"))
+        source_row.addWidget(QLabel(tr("Höhenquelle:")))
 
         self.source_combo = QComboBox()
         self.source_combo.addItems([
-            "Copernicus (weltweit, 30 m)",
-            "DGM1 Deutschland (1 m, über hoehendaten.de)",
-            "DGM1 aus eigenen GeoTIFF-Kacheln (Ordner)",
-            "swissALTI3D Schweiz (2 m, über data.geo.admin.ch)",
+            tr("Copernicus (weltweit, 30 m)"),
+            tr("DGM1 Deutschland (1 m, über hoehendaten.de)"),
+            tr("DGM1 aus eigenen GeoTIFF-Kacheln (Ordner)"),
+            tr("swissALTI3D Schweiz (2 m, über data.geo.admin.ch)"),
         ])
         self.source_combo.setToolTip(
-            "Copernicus: weltweit, aber nur 30 m fein und mit Baumkronen. "
+            tr("Copernicus: weltweit, aber nur 30 m fein und mit Baumkronen. "
             "DGM1 Deutschland: 1-m-Geländemodell der Bundesländer, die Kacheln "
             "werden über den Webdienst hoehendaten.de geladen (etwa 20 Kacheln "
             "pro Minute, danach liegen sie im Zwischenspeicher). Eigene Kacheln: "
@@ -228,7 +229,7 @@ class HeightmapDialog(QDialog):
             "heruntergeladen hast. swissALTI3D Schweiz: Geländemodell von swisstopo "
             "für die Schweiz und Liechtenstein (2 m), die Kacheln werden von "
             "data.geo.admin.ch geladen und liegen danach im Zwischenspeicher. "
-            "Nur bei Karten in der Schweiz wählbar."
+            "Nur bei Karten in der Schweiz wählbar.")
         )
         self.source_combo.currentIndexChanged.connect(
             self._on_source_changed
@@ -248,11 +249,11 @@ class HeightmapDialog(QDialog):
         self._update_source_availability()
 
         self.quick_preview_button = QPushButton(
-            "Schnellvorschau (niedrige Auflösung, vor dem echten Download)"
+            tr("Schnellvorschau (niedrige Auflösung, vor dem echten Download)")
         )
         self.quick_preview_button.setToolTip(
-            "Die Schnellvorschau nutzt immer Copernicus (schnell, weltweit), "
-            "auch wenn unten eine DGM1-Quelle gewählt ist."
+            tr("Die Schnellvorschau nutzt immer Copernicus (schnell, weltweit), "
+            "auch wenn unten eine DGM1-Quelle gewählt ist.")
         )
         self.quick_preview_button.clicked.connect(
             self._quick_preview
@@ -260,7 +261,7 @@ class HeightmapDialog(QDialog):
         layout.addWidget(self.quick_preview_button)
 
         self.download_button = QPushButton(
-            "Höhendaten herunterladen"
+            tr("Höhendaten herunterladen")
         )
         self.download_button.clicked.connect(
             self._download
@@ -272,24 +273,24 @@ class HeightmapDialog(QDialog):
         # -------------------------------------------------
 
         preset_row = QHBoxLayout()
-        preset_row.addWidget(QLabel("Voreinstellung:"))
+        preset_row.addWidget(QLabel(tr("Voreinstellung:")))
 
         self.preset_combo = QComboBox()
         self.preset_combo.addItems([
-            "Eigene Einstellungen",
-            "Original (1:1, unverändert)",
-            "Empfohlen (Glätten, Einebnen, Wasser nach OSM)",
+            tr("Eigene Einstellungen"),
+            tr("Original (1:1, unverändert)"),
+            tr("Empfohlen (Glätten, Einebnen, Wasser nach OSM)"),
         ])
         self.preset_combo.setEnabled(False)
         self.preset_combo.setToolTip(
-            "Original: alle Optionen aus, die echten Höhen. Empfohlen: "
+            tr("Original: alle Optionen aus, die echten Höhen. Empfohlen: "
             "hängt von der Höhenquelle ab. Copernicus: Gelände glätten, "
             "Trassen und Siedlungen einebnen und Wasser nur dort, wo "
             "OpenStreetMap Wasser hat, mit den Standardwerten. DGM1 und "
             "swissALTI3D: "
             "Glätten aus (das Modell ist schon genau), Einebnen 10 m, "
             "Wasser nach OSM mit Böschung 10 m. Optionen, die OSM-Daten "
-            "brauchen, bleiben ohne geladene OSM-Daten aus."
+            "brauchen, bleiben ohne geladene OSM-Daten aus.")
         )
         self.preset_combo.currentIndexChanged.connect(
             self._on_preset_changed
@@ -315,11 +316,11 @@ class HeightmapDialog(QDialog):
         layout.addLayout(form)
 
         self.range_label = QLabel("–")
-        form.addRow("Höhenbereich:", self.range_label)
+        form.addRow(tr("Höhenbereich:"), self.range_label)
 
         self.exclude_outliers_checkbox = QCheckBox(
-            "Ausreißer aus Höhenbereich ausschließen (mehr Präzision "
-            "fürs eigentliche Gelände)"
+            tr("Ausreißer aus Höhenbereich ausschließen (mehr Präzision "
+            "fürs eigentliche Gelände)")
         )
         self.exclude_outliers_checkbox.setVisible(False)
         self.exclude_outliers_checkbox.toggled.connect(
@@ -335,7 +336,7 @@ class HeightmapDialog(QDialog):
         self.water_level_input.valueChanged.connect(
             self._update_preview
         )
-        form.addRow("Wasserhöhe:", self.water_level_input)
+        form.addRow(tr("Wasserhöhe:"), self.water_level_input)
 
         self.note_label = QLabel("")
         self.note_label.setWordWrap(True)
@@ -346,14 +347,14 @@ class HeightmapDialog(QDialog):
         # Gefaelle. Hier wird die Mitte zwischen tiefstem und hoechstem
         # Punkt des Hauptflusses vorgeschlagen.
         self.suggest_water_button = QPushButton(
-            "Wasserhöhe aus den OSM-Gewässern vorschlagen"
+            tr("Wasserhöhe aus den OSM-Gewässern vorschlagen")
         )
         self.suggest_water_button.setEnabled(False)
         self.suggest_water_button.setToolTip(
-            "Liest die Höhen des Hauptflusses (aus OpenStreetMap) und setzt "
+            tr("Liest die Höhen des Hauptflusses (aus OpenStreetMap) und setzt "
             "die Wasserhöhe in die Mitte zwischen tiefstem und höchstem "
             "Punkt. So wird der Fluss an beiden Enden um etwa gleich viel "
-            "korrigiert. Braucht geladene OSM-Daten."
+            "korrigiert. Braucht geladene OSM-Daten.")
         )
         self.suggest_water_button.clicked.connect(
             self._suggest_water_from_osm
@@ -370,10 +371,10 @@ class HeightmapDialog(QDialog):
         # zu uebernehmen - siehe water_slope_compensation.py).
         # -------------------------------------------------
 
-        self.smooth_checkbox = QCheckBox("Gelände glätten")
+        self.smooth_checkbox = QCheckBox(tr("Gelände glätten"))
         self.smooth_checkbox.setToolTip(
-            "Gegen Treppenstufen und Kristallflächen an Hängen: das "
-            "Höhenmodell hat nur etwa 30 m pro Pixel, das Spiel 4 m."
+            tr("Gegen Treppenstufen und Kristallflächen an Hängen: das "
+            "Höhenmodell hat nur etwa 30 m pro Pixel, das Spiel 4 m.")
         )
         self.smooth_checkbox.setEnabled(False)
         self.smooth_checkbox.toggled.connect(
@@ -382,7 +383,7 @@ class HeightmapDialog(QDialog):
         layout.addWidget(self.smooth_checkbox)
 
         smooth_row = QHBoxLayout()
-        smooth_row.addWidget(QLabel("Glättung:"))
+        smooth_row.addWidget(QLabel(tr("Glättung:")))
         self.smooth_sigma_input = QDoubleSpinBox()
         self.smooth_sigma_input.setRange(*SMOOTH_SIGMA_RANGE_M)
         self.smooth_sigma_input.setDecimals(0)
@@ -392,15 +393,15 @@ class HeightmapDialog(QDialog):
         self.smooth_sigma_input.setMinimumWidth(110)
         self.smooth_sigma_input.setKeyboardTracking(False)
         self.smooth_sigma_input.setToolTip(
-            "Breite der Glättung. 15 m entfernt die gröbsten Stufen, "
-            "30 m glättet stärker, flacht aber Gipfel und Kämme leicht ab."
+            tr("Breite der Glättung. 15 m entfernt die gröbsten Stufen, "
+            "30 m glättet stärker, flacht aber Gipfel und Kämme leicht ab.")
         )
         self.smooth_sigma_input.valueChanged.connect(
             self._update_preview
         )
         smooth_row.addWidget(self.smooth_sigma_input)
 
-        smooth_row.addWidget(QLabel("Höhen stauchen auf:"))
+        smooth_row.addWidget(QLabel(tr("Höhen stauchen auf:")))
         self.compress_input = QDoubleSpinBox()
         self.compress_input.setRange(20.0, 100.0)
         self.compress_input.setDecimals(0)
@@ -410,10 +411,10 @@ class HeightmapDialog(QDialog):
         self.compress_input.setMinimumWidth(110)
         self.compress_input.setKeyboardTracking(False)
         self.compress_input.setToolTip(
-            "Staucht alle Höhen über dem Wasserspiegel auf diesen Anteil. "
+            tr("Staucht alle Höhen über dem Wasserspiegel auf diesen Anteil. "
             "100 % = unverändert. Hilft, wenn Hochflächen im Spiel über die "
             "Schneegrenze ragen (weiße Flächen). Die Hänge werden dabei "
-            "flacher."
+            "flacher.")
         )
         self.compress_input.valueChanged.connect(
             self._update_preview
@@ -423,11 +424,11 @@ class HeightmapDialog(QDialog):
         smooth_row.addStretch(1)
         layout.addLayout(smooth_row)
 
-        self.flatten_checkbox = QCheckBox("Trassen und Siedlungen einebnen")
+        self.flatten_checkbox = QCheckBox(tr("Trassen und Siedlungen einebnen"))
         self.flatten_checkbox.setToolTip(
-            "Bahnstrecken, größere Straßen und Gebäude aus OpenStreetMap: "
+            tr("Bahnstrecken, größere Straßen und Gebäude aus OpenStreetMap: "
             "das Gelände dort wird abgeflacht, damit im Spiel weniger "
-            "Rampen nötig sind. Braucht geladene OSM-Daten."
+            "Rampen nötig sind. Braucht geladene OSM-Daten.")
         )
         self.flatten_checkbox.setEnabled(False)
         self.flatten_checkbox.toggled.connect(
@@ -436,7 +437,7 @@ class HeightmapDialog(QDialog):
         layout.addWidget(self.flatten_checkbox)
 
         flatten_row = QHBoxLayout()
-        flatten_row.addWidget(QLabel("Glättung:"))
+        flatten_row.addWidget(QLabel(tr("Glättung:")))
         self.flatten_sigma_input = QDoubleSpinBox()
         self.flatten_sigma_input.setRange(*FLATTEN_SIGMA_RANGE_M)
         self.flatten_sigma_input.setDecimals(0)
@@ -446,8 +447,8 @@ class HeightmapDialog(QDialog):
         self.flatten_sigma_input.setMinimumWidth(110)
         self.flatten_sigma_input.setKeyboardTracking(False)
         self.flatten_sigma_input.setToolTip(
-            "Je größer, desto ebener wird das Gelände entlang der Trassen "
-            "und in den Ortschaften. Einschnitte und Dämme verschwinden."
+            tr("Je größer, desto ebener wird das Gelände entlang der Trassen "
+            "und in den Ortschaften. Einschnitte und Dämme verschwinden.")
         )
         self.flatten_sigma_input.valueChanged.connect(
             self._update_preview
@@ -456,12 +457,12 @@ class HeightmapDialog(QDialog):
         flatten_row.addStretch(1)
         layout.addLayout(flatten_row)
 
-        self.slope_checkbox = QCheckBox("Gefälle ausgleichen")
+        self.slope_checkbox = QCheckBox(tr("Gefälle ausgleichen"))
         self.slope_checkbox.setToolTip(
-            "Legt Flüsse und Seen auf eine gemeinsame Ebene und zieht das "
+            tr("Legt Flüsse und Seen auf eine gemeinsame Ebene und zieht das "
             "Gelände relativ dazu mit. Das Relief über dem jeweiligen "
             "Wasserspiegel bleibt erhalten, die absoluten Höhen ü. NN "
-            "stimmen danach aber nicht mehr."
+            "stimmen danach aber nicht mehr.")
         )
         self.slope_checkbox.setEnabled(False)
         self.slope_checkbox.toggled.connect(
@@ -471,7 +472,7 @@ class HeightmapDialog(QDialog):
 
         slope_row = QHBoxLayout()
 
-        slope_row.addWidget(QLabel("Stärke:"))
+        slope_row.addWidget(QLabel(tr("Stärke:")))
         self.slope_strength_input = QDoubleSpinBox()
         self.slope_strength_input.setMinimumWidth(100)
         self.slope_strength_input.setRange(0.0, 100.0)
@@ -486,7 +487,7 @@ class HeightmapDialog(QDialog):
         )
         slope_row.addWidget(self.slope_strength_input)
 
-        slope_row.addWidget(QLabel("Glättung:"))
+        slope_row.addWidget(QLabel(tr("Glättung:")))
         self.slope_smoothing_input = QDoubleSpinBox()
         self.slope_smoothing_input.setMinimumWidth(110)
         self.slope_smoothing_input.setRange(50.0, 5000.0)
@@ -500,19 +501,19 @@ class HeightmapDialog(QDialog):
         )
         slope_row.addWidget(self.slope_smoothing_input)
 
-        slope_row.addWidget(QLabel("Bezug: Gewässer bis"))
+        slope_row.addWidget(QLabel(tr("Bezug: Gewässer bis")))
         self.slope_max_ref_input = QDoubleSpinBox()
         self.slope_max_ref_input.setRange(1.0, 1000.0)
         self.slope_max_ref_input.setDecimals(0)
-        self.slope_max_ref_input.setSuffix(" m über Wasserspiegel")
+        self.slope_max_ref_input.setSuffix(tr(" m über Wasserspiegel"))
         self.slope_max_ref_input.setMinimumWidth(250)
         self.slope_max_ref_input.setValue(DEFAULT_SLOPE_MAX_REF_M)
         self.slope_max_ref_input.setEnabled(False)
         self.slope_max_ref_input.setKeyboardTracking(False)
         self.slope_max_ref_input.setToolTip(
-            "Nur Gewässer, die höchstens so hoch über dem Wasserspiegel "
+            tr("Nur Gewässer, die höchstens so hoch über dem Wasserspiegel "
             "liegen, dienen als Bezug. Höher gelegene Nebenflüsse und "
-            "Bergseen werden ignoriert, sonst würde ihr Tal überflutet."
+            "Bergseen werden ignoriert, sonst würde ihr Tal überflutet.")
         )
         self.slope_max_ref_input.valueChanged.connect(
             self._update_preview
@@ -533,12 +534,12 @@ class HeightmapDialog(QDialog):
         # -------------------------------------------------
 
         self.enforce_checkbox = QCheckBox(
-            "Wasser nur dort, wo OpenStreetMap Wasser hat (empfohlen)"
+            tr("Wasser nur dort, wo OpenStreetMap Wasser hat (empfohlen)")
         )
         self.enforce_checkbox.setToolTip(
-            "Gewässer bekommen ein festes Bett, alles andere Land liegt "
+            tr("Gewässer bekommen ein festes Bett, alles andere Land liegt "
             "knapp über dem Wasserspiegel: keine überfluteten Auen und "
-            "Tümpel. Ersetzt die sanfte Anpassung unten."
+            "Tümpel. Ersetzt die sanfte Anpassung unten.")
         )
         self.enforce_checkbox.setEnabled(False)
         self.enforce_checkbox.toggled.connect(
@@ -571,30 +572,30 @@ class HeightmapDialog(QDialog):
             return spin
 
         self.enforce_transition_input = _enforce_spin(
-            "Böschung:", DEFAULT_ENFORCE_TRANSITION_M, 10.0, 300.0, 0, " m",
-            "Breite der Böschung zwischen Flussbett und Land. Breiter = "
-            "flacheres Ufer, aber auch etwas breiteres Wasser."
+            tr("Böschung:"), DEFAULT_ENFORCE_TRANSITION_M, 10.0, 300.0, 0, " m",
+            tr("Breite der Böschung zwischen Flussbett und Land. Breiter = "
+            "flacheres Ufer, aber auch etwas breiteres Wasser.")
         )
         self.enforce_edge_input = _enforce_spin(
-            "Tiefe am Ufer:", DEFAULT_ENFORCE_EDGE_M, 0.5, 10.0, 1, " m",
-            "Tiefe des Flussbetts direkt am Ufer. Zur Mitte hin wird es "
-            "tiefer (Fahrrinne), das ergibt einen natürlichen Querschnitt."
+            tr("Tiefe am Ufer:"), DEFAULT_ENFORCE_EDGE_M, 0.5, 10.0, 1, " m",
+            tr("Tiefe des Flussbetts direkt am Ufer. Zur Mitte hin wird es "
+            "tiefer (Fahrrinne), das ergibt einen natürlichen Querschnitt.")
         )
         self.enforce_depth_input = _enforce_spin(
-            "Tiefe in der Mitte:", DEFAULT_ENFORCE_DEPTH_M, 1.0, 30.0, 0, " m",
-            "Tiefe des Flussbetts unter dem Wasserspiegel."
+            tr("Tiefe in der Mitte:"), DEFAULT_ENFORCE_DEPTH_M, 1.0, 30.0, 0, " m",
+            tr("Tiefe des Flussbetts unter dem Wasserspiegel.")
         )
         self.enforce_bank_input = _enforce_spin(
-            "Ufer über Wasser:", DEFAULT_ENFORCE_BANK_M, 0.5, 10.0, 1, " m",
-            "So hoch liegt Land am Ufer mindestens über dem Wasserspiegel. "
-            "Alles darunter wird angehoben und kann nicht überflutet werden.",
+            tr("Ufer über Wasser:"), DEFAULT_ENFORCE_BANK_M, 0.5, 10.0, 1, " m",
+            tr("So hoch liegt Land am Ufer mindestens über dem Wasserspiegel. "
+            "Alles darunter wird angehoben und kann nicht überflutet werden."),
             row=enforce_row2,
         )
         self.enforce_max_rise_input = _enforce_spin(
-            "Nur Gewässer bis", DEFAULT_ENFORCE_MAX_RISE_M, 1.0, 500.0, 0,
-            " m über Wasserspiegel",
-            "Gewässer, die von Natur aus höher liegen (Bäche in den "
-            "Bergen, Bergseen), bleiben unverändert.",
+            tr("Nur Gewässer bis"), DEFAULT_ENFORCE_MAX_RISE_M, 1.0, 500.0, 0,
+            tr(" m über Wasserspiegel"),
+            tr("Gewässer, die von Natur aus höher liegen (Bäche in den "
+            "Bergen, Bergseen), bleiben unverändert."),
             row=enforce_row2,
             min_width=250,
         )
@@ -606,14 +607,14 @@ class HeightmapDialog(QDialog):
         layout.addLayout(enforce_row2)
 
         self.water_blend_checkbox = QCheckBox(
-            "Terrain sanft ans Wasserniveau anpassen"
+            tr("Terrain sanft ans Wasserniveau anpassen")
         )
         self.water_blend_checkbox.setToolTip(
-            "Verhindert trockenfallende Flüsse und Seen, weicht dafür "
+            tr("Verhindert trockenfallende Flüsse und Seen, weicht dafür "
             "geringfügig von den echten Höhendaten ab. Sehr kleine "
             "Einzelgewässer werden ausgenommen, um Krater zu vermeiden. "
             "Das Gelände unterhalb des Wasserspiegels wird zusätzlich "
-            "weichgezeichnet."
+            "weichgezeichnet.")
         )
         self.water_blend_checkbox.setEnabled(False)
         self.water_blend_checkbox.toggled.connect(
@@ -622,7 +623,7 @@ class HeightmapDialog(QDialog):
         layout.addWidget(self.water_blend_checkbox)
 
         transition_row = QHBoxLayout()
-        transition_row.addWidget(QLabel("Übergangsbreite:"))
+        transition_row.addWidget(QLabel(tr("Übergangsbreite:")))
         self.transition_input = QDoubleSpinBox()
         self.transition_input.setRange(4.0, 500.0)
         self.transition_input.setDecimals(0)
@@ -634,18 +635,18 @@ class HeightmapDialog(QDialog):
         )
         transition_row.addWidget(self.transition_input)
 
-        transition_row.addWidget(QLabel("Nur Gewässer bis"))
+        transition_row.addWidget(QLabel(tr("Nur Gewässer bis")))
         self.blend_max_rise_input = QDoubleSpinBox()
         self.blend_max_rise_input.setRange(1.0, 500.0)
         self.blend_max_rise_input.setDecimals(0)
-        self.blend_max_rise_input.setSuffix(" m über Wasserspiegel")
+        self.blend_max_rise_input.setSuffix(tr(" m über Wasserspiegel"))
         self.blend_max_rise_input.setMinimumWidth(250)
         self.blend_max_rise_input.setValue(DEFAULT_BLEND_MAX_RISE_M)
         self.blend_max_rise_input.setEnabled(False)
         self.blend_max_rise_input.setKeyboardTracking(False)
         self.blend_max_rise_input.setToolTip(
-            "Gewässer, die von Natur aus höher liegen (Bäche in den Bergen, "
-            "Bergseen), bleiben unverändert und werden nicht zu Schluchten."
+            tr("Gewässer, die von Natur aus höher liegen (Bäche in den Bergen, "
+            "Bergseen), bleiben unverändert und werden nicht zu Schluchten.")
         )
         self.blend_max_rise_input.valueChanged.connect(
             self._update_preview
@@ -663,17 +664,19 @@ class HeightmapDialog(QDialog):
         # -------------------------------------------------
 
         self.clip_checkbox = QCheckBox(
-            "Höhenfenster begrenzen (Editor nimmt nur "
-            f"{GAME_MIN_M:.0f} bis {GAME_MAX_M:.0f} m)"
+            tr(
+                "Höhenfenster begrenzen (Editor nimmt nur "
+                "{low:.0f} bis {high:.0f} m)"
+            ).format(low=GAME_MIN_M, high=GAME_MAX_M)
         )
         self.clip_checkbox.setToolTip(
-            "Der Karteneditor von TPF3 nimmt nur Höhen in diesem Bereich an. "
+            tr("Der Karteneditor von TPF3 nimmt nur Höhen in diesem Bereich an. "
             "Liegt das Gelände (zum Beispiel in den Alpen) darüber oder darunter, "
             "wird es hier in ein Fenster gelegt. Die Vorschau färbt betroffene "
             "Stellen ein: rot = tiefer gesetzt (oben gekappt oder gestaucht), "
             "hellblau = höher gesetzt (unten abgeschnitten). Das Fenster gilt "
             "in Eintragswerten, also mit dem Haken unten bezogen auf die "
-            "Wasserhöhe."
+            "Wasserhöhe.")
         )
         self.clip_checkbox.setEnabled(False)
         self.clip_checkbox.toggled.connect(
@@ -682,23 +685,23 @@ class HeightmapDialog(QDialog):
         layout.addWidget(self.clip_checkbox)
 
         clip_mode_row = QHBoxLayout()
-        clip_mode_row.addWidget(QLabel("Werte außerhalb:"))
+        clip_mode_row.addWidget(QLabel(tr("Werte außerhalb:")))
 
         self.clip_mode_combo = QComboBox()
         self.clip_mode_combo.addItems([
-            "Oben kappen (Gipfel planieren)",
-            "Unten abschneiden (Tiefen planieren)",
-            "Stauchen (alles ins Fenster drücken)",
+            tr("Oben kappen (Gipfel planieren)"),
+            tr("Unten abschneiden (Tiefen planieren)"),
+            tr("Stauchen (alles ins Fenster drücken)"),
         ])
         self.clip_mode_combo.setEnabled(False)
         self.clip_mode_combo.setToolTip(
-            "Oben kappen: Alles über dem Fenster wird flach auf die Obergrenze "
+            tr("Oben kappen: Alles über dem Fenster wird flach auf die Obergrenze "
             "gesetzt, das Fenster liegt zunächst an der tiefsten Stelle. "
             "Unten abschneiden: Alles unter dem Fenster wird flach auf die "
             "Untergrenze gesetzt, das Fenster liegt zunächst an der höchsten "
             "Stelle. Stauchen: das ganze Gelände wird ins Fenster gedrückt, die "
             "Wasserhöhe bleibt dabei erhalten. Die Fensterbreite bestimmen "
-            "die Felder darunter, der Schieberegler verschiebt das Fenster."
+            "die Felder darunter, der Schieberegler verschiebt das Fenster.")
         )
         self.clip_mode_combo.currentIndexChanged.connect(
             self._on_clip_mode_changed
@@ -708,11 +711,11 @@ class HeightmapDialog(QDialog):
 
         clip_window_row = QHBoxLayout()
 
-        clip_window_row.addWidget(QLabel("Fenster von:"))
+        clip_window_row.addWidget(QLabel(tr("Fenster von:")))
         self.clip_min_input = self._make_clip_spin()
         clip_window_row.addWidget(self.clip_min_input)
 
-        clip_window_row.addWidget(QLabel("bis:"))
+        clip_window_row.addWidget(QLabel(tr("bis:")))
         self.clip_max_input = self._make_clip_spin()
         clip_window_row.addWidget(self.clip_max_input)
 
@@ -720,7 +723,7 @@ class HeightmapDialog(QDialog):
         layout.addLayout(clip_window_row)
 
         clip_slider_row = QHBoxLayout()
-        clip_slider_row.addWidget(QLabel("Fenster verschieben:"))
+        clip_slider_row.addWidget(QLabel(tr("Fenster verschieben:")))
 
         self.clip_slider = QSlider(Qt.Horizontal)
         self.clip_slider.setRange(0, CLIP_SLIDER_STEPS)
@@ -742,11 +745,11 @@ class HeightmapDialog(QDialog):
         # -------------------------------------------------
 
         self.relative_values_checkbox = QCheckBox(
-            "Werte auf Wasserhöhe 0 beziehen"
+            tr("Werte auf Wasserhöhe 0 beziehen")
         )
         self.relative_values_checkbox.setToolTip(
-            "Empfehlung des TPF3-Wikis für Biome und Materialien. Die "
-            "Mindesthöhe kann dabei negativ werden."
+            tr("Empfehlung des TPF3-Wikis für Biome und Materialien. Die "
+            "Mindesthöhe kann dabei negativ werden.")
         )
         self.relative_values_checkbox.toggled.connect(
             self._on_relative_values_toggled
@@ -769,7 +772,7 @@ class HeightmapDialog(QDialog):
 
         # Anleitung: Schritt fuer Schritt von der Auswahl bis zum Import
         # im Spiel (auch ueber F1 erreichbar).
-        self.guide_button = QPushButton("Anleitung (F1)")
+        self.guide_button = QPushButton(tr("Anleitung (F1)"))
         self.guide_button.clicked.connect(self._open_guide)
         button_row.addWidget(self.guide_button)
 
@@ -782,7 +785,7 @@ class HeightmapDialog(QDialog):
         self._connect_custom_markers()
 
         self.export_button = QPushButton(
-            "Exportieren..."
+            tr("Exportieren...")
         )
         self.export_button.setEnabled(False)
         self.export_button.clicked.connect(
@@ -791,59 +794,59 @@ class HeightmapDialog(QDialog):
         button_row.addWidget(self.export_button)
 
         # Biome-Maske aus der geladenen OSM-Landnutzung (eigener Dialog).
-        self.biome_button = QPushButton("Biome-Maske aus OSM...")
+        self.biome_button = QPushButton(tr("Biome-Maske aus OSM..."))
         self.biome_button.setToolTip(
-            "Erzeugt aus der geladenen OSM-Landnutzung eine Maske für den "
-            "Biome-Tab im Karteneditor. Braucht geladene OSM-Daten."
+            tr("Erzeugt aus der geladenen OSM-Landnutzung eine Maske für den "
+            "Biome-Tab im Karteneditor. Braucht geladene OSM-Daten.")
         )
         self.biome_button.clicked.connect(self._open_biome_dialog)
         button_row.addWidget(self.biome_button)
 
         # Staedte aus OSM-Orten (eigener Dialog, Datei fuer towns_industries).
-        self.towns_button = QPushButton("Städte aus OSM...")
+        self.towns_button = QPushButton(tr("Städte aus OSM..."))
         self.towns_button.setToolTip(
-            "Erzeugt aus den geladenen OSM-Orten eine Städte-Datei für den "
-            "Ordner towns_industries. Braucht geladene OSM-Daten."
+            tr("Erzeugt aus den geladenen OSM-Orten eine Städte-Datei für den "
+            "Ordner towns_industries. Braucht geladene OSM-Daten.")
         )
         self.towns_button.clicked.connect(self._open_towns_dialog)
         button_row.addWidget(self.towns_button)
 
         # Industrien aus OSM-Objekten (eigener Dialog, Datei fuer
         # towns_industries).
-        self.industries_button = QPushButton("Industrien aus OSM...")
+        self.industries_button = QPushButton(tr("Industrien aus OSM..."))
         self.industries_button.setToolTip(
-            "Erzeugt aus geladenen OSM-Objekten (Höfe, Steinbrüche, "
+            tr("Erzeugt aus geladenen OSM-Objekten (Höfe, Steinbrüche, "
             "Sägewerke, ...) eine Industrien-Datei für den Ordner "
-            "towns_industries. Braucht geladene OSM-Daten."
+            "towns_industries. Braucht geladene OSM-Daten.")
         )
         self.industries_button.clicked.connect(self._open_industries_dialog)
         button_row.addWidget(self.industries_button)
 
         # Bahnhoefe aus OSM (Name, Lage, Bahnsteige, Gebaeude): schreibt eine
         # .json und eine .csv, baut nichts im Spiel.
-        self.stations_button = QPushButton("Bahnhöfe aus OSM...")
+        self.stations_button = QPushButton(tr("Bahnhöfe aus OSM..."))
         self.stations_button.setToolTip(
-            "Liest Bahnhöfe, Haltepunkte, Bahnsteige, Bahnhofsgebäude und "
+            tr("Liest Bahnhöfe, Haltepunkte, Bahnsteige, Bahnhofsgebäude und "
             "Haltepositionen aus den geladenen OSM-Daten und speichert sie als "
             ".json (alles) und .csv (eine Zeile je Bahnhof). Braucht geladene "
-            "OSM-Daten."
+            "OSM-Daten.")
         )
         self.stations_button.clicked.connect(self._open_stations_dialog)
         button_row.addWidget(self.stations_button)
 
         # Strassen und Gleise fuer den Spiel-Mod (eigener Dialog, schreibt
         # den Mod in den Ordner mods). Vorerst ausgeblendet.
-        self.network_button = QPushButton("Straßen und Gleise...")
+        self.network_button = QPushButton(tr("Straßen und Gleise..."))
         self.network_button.setToolTip(
-            "Erzeugt aus den geladenen OSM-Wegen einen Mod, der im Spiel "
+            tr("Erzeugt aus den geladenen OSM-Wegen einen Mod, der im Spiel "
             "Straßen, Gleise, Brücken und Tunnel baut. Braucht geladene "
-            "OSM-Daten."
+            "OSM-Daten.")
         )
         self.network_button.clicked.connect(self._open_network_dialog)
         button_row.addWidget(self.network_button)
         self.network_button.setVisible(SHOW_ROADS_AND_TRACKS_BUTTON)
 
-        close_button = QPushButton("Schließen")
+        close_button = QPushButton(tr("Schließen"))
         close_button.clicked.connect(self.reject)
         button_row.addWidget(close_button)
 
@@ -915,9 +918,9 @@ class HeightmapDialog(QDialog):
         if not has_osm_data:
             QMessageBox.information(
                 self,
-                "Biome-Maske",
-                "Keine OSM-Daten geladen. Zuerst Werkzeuge → OSM laden "
-                "ausführen und die Ebenen Landnutzung/Vegetation laden.",
+                tr("Biome-Maske"),
+                tr("Keine OSM-Daten geladen. Zuerst Werkzeuge → OSM laden "
+                "ausführen und die Ebenen Landnutzung/Vegetation laden."),
             )
             return
 
@@ -933,9 +936,9 @@ class HeightmapDialog(QDialog):
         if not has_osm_data:
             QMessageBox.information(
                 self,
-                "Städte aus OSM",
-                "Keine OSM-Daten geladen. Zuerst Werkzeuge → OSM laden "
-                "ausführen.",
+                tr("Städte aus OSM"),
+                tr("Keine OSM-Daten geladen. Zuerst Werkzeuge → OSM laden "
+                "ausführen."),
             )
             return
 
@@ -951,9 +954,9 @@ class HeightmapDialog(QDialog):
         if not has_osm_data:
             QMessageBox.information(
                 self,
-                "Bahnhöfe aus OSM",
-                "Keine OSM-Daten geladen. Zuerst Werkzeuge → OSM laden "
-                "ausführen und die Ebene Eisenbahn laden.",
+                tr("Bahnhöfe aus OSM"),
+                tr("Keine OSM-Daten geladen. Zuerst Werkzeuge → OSM laden "
+                "ausführen und die Ebene Eisenbahn laden."),
             )
             return
 
@@ -969,9 +972,9 @@ class HeightmapDialog(QDialog):
         if not has_osm_data:
             QMessageBox.information(
                 self,
-                "Straßen und Gleise",
-                "Keine OSM-Daten geladen. Zuerst Werkzeuge → OSM laden "
-                "ausführen und die Ebenen Straßen und Eisenbahn laden.",
+                tr("Straßen und Gleise"),
+                tr("Keine OSM-Daten geladen. Zuerst Werkzeuge → OSM laden "
+                "ausführen und die Ebenen Straßen und Eisenbahn laden."),
             )
             return
 
@@ -987,9 +990,9 @@ class HeightmapDialog(QDialog):
         if not has_osm_data:
             QMessageBox.information(
                 self,
-                "Industrien aus OSM",
-                "Keine OSM-Daten geladen. Zuerst Werkzeuge → OSM laden "
-                "ausführen.",
+                tr("Industrien aus OSM"),
+                tr("Keine OSM-Daten geladen. Zuerst Werkzeuge → OSM laden "
+                "ausführen."),
             )
             return
 
@@ -1060,7 +1063,7 @@ class HeightmapDialog(QDialog):
 
         folder = QFileDialog.getExistingDirectory(
             self,
-            "Ordner mit DGM1-GeoTIFF-Kacheln wählen",
+            tr("Ordner mit DGM1-GeoTIFF-Kacheln wählen"),
             str(self._dgm1_folder or Path.home()),
         )
 
@@ -1091,10 +1094,10 @@ class HeightmapDialog(QDialog):
 
             if not fetch_dialog.run():
                 raise RuntimeError(
-                    fetch_dialog.error or "Abgebrochen."
+                    fetch_dialog.error or tr("Abgebrochen.")
                 )
 
-            self.status_label.setText("Berechne Höhenraster...")
+            self.status_label.setText(tr("Berechne Höhenraster..."))
             self.repaint()
 
         elif source == SOURCE_SWISSALTI3D:
@@ -1104,21 +1107,21 @@ class HeightmapDialog(QDialog):
                 self.selection,
                 DEFAULT_SWISS_CACHE_DIR,
                 job=SwissFetchJob(self.selection, DEFAULT_SWISS_CACHE_DIR),
-                title="swissALTI3D-Kacheln laden",
+                title=tr("swissALTI3D-Kacheln laden"),
                 note=(
-                    "Die Kacheln kommen von data.geo.admin.ch (swisstopo). Bereits "
+                    tr("Die Kacheln kommen von data.geo.admin.ch (swisstopo). Bereits "
                     "geladene Kacheln werden übersprungen. Du kannst jederzeit "
-                    "abbrechen und später weitermachen."
+                    "abbrechen und später weitermachen.")
                 ),
                 seconds_per_tile=1.0,
             )
 
             if not fetch_dialog.run():
                 raise RuntimeError(
-                    fetch_dialog.error or "Abgebrochen."
+                    fetch_dialog.error or tr("Abgebrochen.")
                 )
 
-            self.status_label.setText("Berechne Höhenraster...")
+            self.status_label.setText(tr("Berechne Höhenraster..."))
             self.repaint()
 
         array, info = build_heightmap_array_ex(
@@ -1141,15 +1144,18 @@ class HeightmapDialog(QDialog):
         if info is None or info.source == SOURCE_COPERNICUS:
             return ""
 
-        text = " (swissALTI3D" if info.source == SOURCE_SWISSALTI3D else " (DGM1"
+        name = "swissALTI3D" if info.source == SOURCE_SWISSALTI3D else "DGM1"
 
         if info.fallback_fraction > 0.0005:
-            text += (
-                f", {info.fallback_fraction * 100:.1f} % der Fläche "
-                f"aus Copernicus ergänzt"
+            return tr(
+                " ({name}, {percent:.1f} % der Fläche aus Copernicus "
+                "ergänzt)"
+            ).format(
+                name=name,
+                percent=info.fallback_fraction * 100,
             )
 
-        return text + ")"
+        return f" ({name})"
 
     def _show_source_info(self):
         """Quellenvermerk und Hinweise zur Hoehenquelle unter dem Statustext."""
@@ -1165,23 +1171,31 @@ class HeightmapDialog(QDialog):
         swiss = info.source == SOURCE_SWISSALTI3D
 
         if info.attributions:
-            lines.append("Quelle: " + " | ".join(info.attributions))
+            lines.append(
+                tr("Quelle: {sources}").format(
+                    sources=" | ".join(info.attributions)
+                )
+            )
         elif swiss:
-            lines.append("Quelle: © swisstopo (Bundesamt für Landestopografie swisstopo), swissALTI3D")
+            lines.append(tr("Quelle: © swisstopo (Bundesamt für Landestopografie swisstopo), swissALTI3D"))
         else:
-            lines.append("Quelle: DGM1 der Landesvermessung (Quellenvermerk des Landes beachten)")
+            lines.append(tr("Quelle: DGM1 der Landesvermessung (Quellenvermerk des Landes beachten)"))
 
         if info.missing_tiles > 0:
             lines.append(
-                f"{info.missing_tiles} Kacheln ohne "
-                f"{'swissALTI3D' if swiss else 'DGM1'}-Daten im Ausschnitt "
-                f"(dort Copernicus)."
+                tr(
+                    "{count} Kacheln ohne {source}-Daten im Ausschnitt "
+                    "(dort Copernicus)."
+                ).format(
+                    count=info.missing_tiles,
+                    source="swissALTI3D" if swiss else "DGM1",
+                )
             )
 
         if info.fallback_fraction > 0.02:
             lines.append(
-                "Achtung: Ein größerer Teil der Fläche stammt aus Copernicus. "
-                "An den Nahtstellen kann es kleine Höhenstufen geben."
+                tr("Achtung: Ein größerer Teil der Fläche stammt aus Copernicus. "
+                "An den Nahtstellen kann es kleine Höhenstufen geben.")
             )
 
         self.source_label.setText("\n".join(lines))
@@ -1190,7 +1204,7 @@ class HeightmapDialog(QDialog):
     def _download(self):
 
         self.status_label.setText(
-            "Lade Höhendaten... (kann je nach Kartengröße etwas dauern)"
+            tr("Lade Höhendaten... (kann je nach Kartengröße etwas dauern)")
         )
         self.download_button.setEnabled(False)
         # Sorgt dafuer, dass der Text vor dem (blockierenden) Download
@@ -1287,12 +1301,12 @@ class HeightmapDialog(QDialog):
 
         if not has_water_data:
             self.water_blend_note_label.setText(
-                "Keine OSM-Daten geladen - für die Terrain-Anpassung "
-                "werden die Wasserflächen aus 'OSM laden' benötigt."
+                tr("Keine OSM-Daten geladen - für die Terrain-Anpassung "
+                "werden die Wasserflächen aus 'OSM laden' benötigt.")
             )
             self.slope_note_label.setText(
-                "Keine OSM-Daten geladen - der Gefälle-Ausgleich "
-                "braucht die Gewässer aus 'OSM laden'."
+                tr("Keine OSM-Daten geladen - der Gefälle-Ausgleich "
+                "braucht die Gewässer aus 'OSM laden'.")
             )
         else:
             self.water_blend_note_label.setText("")
@@ -1301,10 +1315,13 @@ class HeightmapDialog(QDialog):
         if self.suggestion.outlier_count > 0:
 
             self.exclude_outliers_checkbox.setText(
-                f"Ausreißer aus Höhenbereich ausschließen "
-                f"({self.suggestion.outlier_count} Pixel, "
-                f"{self.suggestion.outlier_fraction * 100:.2f}% der Fläche "
-                f"erkannt)"
+                tr(
+                    "Ausreißer aus Höhenbereich ausschließen "
+                    "({count} Pixel, {percent:.2f}% der Fläche erkannt)"
+                ).format(
+                    count=self.suggestion.outlier_count,
+                    percent=self.suggestion.outlier_fraction * 100,
+                )
             )
             self.exclude_outliers_checkbox.setVisible(True)
             self.exclude_outliers_checkbox.setChecked(False)
@@ -1371,7 +1388,7 @@ class HeightmapDialog(QDialog):
         """
 
         self.status_label.setText(
-            "Lade Schnellvorschau..."
+            tr("Lade Schnellvorschau...")
         )
         self.quick_preview_button.setEnabled(False)
         self.download_button.setEnabled(False)
@@ -1384,7 +1401,9 @@ class HeightmapDialog(QDialog):
             )
         except Exception as exc:
             self.status_label.setText(
-                f"Schnellvorschau fehlgeschlagen: {exc}"
+                tr("Schnellvorschau fehlgeschlagen: {error}").format(
+                    error=exc
+                )
             )
             self.quick_preview_button.setEnabled(True)
             self.download_button.setEnabled(True)
@@ -1413,10 +1432,15 @@ class HeightmapDialog(QDialog):
         )
 
         self.status_label.setText(
-            f"Schnellvorschau ({preview_array.shape[1]} x "
-            f"{preview_array.shape[0]} Pixel, niedrige Auflösung - "
-            f"noch nicht exportierbar). Sieht das plausibel aus? Dann "
-            f"jetzt 'Höhendaten herunterladen' für die volle Auflösung."
+            tr(
+                "Schnellvorschau ({width} x {height} Pixel, niedrige "
+                "Auflösung - noch nicht exportierbar). Sieht das plausibel "
+                "aus? Dann jetzt 'Höhendaten herunterladen' für die volle "
+                "Auflösung."
+            ).format(
+                width=preview_array.shape[1],
+                height=preview_array.shape[0],
+            )
         )
 
         self.quick_preview_button.setEnabled(True)
@@ -1490,7 +1514,7 @@ class HeightmapDialog(QDialog):
         except Exception as exc:
             QMessageBox.critical(
                 self,
-                "Wassermaske fehlgeschlagen",
+                tr("Wassermaske fehlgeschlagen"),
                 str(exc),
             )
             self.slope_checkbox.setChecked(False)
@@ -1499,18 +1523,18 @@ class HeightmapDialog(QDialog):
         if not reference_mask.any():
 
             self.slope_note_label.setText(
-                "In diesem Kartenausschnitt wurden keine Seen oder "
+                tr("In diesem Kartenausschnitt wurden keine Seen oder "
                 "größeren Flüsse als Bezug gefunden - der "
-                "Gefälle-Ausgleich hat hier keine Wirkung."
+                "Gefälle-Ausgleich hat hier keine Wirkung.")
             )
 
         else:
 
             self.slope_note_label.setText(
-                "Als Bezug dienen Seen und Wasserflächen sowie Flüsse "
+                tr("Als Bezug dienen Seen und Wasserflächen sowie Flüsse "
                 "und Kanäle bis zur eingestellten Höhe über dem "
                 "Wasserspiegel; Bäche, Gräben und höher gelegene "
-                "Gewässer zählen dafür nicht."
+                "Gewässer zählen dafür nicht.")
             )
 
         self._update_preview()
@@ -1725,7 +1749,7 @@ class HeightmapDialog(QDialog):
             mask = self._get_water_mask()
         except Exception as exc:
             QApplication.restoreOverrideCursor()
-            QMessageBox.critical(self, "Wassermaske fehlgeschlagen", str(exc))
+            QMessageBox.critical(self, tr("Wassermaske fehlgeschlagen"), str(exc))
             return
 
         QApplication.restoreOverrideCursor()
@@ -1734,10 +1758,10 @@ class HeightmapDialog(QDialog):
 
             QMessageBox.information(
                 self,
-                "Keine Gewässer",
-                "In diesem Kartenausschnitt wurden keine Wasserflächen oder "
+                tr("Keine Gewässer"),
+                tr("In diesem Kartenausschnitt wurden keine Wasserflächen oder "
                 "-wege gefunden. Zuerst OSM-Daten laden "
-                "(Werkzeuge → OSM laden).",
+                "(Werkzeuge → OSM laden)."),
             )
 
             return
@@ -1779,17 +1803,27 @@ class HeightmapDialog(QDialog):
             self._applying_preset = False
 
         text = (
-            f"Hauptfluss liegt zwischen {river_low:.0f} und "
-            f"{river_high:.0f} m. Wasserhöhe auf {middle:.0f} m gesetzt "
-            f"(Mitte). Die Wasseroberfläche wird am oberen Ende um bis zu "
-            f"{lowered:.0f} m abgesenkt und am unteren um bis zu "
-            f"{raised:.0f} m angehoben."
+            tr(
+                "Hauptfluss liegt zwischen {low:.0f} und {high:.0f} m. "
+                "Wasserhöhe auf {middle:.0f} m gesetzt (Mitte). Die "
+                "Wasseroberfläche wird am oberen Ende um bis zu "
+                "{lowered:.0f} m abgesenkt und am unteren um bis zu "
+                "{raised:.0f} m angehoben."
+            ).format(
+                low=river_low,
+                high=river_high,
+                middle=middle,
+                lowered=lowered,
+                raised=raised,
+            )
         )
 
         if raised_threshold:
             text += (
-                f" Die Grenze „Nur Gewässer bis“ wurde auf "
-                f"{needed_rise} m erhöht."
+                tr(
+                    " Die Grenze „Nur Gewässer bis“ wurde auf {value} m "
+                    "erhöht."
+                ).format(value=needed_rise)
             )
 
         self.water_hint_label.setText(text)
@@ -1850,7 +1884,7 @@ class HeightmapDialog(QDialog):
             except Exception as exc:
                 QMessageBox.critical(
                     self,
-                    "Wassermaske fehlgeschlagen",
+                    tr("Wassermaske fehlgeschlagen"),
                     str(exc),
                 )
                 self.enforce_checkbox.setChecked(False)
@@ -1860,10 +1894,10 @@ class HeightmapDialog(QDialog):
 
                 QMessageBox.information(
                     self,
-                    "Keine Gewässer",
-                    "In diesem Kartenausschnitt wurden keine Wasserflächen "
+                    tr("Keine Gewässer"),
+                    tr("In diesem Kartenausschnitt wurden keine Wasserflächen "
                     "oder -wege gefunden - die Einstellung hat keine "
-                    "Wirkung. Zuerst OSM-Daten laden (Werkzeuge → OSM laden).",
+                    "Wirkung. Zuerst OSM-Daten laden (Werkzeuge → OSM laden)."),
                 )
 
         self._update_preview()
@@ -1880,7 +1914,7 @@ class HeightmapDialog(QDialog):
             except Exception as exc:
                 QMessageBox.critical(
                     self,
-                    "Wassermaske fehlgeschlagen",
+                    tr("Wassermaske fehlgeschlagen"),
                     str(exc),
                 )
                 self.water_blend_checkbox.setChecked(False)
@@ -1889,9 +1923,9 @@ class HeightmapDialog(QDialog):
             if not water_mask.any():
 
                 self.water_blend_note_label.setText(
-                    "In diesem Kartenausschnitt wurden keine "
+                    tr("In diesem Kartenausschnitt wurden keine "
                     "Wasserflächen/-wege gefunden - die Anpassung hat "
-                    "hier keine Wirkung."
+                    "hier keine Wirkung.")
                 )
 
             else:
@@ -2321,9 +2355,9 @@ class HeightmapDialog(QDialog):
 
         if not report.window_min_m <= water_level <= report.window_max_m:
             text += (
-                "\nAchtung: Die Wasserhöhe liegt außerhalb des Fensters, "
+                tr("\nAchtung: Die Wasserhöhe liegt außerhalb des Fensters, "
                 "die Flüsse wären im Spiel trocken oder die ganze Karte läge "
-                "unter Wasser."
+                "unter Wasser.")
             )
 
         self.clip_report_label.setText(text)
@@ -2371,10 +2405,13 @@ class HeightmapDialog(QDialog):
         if suggestion.outlier_count > 0:
 
             checkbox.setText(
-                f"Ausreißer aus Höhenbereich ausschließen "
-                f"({suggestion.outlier_count} Pixel, "
-                f"{suggestion.outlier_fraction * 100:.2f}% der Fläche "
-                f"erkannt)"
+                tr(
+                    "Ausreißer aus Höhenbereich ausschließen "
+                    "({count} Pixel, {percent:.2f}% der Fläche erkannt)"
+                ).format(
+                    count=suggestion.outlier_count,
+                    percent=suggestion.outlier_fraction * 100,
+                )
             )
             checkbox.setVisible(True)
 
@@ -2399,7 +2436,7 @@ class HeightmapDialog(QDialog):
         if not matches:
             return None
 
-        return " oder ".join(size.label for size in matches)
+        return tr(" oder ").join(size.label for size in matches)
 
     def _game_values_text(self) -> str:
         """
@@ -2428,16 +2465,18 @@ class HeightmapDialog(QDialog):
         else:
 
             lines = [
-                "Im TPF3-Import eintragen: "
-                f"Mindesthöhe {range_min:.0f}, "
-                f"Maximalhöhe {range_max:.0f}, "
-                f"Wasserhöhe {water:.0f}",
+                tr(
+                    "Im TPF3-Import eintragen: Mindesthöhe {low:.0f}, "
+                    "Maximalhöhe {high:.0f}, Wasserhöhe {water:.0f}"
+                ).format(low=range_min, high=range_max, water=water),
             ]
 
         size_hint = self._game_size_hint()
 
         if size_hint:
-            lines.append(f"Kartengröße und -format im Spiel: {size_hint}")
+            lines.append(tr("Kartengröße und -format im Spiel: {size}").format(
+                             size=size_hint
+                         ))
 
         hint = height_hint(
             range_min,
@@ -2533,9 +2572,9 @@ class HeightmapDialog(QDialog):
 
         filename, _ = QFileDialog.getSaveFileName(
             self,
-            "Heightmap exportieren",
+            tr("Heightmap exportieren"),
             default_name,
-            "PNG-Bilder (*.png)"
+            tr("PNG-Bilder (*.png)")
         )
 
         if not filename:
@@ -2553,7 +2592,7 @@ class HeightmapDialog(QDialog):
         except Exception as exc:
             QMessageBox.critical(
                 self,
-                "Export fehlgeschlagen",
+                tr("Export fehlgeschlagen"),
                 str(exc)
             )
             return
@@ -2569,10 +2608,12 @@ class HeightmapDialog(QDialog):
         ):
 
             outlier_warning = (
-                f"\n\nHinweis: Die {self._active_suggestion().outlier_count} als "
-                f"Ausreißer erkannten Pixel liegen außerhalb dieses "
-                f"Bereichs und wurden dadurch auf den Rand geklemmt "
-                f"(0 bzw. 65535) - deren echte Höhe geht im Export verloren."
+                tr(
+                    "\n\nHinweis: Die {count} als Ausreißer erkannten Pixel "
+                    "liegen außerhalb dieses Bereichs und wurden dadurch auf den "
+                    "Rand geklemmt (0 bzw. 65535) - deren echte Höhe geht im "
+                    "Export verloren."
+                ).format(count=self._active_suggestion().outlier_count)
             )
 
         slope_note = ""
@@ -2580,12 +2621,16 @@ class HeightmapDialog(QDialog):
         if self.slope_checkbox.isChecked():
 
             slope_note = (
-                f"\n\nGefälle-Ausgleich aktiv (Stärke "
-                f"{self.slope_strength_input.value():.0f} %, Glättung "
-                f"{self.slope_smoothing_input.value():.0f} m): Flüsse und "
-                f"Seen wurden auf eine gemeinsame Ebene gelegt, das "
-                f"Gelände relativ dazu angepasst - die absoluten Höhen "
-                f"ü. NN stimmen dadurch nicht mehr."
+                tr(
+                    "\n\nGefälle-Ausgleich aktiv (Stärke {strength:.0f} %, "
+                    "Glättung {smoothing:.0f} m): Flüsse und Seen wurden auf "
+                    "eine gemeinsame Ebene gelegt, das Gelände relativ dazu "
+                    "angepasst - die absoluten Höhen ü. NN stimmen dadurch nicht "
+                    "mehr."
+                ).format(
+                    strength=self.slope_strength_input.value(),
+                    smoothing=self.slope_smoothing_input.value(),
+                )
             )
 
         flatten_note = ""
@@ -2593,8 +2638,9 @@ class HeightmapDialog(QDialog):
         if self.flatten_checkbox.isChecked():
 
             flatten_note = (
-                f"\n\nTrassen und Siedlungen eingeebnet "
-                f"({self.flatten_sigma_input.value():.0f} m)."
+                tr(
+                    "\n\nTrassen und Siedlungen eingeebnet ({sigma:.0f} m)."
+                ).format(sigma=self.flatten_sigma_input.value())
             )
 
         compress_note = ""
@@ -2602,8 +2648,10 @@ class HeightmapDialog(QDialog):
         if self.compress_input.value() < 100.0:
 
             compress_note = (
-                f"\n\nHöhen über dem Wasserspiegel auf "
-                f"{self.compress_input.value():.0f} % gestaucht."
+                tr(
+                    "\n\nHöhen über dem Wasserspiegel auf {percent:.0f} % "
+                    "gestaucht."
+                ).format(percent=self.compress_input.value())
             )
 
         smooth_note = ""
@@ -2611,7 +2659,9 @@ class HeightmapDialog(QDialog):
         if self.smooth_checkbox.isChecked():
 
             smooth_note = (
-                f"\n\nGelände geglättet ({self.smooth_sigma_input.value():.0f} m)."
+                tr("\n\nGelände geglättet ({sigma:.0f} m).").format(
+                    sigma=self.smooth_sigma_input.value()
+                )
             )
 
         enforce_note = ""
@@ -2619,12 +2669,17 @@ class HeightmapDialog(QDialog):
         if self.enforce_checkbox.isChecked():
 
             enforce_note = (
-                f"\n\nWasser nur dort, wo OpenStreetMap Wasser hat: "
-                f"Flussbett {self.enforce_edge_input.value():.0f} m (Ufer) bis "
-                f"{self.enforce_depth_input.value():.0f} m (Mitte) unter "
-                f"dem Wasserspiegel, Land mindestens "
-                f"{self.enforce_bank_input.value():.1f} m darüber, Böschung "
-                f"{self.enforce_transition_input.value():.0f} m."
+                tr(
+                    "\n\nWasser nur dort, wo OpenStreetMap Wasser hat: "
+                    "Flussbett {edge:.0f} m (Ufer) bis {depth:.0f} m (Mitte) "
+                    "unter dem Wasserspiegel, Land mindestens {bank:.1f} m "
+                    "darüber, Böschung {transition:.0f} m."
+                ).format(
+                    edge=self.enforce_edge_input.value(),
+                    depth=self.enforce_depth_input.value(),
+                    bank=self.enforce_bank_input.value(),
+                    transition=self.enforce_transition_input.value(),
+                )
             )
 
         water_blend_note = ""
@@ -2632,10 +2687,11 @@ class HeightmapDialog(QDialog):
         if self.water_blend_checkbox.isChecked():
 
             water_blend_note = (
-                f"\n\nDas Terrain wurde um Gewässer herum (Übergang "
-                f"{self.transition_input.value():.0f} m) sanft ans "
-                f"Wasserniveau angepasst - weicht dort geringfügig von "
-                f"den echten Höhendaten ab."
+                tr(
+                    "\n\nDas Terrain wurde um Gewässer herum (Übergang "
+                    "{transition:.0f} m) sanft ans Wasserniveau angepasst - "
+                    "weicht dort geringfügig von den echten Höhendaten ab."
+                ).format(transition=self.transition_input.value())
             )
 
         clip_note = ""
@@ -2643,22 +2699,29 @@ class HeightmapDialog(QDialog):
         if self._clip_report is not None:
 
             clip_note = (
-                f"\n\nHöhenfenster {self._clip_report.window_min_m:.0f} bis "
-                f"{self._clip_report.window_max_m:.0f} m: "
-                f"{describe_report(self._clip_report)}"
+                tr(
+                    "\n\nHöhenfenster {low:.0f} bis {high:.0f} m: {report}"
+                ).format(
+                    low=self._clip_report.window_min_m,
+                    high=self._clip_report.window_max_m,
+                    report=describe_report(self._clip_report),
+                )
             )
 
         QMessageBox.information(
             self,
-            "Export abgeschlossen",
-            f"Heightmap gespeichert unter:\n{filename}\n\n"
-            f"{self._game_values_text()}"
-            f"{outlier_warning}"
-            f"{smooth_note}"
-            f"{flatten_note}"
-            f"{compress_note}"
-            f"{slope_note}"
-            f"{enforce_note}"
-            f"{water_blend_note}"
-            f"{clip_note}"
+            tr("Export abgeschlossen"),
+            tr("Heightmap gespeichert unter:\n{filename}\n\n").format(
+                filename=filename
+            ) + (
+                self._game_values_text()
+                + outlier_warning
+                + smooth_note
+                + flatten_note
+                + compress_note
+                + slope_note
+                + enforce_note
+                + water_blend_note
+                + clip_note
+            )
         )

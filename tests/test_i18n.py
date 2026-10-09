@@ -29,6 +29,7 @@ SAME_IN_BOTH = {
     "Marker",
     "Parks",
     "Vegetation",
+    "Heightmap",
     "Marker: {id} | {lat:.6f}, {lon:.6f}",
 }
 
