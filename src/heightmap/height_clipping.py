@@ -3,7 +3,7 @@ Hoehenfenster fuer den TPF3-Import: Was der Karteneditor annimmt, und was mit
 Hoehen ausserhalb des gewaehlten Fensters passiert.
 
 Der Editor von TPF3 nimmt beim Heightmap-Import nur Werte von GAME_MIN_M bis
-GAME_MAX_M (im Spiel getestet: -20 bis 3177 m). Liegt das Gelaende (zum Beispiel
+GAME_MAX_M (im Spiel getestet: -100 bis 3177 m). Liegt das Gelaende (zum Beispiel
 in den Alpen) ausserhalb, muss es in ein Fenster gelegt werden. Alle Rechnungen
 dazu stehen hier, damit Vorschau, Zahlen im Dialog und Export dasselbe Raster
 und dieselbe Normierung benutzen.
@@ -22,7 +22,7 @@ from src.i18n import tr
 
 # Grenzen der Werte, die der Karteneditor von TPF3 beim Import annimmt
 # (Eintragswerte Mindest- und Maximalhoehe, im Spiel getestet).
-GAME_MIN_M = -20.0
+GAME_MIN_M = -100.0
 GAME_MAX_M = 3177.0
 GAME_MAX_SPAN_M = GAME_MAX_M - GAME_MIN_M
 

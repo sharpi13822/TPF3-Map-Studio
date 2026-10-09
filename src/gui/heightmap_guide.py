@@ -103,7 +103,7 @@ waren im Spiel beide Enden des Flusses gefüllt.</li>
 </ol>
 
 <h4>Höhenfenster (Grenzen des Karteneditors)</h4>
-<p>Der Karteneditor von TPF3 nimmt beim Import nur Höhen von <b>−20 bis 3177 m</b> an (im Spiel
+<p>Der Karteneditor von TPF3 nimmt beim Import nur Höhen von <b>−100 bis 3177 m</b> an (im Spiel
 getestet). Liegt das Gelände darüber oder darunter, zum Beispiel in den Alpen, zeigt der Dialog unten
 einen Hinweis. Dann den Haken <b>Höhenfenster begrenzen</b> setzen. Das Fenster gilt in den Werten, die
 du im Editor einträgst: Mit dem Haken „Werte auf Wasserhöhe 0 beziehen“ ist es relativ zur Wasserhöhe.
@@ -208,7 +208,7 @@ geprüft.</i></td></tr>
 Alpen)</td><td>Das Gelände liegt ganz über der Schneegrenze des Spiels, weil die Höhen über Meer eingetragen
 werden (Bern: 488 bis 936 m). Haken <b>„Werte auf Wasserhöhe 0 beziehen“</b> setzen, <b>Höhen stauchen</b>
 (bei Bern etwa 75 %), neue Zahlen unten ablesen, neu exportieren und mit den neuen Zahlen importieren.</td></tr>
-<tr><td>Der Editor nimmt die Höhen nicht an, oder das Gelände ragt über 3177 m (Alpen)</td><td>Der Editor nimmt nur −20 bis 3177 m. <b>Höhenfenster begrenzen</b> anhaken, Modus wählen (Oben kappen, Unten abschneiden oder Stauchen), neue Zahlen unten ablesen. Die Zeile unter dem Fenster zeigt, wie viel Fläche planiert wird.</td></tr>
+<tr><td>Der Editor nimmt die Höhen nicht an, oder das Gelände ragt über 3177 m (Alpen)</td><td>Der Editor nimmt nur −100 bis 3177 m. <b>Höhenfenster begrenzen</b> anhaken, Modus wählen (Oben kappen, Unten abschneiden oder Stauchen), neue Zahlen unten ablesen. Die Zeile unter dem Fenster zeigt, wie viel Fläche planiert wird.</td></tr>
 <tr><td>Weiße Flächen auf den Höhen</td><td>Schneegrenze im Spiel. Schneegrenzen-Test
 machen, dann <b>Höhen stauchen</b>.</td></tr>
 <tr><td>Graue Felsstreifen an Hängen</td><td>Ab einer Neigung färbt das Spiel Fels. Hänge mit

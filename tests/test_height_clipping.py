@@ -32,9 +32,9 @@ def _ramp(low, high, rows=40, cols=50):
 class GameLimitsTest(unittest.TestCase):
 
     def test_limits_are_the_tested_editor_values(self):
-        self.assertEqual(GAME_MIN_M, -20.0)
+        self.assertEqual(GAME_MIN_M, -100.0)
         self.assertEqual(GAME_MAX_M, 3177.0)
-        self.assertEqual(GAME_MAX_SPAN_M, 3197.0)
+        self.assertEqual(GAME_MAX_SPAN_M, 3277.0)
 
 
 class ApplyWindowTest(unittest.TestCase):
@@ -139,7 +139,7 @@ class DefaultWindowTest(unittest.TestCase):
         self.assertEqual(default_window(0, 4200, MODE_CAP), (0.0, 3177.0))
 
     def test_deep_pits_are_cut_by_default(self):
-        self.assertEqual(default_window(-500, 2000, MODE_CUT), (-20.0, 2000.0))
+        self.assertEqual(default_window(-500, 2000, MODE_CUT), (-100.0, 2000.0))
 
     def test_terrain_that_fits_gives_its_own_range(self):
         for mode in MODES:
@@ -166,10 +166,10 @@ class DefaultWindowTest(unittest.TestCase):
 
     def test_slider_range(self):
         # ueber den ganzen Editor-Bereich, unabhaengig vom Gelaende
-        self.assertEqual(window_slider_range(2000), (-20.0, 1177.0))
+        self.assertEqual(window_slider_range(2000), (-100.0, 1177.0))
         # nichts zu schieben, wenn das Fenster die ganze Editor-Spanne fuellt (oder mehr)
-        self.assertEqual(window_slider_range(GAME_MAX_SPAN_M), (-20.0, -20.0))
-        self.assertEqual(window_slider_range(5000), (-20.0, -20.0))
+        self.assertEqual(window_slider_range(GAME_MAX_SPAN_M), (-100.0, -100.0))
+        self.assertEqual(window_slider_range(5000), (-100.0, -100.0))
 
     def test_slider_moves_a_window_that_already_fits(self):
         # Gelaende 503..2961 m (Bern/Alpen-Beispiel): Fenster = Gelaende, trotzdem verschiebbar
@@ -190,7 +190,8 @@ class WarningAndTextTest(unittest.TestCase):
         self.assertIsNone(limit_warning(-20, 3177))
         self.assertIsNone(limit_warning(0, 936))
         self.assertIn("3177", limit_warning(0, 4200))
-        self.assertIn("-20", limit_warning(-100, 500))
+        self.assertIsNone(limit_warning(-100, 500))
+        self.assertIn("-100", limit_warning(-150, 500))
 
     def test_describe_untouched_terrain(self):
         _out, report = apply_height_window(_ramp(0, 500), 0, 3177, MODE_CAP)
@@ -221,7 +222,7 @@ class SharedNormalizationTest(unittest.TestCase):
 
         from src.heightmap.heightmap_exporter import export_heightmap_png
 
-        heights = _ramp(-20, 3500, rows=30, cols=20)
+        heights = _ramp(GAME_MIN_M, 3500, rows=30, cols=20)
         clipped, _report = apply_height_window(heights, GAME_MIN_M, GAME_MAX_M, MODE_CAP)
 
         with tempfile.TemporaryDirectory() as folder:

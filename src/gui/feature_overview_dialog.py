@@ -223,7 +223,7 @@ FEATURE_GROUPS = (
             ),
             (
                 "Höhenfenster begrenzen",
-                "Der Karteneditor von TPF3 nimmt nur Höhen von -20 bis 3177 m "
+                "Der Karteneditor von TPF3 nimmt nur Höhen von -100 bis 3177 m "
                 "an. Mit dem Haken legst du das Gelände in ein Fenster (Felder "
                 "'Fenster von ... bis', ein Schieberegler verschiebt es). Für "
                 "Werte außerhalb gibt es drei Modi: Oben kappen (Gipfel werden "
