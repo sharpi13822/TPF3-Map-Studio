@@ -5,6 +5,7 @@ from src.map.objects.selection import Selection
 from src.osm.osm_parser import OSMParser
 from src.osm.objects.osm_data import OSMData
 from src.osm.overpass_query_builder import OverpassQueryConfig, build_query
+from src.i18n import tr
 
 
 class OverpassClient:
@@ -107,5 +108,5 @@ class OverpassClient:
                     print(exc)
 
         raise RuntimeError(
-            "Keiner der Overpass-Server war erreichbar."
+            tr("Keiner der Overpass-Server war erreichbar.")
         ) from last_exception

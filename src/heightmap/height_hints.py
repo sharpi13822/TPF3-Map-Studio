@@ -7,6 +7,7 @@ Schnee ab etwa 375 bis 425 m. Liegt das ganze Gelaende hoeher (zum Beispiel bei 
 """
 
 from __future__ import annotations
+from src.i18n import tr
 
 # Liegt schon die tiefste Stelle hoeher als dies, ist im Spiel alles Fels oder Schnee.
 HIGH_TERRAIN_M = 300.0
@@ -24,17 +25,14 @@ def height_hint(range_min: float, range_max: float, water: float, relative: bool
 
     if not relative and range_min >= HIGH_TERRAIN_M:
         return (
-            f"Achtung: Das ganze Gelände liegt über etwa {HIGH_TERRAIN_M:.0f} m. Im Spiel wird es "
-            "dadurch komplett weiß (Schnee) oder grau (Fels). Den Haken „Werte auf Wasserhöhe 0 "
-            "beziehen“ setzen und bei Bedarf „Höhen stauchen“ verwenden."
+            tr("Achtung: Das ganze Gelände liegt über etwa {HIGH_TERRAIN_M:.0f} m. Im Spiel wird es dadurch komplett weiß (Schnee) oder grau (Fels). Den Haken „Werte auf Wasserhöhe 0 beziehen“ setzen und bei Bedarf „Höhen stauchen“ verwenden.").format(HIGH_TERRAIN_M=HIGH_TERRAIN_M)
         )
 
     top = (range_max - water) if relative else range_max
 
     if top >= SNOW_LINE_M:
         return (
-            f"Hinweis: Die höchsten Stellen liegen bei etwa {top:.0f} m. Ab etwa {SNOW_LINE_M:.0f} m "
-            "färbt das Spiel weiß. „Höhen stauchen“ verringert das."
+            tr("Hinweis: Die höchsten Stellen liegen bei etwa {top:.0f} m. Ab etwa {SNOW_LINE_M:.0f} m färbt das Spiel weiß. „Höhen stauchen“ verringert das.").format(top=top, SNOW_LINE_M=SNOW_LINE_M)
         )
 
     return None

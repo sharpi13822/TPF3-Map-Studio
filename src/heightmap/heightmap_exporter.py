@@ -21,6 +21,7 @@ from src.heightmap.height_clipping import normalize_heights
 from src.heightmap.copernicus_dem import DemMosaic, download_tiles_for_selection
 from src.heightmap.dgm1_dem import Dgm1Error, Dgm1Mosaic
 from src.heightmap.swissalti3d_dem import required_swiss_tiles
+from src.i18n import tr
 
 METERS_PER_PIXEL = 4.0
 
@@ -166,18 +167,18 @@ def build_heightmap_array_ex(
             )
         else:
             if dgm1_folder is None:
-                raise Dgm1Error("Kein Ordner mit DGM1-Kacheln angegeben.")
+                raise Dgm1Error(tr("Kein Ordner mit DGM1-Kacheln angegeben."))
             dgm1 = Dgm1Mosaic.from_folder(selection, dgm1_folder, METERS_PER_PIXEL)
 
         if dgm1.slot_count == 0:
             if source == SOURCE_SWISSALTI3D:
                 raise Dgm1Error(
-                    "Keine swissALTI3D-Kacheln fuer diesen Ausschnitt gefunden. Liegt der "
-                    "Ausschnitt ausserhalb der Schweiz und Liechtensteins, bitte Copernicus waehlen."
+                    tr("Keine swissALTI3D-Kacheln fuer diesen Ausschnitt gefunden. Liegt der "
+                    "Ausschnitt ausserhalb der Schweiz und Liechtensteins, bitte Copernicus waehlen.")
                 )
             raise Dgm1Error(
-                "Keine DGM1-Kacheln fuer diesen Ausschnitt gefunden. Liegt der Ausschnitt "
-                "ausserhalb Deutschlands, bitte Copernicus waehlen."
+                tr("Keine DGM1-Kacheln fuer diesen Ausschnitt gefunden. Liegt der Ausschnitt "
+                "ausserhalb Deutschlands, bitte Copernicus waehlen.")
             )
 
         def make_fallback():
@@ -202,8 +203,8 @@ def build_heightmap_array_ex(
 
     if np.isnan(out).any():
         raise RuntimeError(
-            "Hoehendaten decken den Kartenausschnitt nicht vollstaendig ab "
-            "(evtl. fehlt eine Randkachel)."
+            tr("Hoehendaten decken den Kartenausschnitt nicht vollstaendig ab "
+            "(evtl. fehlt eine Randkachel).")
         )
 
     return out, info

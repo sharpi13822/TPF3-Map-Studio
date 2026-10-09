@@ -4,6 +4,7 @@ import math
 from typing import Any
 
 from src.tpf2.tpf2_geometry import TPF2Geometry
+from src.i18n import tr
 
 
 class TPF2Exporter:
@@ -47,7 +48,7 @@ class TPF2Exporter:
                         (float(p[0]), float(p[1])) for p in geometry
                     )
         if not coordinates:
-            raise ValueError("Keine Liniengeometrien für TPF2 vorhanden.")
+            raise ValueError(tr("Keine Liniengeometrien für TPF2 vorhanden."))
         return cls.from_coordinates(coordinates)
 
     def export(self, export_data) -> dict[str, Any]:

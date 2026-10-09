@@ -32,6 +32,7 @@ from pathlib import Path
 import numpy as np
 
 from src.tpf2.tpf2_geometry import TPF2Geometry
+from src.i18n import tr
 
 
 @dataclass(frozen=True)
@@ -46,30 +47,30 @@ class IndustryRule:
 RULES: tuple[IndustryRule, ...] = (
     IndustryRule("farm", "Farm (landuse=farmyard)", False, True, False),
     IndustryRule(
-        "livestock_farm", "Viehzucht (building=cowshed/stable/sty)",
+        "livestock_farm", tr("Viehzucht (building=cowshed/stable/sty)"),
         False, True, False,
     ),
-    IndustryRule("forest", "Forst (große Waldflächen)", False, False, True),
-    IndustryRule("saw_mill", "Sägewerk", False, True, False),
-    IndustryRule("bricks_works", "Ziegelei", False, True, False),
-    IndustryRule("clay_pit", "Lehmgrube (quarry + resource=clay)", False, True, False),
-    IndustryRule("quarry", "Steinbruch (landuse=quarry)", False, True, False),
-    IndustryRule("sand_pit", "Sandgrube (quarry + sand/gravel)", False, True, False),
-    IndustryRule("coal_mine", "Kohlemine (resource=coal)", False, True, False),
-    IndustryRule("iron_ore_mine", "Eisenerzmine (resource=iron_ore)", False, True, False),
-    IndustryRule("oil_well", "Ölquelle (man_made=petroleum_well)", False, True, False),
-    IndustryRule("oil_platform", "Ölplattform (offshore_platform)", True, True, False),
-    IndustryRule("oil_refinery", "Raffinerie", False, True, False),
-    IndustryRule("steel_mill", "Stahlwerk", False, True, False),
-    IndustryRule("machine_factory", "Maschinenfabrik", False, True, False),
-    IndustryRule("tool_factory", "Werkzeugfabrik", False, True, False),
-    IndustryRule("vehicle_factory", "Fahrzeugfabrik", False, True, False),
-    IndustryRule("glass_works", "Glashütte", False, True, False),
-    IndustryRule("brewery", "Brauerei", False, True, False),
-    IndustryRule("food_factory", "Konservenfabrik / Lebensmittel", False, True, False),
-    IndustryRule("furniture_factory", "Möbelfabrik", False, True, False),
-    IndustryRule("chemical_plant", "Chemiewerk", False, True, False),
-    IndustryRule("textile_factory", "Textilfabrik", False, True, False),
+    IndustryRule("forest", tr("Forst (große Waldflächen)"), False, False, True),
+    IndustryRule("saw_mill", tr("Sägewerk"), False, True, False),
+    IndustryRule("bricks_works", tr("Ziegelei"), False, True, False),
+    IndustryRule("clay_pit", tr("Lehmgrube (quarry + resource=clay)"), False, True, False),
+    IndustryRule("quarry", tr("Steinbruch (landuse=quarry)"), False, True, False),
+    IndustryRule("sand_pit", tr("Sandgrube (quarry + sand/gravel)"), False, True, False),
+    IndustryRule("coal_mine", tr("Kohlemine (resource=coal)"), False, True, False),
+    IndustryRule("iron_ore_mine", tr("Eisenerzmine (resource=iron_ore)"), False, True, False),
+    IndustryRule("oil_well", tr("Ölquelle (man_made=petroleum_well)"), False, True, False),
+    IndustryRule("oil_platform", tr("Ölplattform (offshore_platform)"), True, True, False),
+    IndustryRule("oil_refinery", tr("Raffinerie"), False, True, False),
+    IndustryRule("steel_mill", tr("Stahlwerk"), False, True, False),
+    IndustryRule("machine_factory", tr("Maschinenfabrik"), False, True, False),
+    IndustryRule("tool_factory", tr("Werkzeugfabrik"), False, True, False),
+    IndustryRule("vehicle_factory", tr("Fahrzeugfabrik"), False, True, False),
+    IndustryRule("glass_works", tr("Glashütte"), False, True, False),
+    IndustryRule("brewery", tr("Brauerei"), False, True, False),
+    IndustryRule("food_factory", tr("Konservenfabrik / Lebensmittel"), False, True, False),
+    IndustryRule("furniture_factory", tr("Möbelfabrik"), False, True, False),
+    IndustryRule("chemical_plant", tr("Chemiewerk"), False, True, False),
+    IndustryRule("textile_factory", tr("Textilfabrik"), False, True, False),
 )
 
 RULE_KEYS = tuple(rule.key for rule in RULES)

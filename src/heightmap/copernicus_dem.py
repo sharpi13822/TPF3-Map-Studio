@@ -22,6 +22,7 @@ import numpy as np
 import requests
 
 from src.map.objects.selection import Selection
+from src.i18n import tr
 
 BASE_URL = "https://copernicus-dem-30m.s3.amazonaws.com"
 
@@ -67,8 +68,7 @@ def download_tile(tile_id: str, cache_dir: Path) -> Path:
         with requests.get(url, stream=True, timeout=60) as resp:
             if resp.status_code == 404:
                 raise FileNotFoundError(
-                    f"Kachel {tile_id} existiert nicht bei Copernicus DEM "
-                    f"(vermutlich reines Wassergebiet ohne Landkachel: {url})"
+                    tr("Kachel {tile_id} existiert nicht bei Copernicus DEM (vermutlich reines Wassergebiet ohne Landkachel: {url})").format(tile_id=tile_id, url=url)
                 )
             resp.raise_for_status()
             with open(tmp, "wb") as f:

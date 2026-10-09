@@ -38,6 +38,7 @@ from src.heightmap.dgm1_dem import (
 )
 from src.heightmap.lv95 import LV95_ZONE, latlon_to_lv95, lv95_to_latlon
 from src.http_identity import USER_AGENT
+from src.i18n import tr
 
 STAC_ITEMS_URL = "https://data.geo.admin.ch/api/stac/v0.9/collections/ch.swisstopo.swissalti3d/items"
 
@@ -207,12 +208,14 @@ def _get(session, url, params=None, timeout=60, retries=3, sleep=time.sleep):
 
         if response.status_code != 200:
             raise Dgm1Error(
-                f"swisstopo antwortet mit HTTP {response.status_code} ({url})."
+                tr("swisstopo antwortet mit HTTP {status} ({url}).").format(
+                    status=response.status_code, url=url
+                )
             )
 
         return response
 
-    raise Dgm1Error(f"swisstopo nicht erreichbar ({last_error or 'unbekannter Fehler'}).")
+    raise Dgm1Error(tr("swisstopo nicht erreichbar ({error}).").format(error=last_error or tr("unbekannter Fehler")))
 
 
 def query_items(session, bbox, sleep=time.sleep) -> list[dict]:
@@ -233,7 +236,7 @@ def query_items(session, bbox, sleep=time.sleep) -> list[dict]:
         try:
             body = response.json()
         except ValueError as exc:
-            raise Dgm1Error(f"Unlesbare Antwort von swisstopo: {exc}") from exc
+            raise Dgm1Error(tr("Unlesbare Antwort von swisstopo: {exc}").format(exc=exc)) from exc
 
         items.extend(body.get("features") or [])
 
@@ -340,7 +343,7 @@ def fetch_tiles_for_selection(
 
         check_cancel()
 
-        report(f"Suche Kacheln bei swisstopo ({index + 1} von {len(blocks)})")
+        report(tr("Suche Kacheln bei swisstopo ({value} von {count})").format(value=index + 1, count=len(blocks)))
 
         found.update(pick_latest(query_items(session, bbox, sleep=sleep)))
 
@@ -350,7 +353,7 @@ def fetch_tiles_for_selection(
 
         check_cancel()
 
-        report(f"Kachel {done + 1} von {len(slots)}")
+        report(tr("Kachel {value} von {count}").format(value=done + 1, count=len(slots)))
 
         entry = found.get((ie, inn))
 
@@ -372,7 +375,7 @@ def fetch_tiles_for_selection(
         response = _get(session, href, timeout=180, sleep=sleep)
 
         if len(response.content) < 1000:
-            raise Dgm1Error(f"Kachel {ie}-{inn}: Antwort von swisstopo ist zu klein, vermutlich fehlerhaft.")
+            raise Dgm1Error(tr("Kachel {ie}-{inn}: Antwort von swisstopo ist zu klein, vermutlich fehlerhaft.").format(ie=ie, inn=inn))
 
         store_tile(cache_dir, ie, inn, response.content, year, href)
 

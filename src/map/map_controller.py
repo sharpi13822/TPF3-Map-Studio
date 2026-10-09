@@ -28,6 +28,7 @@ from src.geometry.polyline import Polyline
 from src.export.osm_exporter import OSMExporter
 from src.tpf2.tpf2_exporter import TPF2Exporter
 from src.tpf2.tpf2_lua_writer import TPF2LuaWriter
+from src.i18n import tr
 
 
 class Tool(Enum):
@@ -355,8 +356,7 @@ class MapController(QObject):
                 self.api.clear_measure_line()
 
                 self.measurement_changed.emit(
-                    f"Messung: Startpunkt {lat:.6f}, {lon:.6f} "
-                    f"(zweiten Punkt anklicken)"
+                    tr("Messung: Startpunkt {lat:.6f}, {lon:.6f} (zweiten Punkt anklicken)").format(lat=lat, lon=lon)
                 )
 
                 return
@@ -378,7 +378,7 @@ class MapController(QObject):
             )
 
             self.measurement_changed.emit(
-                f"Messung: {distance_text}"
+                tr("Messung: {distance_text}").format(distance_text=distance_text)
             )
 
             print(

@@ -18,6 +18,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 import numpy as np
+from src.i18n import tr
 
 # Grenzen der Werte, die der Karteneditor von TPF3 beim Import annimmt
 # (Eintragswerte Mindest- und Maximalhoehe, im Spiel getestet).
@@ -218,10 +219,7 @@ def limit_warning(entered_min: float, entered_max: float) -> str | None:
         return None
 
     return (
-        f"Achtung: Der Karteneditor nimmt nur Höhen von {GAME_MIN_M:.0f} bis "
-        f"{GAME_MAX_M:.0f} m. Dein Bereich ({entered_min:.0f} bis {entered_max:.0f} m) "
-        "liegt außerhalb. „Höhenfenster begrenzen“ anhaken oder „Höhen stauchen“ "
-        "verwenden."
+        tr("Achtung: Der Karteneditor nimmt nur Höhen von {GAME_MIN_M:.0f} bis {GAME_MAX_M:.0f} m. Dein Bereich ({entered_min:.0f} bis {entered_max:.0f} m) liegt außerhalb. „Höhenfenster begrenzen“ anhaken oder „Höhen stauchen“ verwenden.").format(GAME_MIN_M=GAME_MIN_M, GAME_MAX_M=GAME_MAX_M, entered_min=entered_min, entered_max=entered_max)
     )
 
 
@@ -241,22 +239,18 @@ def describe_report(report: ClipReport) -> str:
     if report.mode == MODE_SQUEEZE:
 
         if report.scale_up >= 0.9995 and report.scale_down >= 0.9995:
-            return "Nichts wird gestaucht: Das Gelände passt schon ins Fenster."
+            return tr("Nichts wird gestaucht: Das Gelände passt schon ins Fenster.")
 
         return (
-            f"Gestaucht: Höhen über dem Bezugspunkt auf {report.scale_up * 100:.0f} %, "
-            f"darunter auf {report.scale_down * 100:.0f} % "
-            f"({_percent(report.changed_fraction)} % der Fläche verändert)."
+            tr("Gestaucht: Höhen über dem Bezugspunkt auf {value:.0f} %, darunter auf {value2:.0f} % ({percent} % der Fläche verändert).").format(value=report.scale_up * 100, value2=report.scale_down * 100, percent=_percent(report.changed_fraction))
         )
 
     if report.changed_fraction <= 0.0:
         return (
-            "Nichts wird planiert: Das Gelände liegt ganz im Fenster. Mit dem "
-            "Schieberegler oder engeren Feldern lässt sich das ändern."
+            tr("Nichts wird planiert: Das Gelände liegt ganz im Fenster. Mit dem "
+            "Schieberegler oder engeren Feldern lässt sich das ändern.")
         )
 
     return (
-        f"{_percent(report.changed_fraction)} % der Fläche werden planiert "
-        f"(oben gekappt: {_percent(report.lowered_fraction)} %, "
-        f"unten abgeschnitten: {_percent(report.raised_fraction)} %)."
+        tr("{percent} % der Fläche werden planiert (oben gekappt: {percent2} %, unten abgeschnitten: {percent3} %).").format(percent=_percent(report.changed_fraction), percent2=_percent(report.lowered_fraction), percent3=_percent(report.raised_fraction))
     )

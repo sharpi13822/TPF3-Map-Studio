@@ -32,16 +32,17 @@ from src.heightmap.water_terrain_blend import (
     ring_is_usable,
 )
 from src.tpf2.tpf2_geometry import TPF2Geometry
+from src.i18n import tr
 
 # Grauwerte der fuenf Biome (Mitten der Intervalle).
 BIOME_GRAY = (26, 77, 128, 179, 230)
 
 BIOME_NAMES = (
-    "Biom 0 - helle Wiese",
-    "Biom 1 - Wiese mit Baumgruppen",
-    "Biom 2 - dunkle Wiese",
-    "Biom 3 - trockene Steppe",
-    "Biom 4 - gruen-braun gemischt",
+    tr("Biom 0 - helle Wiese"),
+    tr("Biom 1 - Wiese mit Baumgruppen"),
+    tr("Biom 2 - dunkle Wiese"),
+    tr("Biom 3 - trockene Steppe"),
+    tr("Biom 4 - gruen-braun gemischt"),
 )
 
 # Biom fuer alles, was keine Kategorie trifft (und fuer Wasser).

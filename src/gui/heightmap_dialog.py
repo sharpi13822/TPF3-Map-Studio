@@ -2457,9 +2457,10 @@ class HeightmapDialog(QDialog):
         if self.relative_values_checkbox.isChecked():
 
             lines = [
-                "Im TPF3-Import eintragen (auf Wasserhöhe 0 bezogen): "
-                f"Mindesthöhe {range_min - water:.0f}, "
-                f"Maximalhöhe {range_max - water:.0f}, Wasserhöhe 0",
+                tr(
+                    "Im TPF3-Import eintragen (auf Wasserhöhe 0 bezogen): "
+                    "Mindesthöhe {low:.0f}, Maximalhöhe {high:.0f}, Wasserhöhe 0"
+                ).format(low=range_min - water, high=range_max - water),
             ]
 
         else:

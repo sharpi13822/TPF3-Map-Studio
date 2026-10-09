@@ -18,6 +18,7 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
+from src.i18n import tr
 
 
 # ---------------------------------------------------------------------------
@@ -67,95 +68,95 @@ class ModCheckReport:
 REQUIRED_MODS: tuple[RequiredMod, ...] = (
 
     # --- Gleistypen -----------------------------------------------------
-    RequiredMod("Natural Environment Professional 2", "Gleistypen",
-                note="Nur ueber transportfever.net erhaeltlich, kein fester Ordnername bekannt."),
-    RequiredMod("NEP Addon", "Gleistypen",
-                note="GitHub-Mod, kein Workshop-Eintrag."),
-    RequiredMod("Gleispaket mit 750mm 1000mm", "Gleistypen"),
-    RequiredMod("Feldbahn Infrastruktur", "Gleistypen"),
-    RequiredMod("Vienna Fever: Infrastructure", "Gleistypen", workshop_id="2060012969"),
-    RequiredMod("Berlin Stadtbahn Viaduct Construction - Basic Segments", "Gleistypen",
+    RequiredMod("Natural Environment Professional 2", tr("Gleistypen"),
+                note=tr("Nur ueber transportfever.net erhaeltlich, kein fester Ordnername bekannt.")),
+    RequiredMod("NEP Addon", tr("Gleistypen"),
+                note=tr("GitHub-Mod, kein Workshop-Eintrag.")),
+    RequiredMod("Gleispaket mit 750mm 1000mm", tr("Gleistypen")),
+    RequiredMod("Feldbahn Infrastruktur", tr("Gleistypen")),
+    RequiredMod("Vienna Fever: Infrastructure", tr("Gleistypen"), workshop_id="2060012969"),
+    RequiredMod("Berlin Stadtbahn Viaduct Construction - Basic Segments", tr("Gleistypen"),
                 workshop_id="2258619623", toggle="elektrifizierte_gleise",
-                note="Nur noetig, falls das Gebiet elektrifizierte Bahnstrecken enthaelt."),
-    RequiredMod("Old Track", "Gleistypen", workshop_id="1983390040"),
-    RequiredMod("Ballast", "Gleistypen", workshop_id="2072274420"),
+                note=tr("Nur noetig, falls das Gebiet elektrifizierte Bahnstrecken enthaelt.")),
+    RequiredMod("Old Track", tr("Gleistypen"), workshop_id="1983390040"),
+    RequiredMod("Ballast", tr("Gleistypen"), workshop_id="2072274420"),
 
     # --- Straßentypen -----------------------------------------------------
-    RequiredMod("ext.roads footpaths standalone", "Straßentypen", workshop_id="1968514713"),
-    RequiredMod("Street fine tuning", "Straßentypen", workshop_id="2021038808"),
-    RequiredMod("Freestyle train station", "Straßentypen", workshop_id="2363493916",
-                note="Wird auch fuer Bruecken-Typen verwendet."),
-    RequiredMod("Marc's Street and Trampack", "Straßentypen", workshop_id="1933747406"),
-    RequiredMod("Airport Roads (EXPERIMENTAL)", "Straßentypen", workshop_id="2232249704"),
-    RequiredMod("Roads´n Trams Projekt (RTP)", "Straßentypen"),
-    RequiredMod("SMP 2.0", "Straßentypen", workshop_id="1943578742"),
-    RequiredMod("Joe Fried Straßenpaket: Straßengeschichte", "Straßentypen",
+    RequiredMod("ext.roads footpaths standalone", tr("Straßentypen"), workshop_id="1968514713"),
+    RequiredMod("Street fine tuning", tr("Straßentypen"), workshop_id="2021038808"),
+    RequiredMod("Freestyle train station", tr("Straßentypen"), workshop_id="2363493916",
+                note=tr("Wird auch fuer Bruecken-Typen verwendet.")),
+    RequiredMod("Marc's Street and Trampack", tr("Straßentypen"), workshop_id="1933747406"),
+    RequiredMod("Airport Roads (EXPERIMENTAL)", tr("Straßentypen"), workshop_id="2232249704"),
+    RequiredMod("Roads´n Trams Projekt (RTP)", tr("Straßentypen")),
+    RequiredMod("SMP 2.0", tr("Straßentypen"), workshop_id="1943578742"),
+    RequiredMod("Joe Fried Straßenpaket: Straßengeschichte", tr("Straßentypen"),
                 local_names=("joefried_roadstrassen_em_2",)),
-    RequiredMod("Autobahnkreuz TpF2", "Straßentypen"),
-    RequiredMod("Water Textures - Natural Water Surfaces", "Straßentypen",
+    RequiredMod("Autobahnkreuz TpF2", tr("Straßentypen")),
+    RequiredMod("Water Textures - Natural Water Surfaces", tr("Straßentypen"),
                 workshop_id="2014569888",
-                note="Water 4 (4.2/4.3/4.4) und Street 4 mit blauem Wasser aktivieren."),
+                note=tr("Water 4 (4.2/4.3/4.4) und Street 4 mit blauem Wasser aktivieren.")),
 
     # --- Brückentypen -----------------------------------------------------
-    RequiredMod("TFMR2.0 Bridge (Transport Fever Modular Road)", "Brückentypen",
+    RequiredMod("TFMR2.0 Bridge (Transport Fever Modular Road)", tr("Brückentypen"),
                 workshop_id="2187434173", toggle="bruecken"),
-    RequiredMod("Bridge Type-1", "Brückentypen", workshop_id="1939805466", toggle="bruecken"),
-    RequiredMod("Vienna Fever: Bridge and Retaining Wall", "Brückentypen",
+    RequiredMod("Bridge Type-1", tr("Brückentypen"), workshop_id="1939805466", toggle="bruecken"),
+    RequiredMod("Vienna Fever: Bridge and Retaining Wall", tr("Brückentypen"),
                 workshop_id="2060132685", toggle="bruecken"),
-    RequiredMod("Gitterträger-Fachwerkbrücke", "Brückentypen", toggle="bruecken",
-                note="Nur bis Importer-Version 1.3 benoetigt."),
-    RequiredMod("Autobahnkreuz TpF2 (Brücke)", "Brückentypen", toggle="bruecken"),
+    RequiredMod("Gitterträger-Fachwerkbrücke", tr("Brückentypen"), toggle="bruecken",
+                note=tr("Nur bis Importer-Version 1.3 benoetigt.")),
+    RequiredMod("Autobahnkreuz TpF2 (Brücke)", tr("Brückentypen"), toggle="bruecken"),
 
     # --- Signale ------------------------------------------------------
-    RequiredMod("H/V-Signale Einheitsbauform²", "Signale", toggle="signale",
+    RequiredMod("H/V-Signale Einheitsbauform²", tr("Signale"), toggle="signale",
                 local_names=("sebbe_hv69signale_basis_1", "sebbe_hv69signale_erw1_1"),
-                note="Basis + Erweiterungen 1-3 vom selben Autor (sebbe_hv69signale_*)."),
-    RequiredMod("Signalkomponenten", "Signale", workshop_id="2770909719", toggle="signale"),
-    RequiredMod("Ks-Signalsystem", "Signale", workshop_id="2920749928", toggle="signale"),
-    RequiredMod("Level crossing signals", "Signale", workshop_id="2770910636", toggle="signale"),
-    RequiredMod("Signal Distance", "Signale", workshop_id="2294246900", toggle="signale",
-                note="Wird fuer die Signalplatzierung vorausgesetzt."),
+                note=tr("Basis + Erweiterungen 1-3 vom selben Autor (sebbe_hv69signale_*).")),
+    RequiredMod("Signalkomponenten", tr("Signale"), workshop_id="2770909719", toggle="signale"),
+    RequiredMod("Ks-Signalsystem", tr("Signale"), workshop_id="2920749928", toggle="signale"),
+    RequiredMod("Level crossing signals", tr("Signale"), workshop_id="2770910636", toggle="signale"),
+    RequiredMod("Signal Distance", tr("Signale"), workshop_id="2294246900", toggle="signale",
+                note=tr("Wird fuer die Signalplatzierung vorausgesetzt.")),
 
     # --- Objekte --------------------------------------------------------
-    RequiredMod("Connum's German Traffic Assets", "Objekte", workshop_id="1963592311",
+    RequiredMod("Connum's German Traffic Assets", tr("Objekte"), workshop_id="1963592311",
                 toggle="objekte"),
-    RequiredMod("Litfaßsäulen", "Objekte", local_names=("sabon_litfass_era_c_1",),
+    RequiredMod("Litfaßsäulen", tr("Objekte"), local_names=("sabon_litfass_era_c_1",),
                 toggle="objekte"),
-    RequiredMod("Hide Street Trees", "Objekte", toggle="objekte",
-                note="Empfohlen, kein Pflicht-Mod."),
+    RequiredMod("Hide Street Trees", tr("Objekte"), toggle="objekte",
+                note=tr("Empfohlen, kein Pflicht-Mod.")),
 
     # --- Forester / Baummodelle ------------------------------------------
-    RequiredMod("Forester", "Forester / Bäume", toggle="wald_import",
+    RequiredMod("Forester", tr("Forester / Bäume"), toggle="wald_import",
                 local_names=("vt_snowball_forester_1.4_Interface",),
-                note="Zwingend genau diese Version (Interface-Variante) verwenden."),
-    RequiredMod("Spacky_Trees conifers", "Forester / Bäume", workshop_id="2247194383",
+                note=tr("Zwingend genau diese Version (Interface-Variante) verwenden.")),
+    RequiredMod("Spacky_Trees conifers", tr("Forester / Bäume"), workshop_id="2247194383",
                 toggle="wald_import"),
 
     # --- Paver / Bodentexturen --------------------------------------------
-    RequiredMod("Paver", "Paver / Bodentexturen", toggle="paver"),
-    RequiredMod("Ingo's textures - pavement", "Paver / Bodentexturen",
+    RequiredMod("Paver", tr("Paver / Bodentexturen"), toggle="paver"),
+    RequiredMod("Ingo's textures - pavement", tr("Paver / Bodentexturen"),
                 workshop_id="2763516913", toggle="paver"),
-    RequiredMod("Ingo's Vegetation Extended", "Paver / Bodentexturen",
+    RequiredMod("Ingo's Vegetation Extended", tr("Paver / Bodentexturen"),
                 workshop_id="3432184100", toggle="paver"),
-    RequiredMod("Bodentexturen 1.0", "Paver / Bodentexturen", toggle="paver"),
-    RequiredMod("Bodentexturen 4.0", "Paver / Bodentexturen", toggle="paver"),
+    RequiredMod("Bodentexturen 1.0", tr("Paver / Bodentexturen"), toggle="paver"),
+    RequiredMod("Bodentexturen 4.0", tr("Paver / Bodentexturen"), toggle="paver"),
 
 )
 
 # Nur informativ, nie als "fehlt" gewertet - Empfehlungen der Doku, die
 # VOR dem OSM-Import aktiviert werden sollten:
 RECOMMENDED_BEFORE_IMPORT: tuple[RequiredMod, ...] = (
-    RequiredMod("Realistic Railway Slopes", "Empfohlen vor dem Import",
+    RequiredMod("Realistic Railway Slopes", tr("Empfohlen vor dem Import"),
                 workshop_id="2161175689",
                 note="Embankment Slope: 1, Embankment Slope High: off."),
-    RequiredMod("Maximum Street Slopes", "Empfohlen vor dem Import",
+    RequiredMod("Maximum Street Slopes", tr("Empfohlen vor dem Import"),
                 workshop_id="2206802861",
                 note="Embankment Slope: 1, Embankment Slope High: off."),
-    RequiredMod("Realistic Track Curve Speeds", "Empfohlen vor dem Import",
+    RequiredMod("Realistic Track Curve Speeds", tr("Empfohlen vor dem Import"),
                 workshop_id="2558586098",
-                note="'No superelevation at speed restricted tracks' deaktivieren."),
-    RequiredMod("Sidewalk Lowerer", "Empfohlen vor dem Import",
-                note="'Adjust Small Streets town new' deaktivieren."),
+                note=tr("'No superelevation at speed restricted tracks' deaktivieren.")),
+    RequiredMod("Sidewalk Lowerer", tr("Empfohlen vor dem Import"),
+                note=tr("'Adjust Small Streets town new' deaktivieren.")),
 )
 
 # Bekannte, vom Nutzer als problematisch identifizierte Mods - werden
@@ -163,7 +164,7 @@ RECOMMENDED_BEFORE_IMPORT: tuple[RequiredMod, ...] = (
 # gefunden (Ordner- oder Anzeigename-Teilstring, gross-/kleinschreibungs-
 # unabhaengig):
 KNOWN_CRASH_MODS: tuple[tuple[str, str], ...] = (
-    ("snowball_fences", "Bekannter Absturzverursacher (nicht Teil der Importer-Anforderungen)."),
+    ("snowball_fences", tr("Bekannter Absturzverursacher (nicht Teil der Importer-Anforderungen).")),
 )
 
 

@@ -1354,4 +1354,246 @@ guide of the heightmap dialog (F1).</p>
         'Feature overview',
     'Übersicht der Funktionen des Studios, gruppiert nach dem Menü oder Dialog, in dem sie zu finden sind.':
         "Overview of the Studio's functions, grouped by the menu or dialog in which they can be found.",
+    '\n\nHinweis: {outlier_count} Pixel ({value:.2f}% der Fläche) liegen deutlich außerhalb des üblichen Höhenbereichs der restlichen Fläche (z.B. einzelne Bergbau-Restlöcher oder Rand-Artefakte) - Höhenbereich {range_min:.0f}–{range_max:.0f} m. Ohne diese Ausreißer läge er bei {robust_range_min:.0f}–{robust_range_max:.0f} m, was mehr 16-Bit-Präzision für das eigentliche Gelände übrig lässt. Der Export nutzt weiterhin den vollen Bereich (nichts geht verloren), außer du wählst im Dialog explizit die engere Spanne.':
+        '\n\nNote: {outlier_count} pixels ({value:.2f}% of the area) lie clearly outside the usual elevation range of the rest of the area (e.g. individual mining pits or edge artefacts) - elevation range {range_min:.0f}–{range_max:.0f} m. Without these outliers it would be {robust_range_min:.0f}–{robust_range_max:.0f} m, which leaves more 16-bit precision for the actual terrain. The export still uses the full range (nothing is lost), unless you explicitly choose the narrower range in the dialog.',
+    '  {bridges_short} sehr kurze Bruecken werden als gewoehnliche Kante gebaut':
+        '  {bridges_short} very short bridges are built as an ordinary edge',
+    '  {junctions_merged} Einmuendungen zusammengelegt, {ways_dropped_merge} Kurzstuecke entfallen':
+        '  {junctions_merged} junctions merged, {ways_dropped_merge} short pieces dropped',
+    '  {merged_pairs} Richtungsfahrbahnen zusammengefasst':
+        '  {merged_pairs} carriageways merged',
+    '  {nodes_added} Knoten auf langen Kanten eingefügt':
+        '  {nodes_added} nodes inserted on long edges',
+    '  {oneway} Einbahnstrassen mit schmaler Einbahn-Vorlage':
+        '  {oneway} one-way roads with the narrow one-way template',
+    '  {roads_moved} Straßenknoten vom Gleis weggerückt (Mindestabstand)':
+        '  {roads_moved} road nodes moved away from the track (minimum distance)',
+    '  {tracks_removed} Doppelgleise entfernt':
+        '  {tracks_removed} doubled tracks removed',
+    '  {tracks_spaced} Gleisknoten auf gleichmäßigen Gleisabstand gerückt':
+        '  {tracks_spaced} track nodes moved to an even track spacing',
+    '  {tracks_unified} Gleiswege auf die Vorlage ihres Gleisnetzes angeglichen':
+        '  {tracks_unified} track ways aligned to the template of their track network',
+    "'Adjust Small Streets town new' deaktivieren.":
+        "Disable 'Adjust Small Streets town new'.",
+    "'No superelevation at speed restricted tracks' deaktivieren.":
+        "Disable 'No superelevation at speed restricted tracks'.",
+    "'Orte' war aktiviert, aber 0 Städte/Dörfer gefunden. Für ein bewohntes Gebiet ungewöhnlich - Download prüfen, bevor der grosse Lauf gestartet wird.":
+        "'Places' was enabled, but 0 towns/villages were found. Unusual for an inhabited area - check the download before starting the big run.",
+    "'Orte' war in der Overpass-Abfrage nicht aktiviert - unter Werkzeuge > Overpass-Abfrage einschalten, falls die Städteanzahl geprüft werden soll.":
+        "'Places' was not enabled in the Overpass query - enable it under Tools > Overpass query if the number of towns is to be checked.",
+    "'{label}' war in der Overpass-Abfrage aktiviert, aber es wurden 0 gefunden.":
+        "'{label}' was enabled in the Overpass query, but 0 were found.",
+    '0 Wege geladen - die Overpass-Antwort war vermutlich leer oder der Download ist fehlgeschlagen.':
+        '0 ways loaded - the Overpass response was probably empty or the download failed.',
+    'Achtung: Das ganze Gelände liegt über etwa {HIGH_TERRAIN_M:.0f} m. Im Spiel wird es dadurch komplett weiß (Schnee) oder grau (Fels). Den Haken „Werte auf Wasserhöhe 0 beziehen“ setzen und bei Bedarf „Höhen stauchen“ verwenden.':
+        'Warning: The whole terrain lies above about {HIGH_TERRAIN_M:.0f} m. In the game it will therefore be completely white (snow) or grey (rock). Tick “Relate values to water level 0” and use “Compress elevations” if needed.',
+    'Achtung: Der Karteneditor nimmt nur Höhen von {GAME_MIN_M:.0f} bis {GAME_MAX_M:.0f} m. Dein Bereich ({entered_min:.0f} bis {entered_max:.0f} m) liegt außerhalb. „Höhenfenster begrenzen“ anhaken oder „Höhen stauchen“ verwenden.':
+        'Warning: The map editor only accepts elevations from {GAME_MIN_M:.0f} to {GAME_MAX_M:.0f} m. Your range ({entered_min:.0f} to {entered_max:.0f} m) lies outside it. Tick “Limit elevation window” or use “Compress elevations”.',
+    'Ausgewähltes Gebiet: ca. {area_km2:.2f} km².':
+        'Selected area: approx. {area_km2:.2f} km².',
+    'Basis + Erweiterungen 1-3 vom selben Autor (sebbe_hv69signale_*).':
+        'Base + extensions 1-3 by the same author (sebbe_hv69signale_*).',
+    'Bekannter Absturzverursacher (nicht Teil der Importer-Anforderungen).':
+        'Known cause of crashes (not part of the importer requirements).',
+    'Brauerei':
+        'Brewery',
+    'Bruecken: {bridges}, Tunnel: {tunnels}':
+        'Bridges: {bridges}, tunnels: {tunnels}',
+    'Brückentypen':
+        'Bridge types',
+    'Chemiewerk':
+        'Chemical plant',
+    'Eisenerzmine (resource=iron_ore)':
+        'Iron ore mine (resource=iron_ore)',
+    'Empfohlen vor dem Import':
+        'Recommended before the import',
+    'Empfohlen, kein Pflicht-Mod.':
+        'Recommended, not a mandatory mod.',
+    'Fahrzeugfabrik':
+        'Vehicle factory',
+    'Fläche':
+        'Area',
+    'Forester / Bäume':
+        'Forester / trees',
+    'Forst (große Waldflächen)':
+        'Forestry (large forest areas)',
+    'Gebäudedichte':
+        'Building density',
+    'Gestaucht: Höhen über dem Bezugspunkt auf {value:.0f} %, darunter auf {value2:.0f} % ({percent} % der Fläche verändert).':
+        'Compressed: elevations above the reference point to {value:.0f} %, below it to {value2:.0f} % ({percent} % of the area changed).',
+    'GitHub-Mod, kein Workshop-Eintrag.':
+        'GitHub mod, no Workshop entry.',
+    'Glashütte':
+        'Glassworks',
+    'Hinweis: Die höchsten Stellen liegen bei etwa {top:.0f} m. Ab etwa {SNOW_LINE_M:.0f} m färbt das Spiel weiß. „Höhen stauchen“ verringert das.':
+        'Note: The highest points are at about {top:.0f} m. From about {SNOW_LINE_M:.0f} m the game colours the terrain white. “Compress elevations” reduces this.',
+    'Hoehendaten decken den Kartenausschnitt nicht vollstaendig ab (evtl. fehlt eine Randkachel).':
+        'The elevation data does not completely cover the map section (an edge tile may be missing).',
+    'Höhenbereich: {range_min_m:.0f} – {range_max_m:.0f} m':
+        'Elevation range: {range_min_m:.0f} – {range_max_m:.0f} m',
+    'Im Ordner {folder} liegen keine GeoTIFF-Dateien (.tif).':
+        'There are no GeoTIFF files (.tif) in the folder {folder}.',
+    'Kachel {ie}-{inn}: Antwort von swisstopo ist zu klein, vermutlich fehlerhaft.':
+        'Tile {ie}-{inn}: the response from swisstopo is too small, probably faulty.',
+    'Kachel {slot_prefix} konnte nicht geladen werden ({error}).':
+        'Tile {slot_prefix} could not be loaded ({error}).',
+    'Kachel {slot_prefix}: Daten nicht lesbar.':
+        'Tile {slot_prefix}: data not readable.',
+    'Kachel {tile_id} existiert nicht bei Copernicus DEM (vermutlich reines Wassergebiet ohne Landkachel: {url})':
+        'Tile {tile_id} does not exist at Copernicus DEM (probably a pure water area without a land tile: {url})',
+    'Kachel {value} von {count}':
+        'Tile {value} of {count}',
+    'Kartenausschnitt':
+        'Map section',
+    'Keine DGM1-Kacheln fuer diesen Ausschnitt gefunden. Liegt der Ausschnitt ausserhalb Deutschlands, bitte Copernicus waehlen.':
+        'No DGM1 tiles found for this section. If the section lies outside Germany, please choose Copernicus.',
+    'Keine Liniengeometrien für TPF2 vorhanden.':
+        'No line geometries available for TPF2.',
+    "Keine OSM-Daten geladen. Zuerst 'OSM laden' ausführen.":
+        "No OSM data loaded. First run 'Load OSM'.",
+    'Keine swissALTI3D-Kacheln fuer diesen Ausschnitt gefunden. Liegt der Ausschnitt ausserhalb der Schweiz und Liechtensteins, bitte Copernicus waehlen.':
+        'No swissALTI3D tiles found for this section. If the section lies outside Switzerland and Liechtenstein, please choose Copernicus.',
+    'Keiner der Overpass-Server war erreichbar.':
+        'None of the Overpass servers could be reached.',
+    'Knoten/Wege-Verhältnis':
+        'Node/way ratio',
+    'Knoten: {count} (vor der Vereinfachung {nodes_before} Punkte)':
+        'Nodes: {count} (before simplification {nodes_before} points)',
+    'Kohlemine (resource=coal)':
+        'Coal mine (resource=coal)',
+    'Konservenfabrik / Lebensmittel':
+        'Cannery / food',
+    'Lehmgrube (quarry + resource=clay)':
+        'Clay pit (quarry + resource=clay)',
+    'Maschinenfabrik':
+        'Machine factory',
+    'Messung: Startpunkt {lat:.6f}, {lon:.6f} (zweiten Punkt anklicken)':
+        'Measurement: start point {lat:.6f}, {lon:.6f} (click the second point)',
+    'Messung: {distance_text}':
+        'Measurement: {distance_text}',
+    'Möbelfabrik':
+        'Furniture factory',
+    'Nicht unterstützte Projektversion: {version}':
+        'Unsupported project version: {version}',
+    'Nichts wird gestaucht: Das Gelände passt schon ins Fenster.':
+        'Nothing is compressed: the terrain already fits into the window.',
+    'Nichts wird planiert: Das Gelände liegt ganz im Fenster. Mit dem Schieberegler oder engeren Feldern lässt sich das ändern.':
+        'Nothing is levelled: the terrain lies entirely inside the window. You can change this with the slider or narrower fields.',
+    'Nur bis Importer-Version 1.3 benoetigt.':
+        'Only needed up to importer version 1.3.',
+    'Nur noetig, falls das Gebiet elektrifizierte Bahnstrecken enthaelt.':
+        'Only needed if the area contains electrified railway lines.',
+    'Nur ueber transportfever.net erhaeltlich, kein fester Ordnername bekannt.':
+        'Only available via transportfever.net, no fixed folder name known.',
+    'Nur {ratio:.2f} Knoten pro Weg im Schnitt ({node_count} Knoten, {way_count} Wege). Ein Weg braucht mindestens 2 Knoten - der Download wirkt unvollständig.':
+        'Only {ratio:.2f} nodes per way on average ({node_count} nodes, {way_count} ways). A way needs at least 2 nodes - the download looks incomplete.',
+    'Objekte':
+        'Objects',
+    'Orte':
+        'Places',
+    'Ortsdichte':
+        'Place density',
+    'Paver / Bodentexturen':
+        'Paver / ground textures',
+    'Raffinerie':
+        'Refinery',
+    'Sandgrube (quarry + sand/gravel)':
+        'Sand pit (quarry + sand/gravel)',
+    'Signale':
+        'Signals',
+    'Stahlwerk':
+        'Steelworks',
+    'Steinbruch (landuse=quarry)':
+        'Quarry (landuse=quarry)',
+    'Straßendichte':
+        'Road density',
+    'Suche Kacheln bei swisstopo ({value} von {count})':
+        'Searching for tiles at swisstopo ({value} of {count})',
+    'Sägewerk':
+        'Sawmill',
+    'Textilfabrik':
+        'Textile factory',
+    'Unlesbare Antwort von hoehendaten.de: {exc}':
+        'Unreadable response from hoehendaten.de: {exc}',
+    'Unlesbare Antwort von swisstopo: {exc}':
+        'Unreadable response from swisstopo: {exc}',
+    'Viehzucht (building=cowshed/stable/sty)':
+        'Livestock farm (building=cowshed/stable/sty)',
+    'Vorschlag basiert auf dem {SUGGESTION_PERCENTILE}. Perzentil der Fläche (ohne die äußersten {EDGE_MARGIN_PX} Pixel Rand), das erfahrungsgemäß dem natürlichen Flussniveau entspricht. Bleiben nach dem Import Flüsse trocken, einen höheren Wert probieren; steht zu viel Fläche unter Wasser, einen niedrigeren.':
+        'Suggestion is based on the {SUGGESTION_PERCENTILE}th percentile of the area (without the outermost {EDGE_MARGIN_PX} pixels of edge), which experience shows corresponds to the natural river level. If rivers stay dry after the import, try a higher value; if too much area is under water, a lower one.',
+    'Wasserhöhe: {water_level_m:.0f} m':
+        'Water level: {water_level_m:.0f} m',
+    'Water 4 (4.2/4.3/4.4) und Street 4 mit blauem Wasser aktivieren.':
+        'Enable Water 4 (4.2/4.3/4.4) and Street 4 with blue water.',
+    'Wege':
+        'Ways',
+    'Wege: {ways_used} von {ways_osm} OSM-Wegen':
+        'Ways: {ways_used} of {ways_osm} OSM ways',
+    'Werkzeugfabrik':
+        'Tool factory',
+    'Wird auch fuer Bruecken-Typen verwendet.':
+        'Also used for bridge types.',
+    'Wird fuer die Signalplatzierung vorausgesetzt.':
+        'Required for signal placement.',
+    'Ziegelei':
+        'Brickworks',
+    'Zwingend genau diese Version (Interface-Variante) verwenden.':
+        'Use exactly this version (interface variant).',
+    'swisstopo nicht erreichbar ({error}).':
+        'swisstopo not reachable ({error}).',
+    'unbekannter Fehler':
+        'unknown error',
+    '{count} Orte gefunden.':
+        '{count} places found.',
+    '{count}× {label} gefunden.':
+        '{count}× {label} found.',
+    '{name}: Hoehenwerte nicht lesbar ({exc}). Die Datei bleibt zur Pruefung im Ordner liegen.':
+        '{name}: elevation values not readable ({exc}). The file stays in the folder for inspection.',
+    '{name}: Kachel liegt nicht auf dem 1-km-Raster (Ecke {e_ul:.1f} / {n_ul:.1f}). Solche Dateien werden nicht unterstuetzt.':
+        '{name}: tile does not lie on the 1 km grid (corner {e_ul:.1f} / {n_ul:.1f}). Such files are not supported.',
+    '{name}: Pixelgroesse {px} m passt nicht in eine 1-km-Kachel.':
+        '{name}: pixel size {px} m does not fit into a 1 km tile.',
+    '{name}: keine Georeferenzierung im GeoTIFF gefunden.':
+        '{name}: no georeferencing found in the GeoTIFF.',
+    '{name}: keine lesbare GeoTIFF-Datei ({exc}).':
+        '{name}: not a readable GeoTIFF file ({exc}).',
+    '{percent} % der Fläche werden planiert (oben gekappt: {percent2} %, unten abgeschnitten: {percent3} %).':
+        '{percent} % of the area is levelled (clipped at the top: {percent2} %, cut off at the bottom: {percent3} %).',
+    '{ratio:.2f} Knoten pro Weg im Schnitt - unauffällig.':
+        '{ratio:.2f} nodes per way on average - nothing unusual.',
+    '{value:.1f} Gebäude pro km² (nur zur eigenen Einschätzung).':
+        '{value:.1f} buildings per km² (for your own assessment only).',
+    '{value:.1f} Straßen-Segmente pro km² (nur zur eigenen Einschätzung, kein automatisches Urteil).':
+        '{value:.1f} road segments per km² (for your own assessment only, no automatic verdict).',
+    '{value:.2f} Orte pro 100 km² (nur zur eigenen Einschätzung).':
+        '{value:.2f} places per 100 km² (for your own assessment only).',
+    '{way_count} Wege geladen.':
+        '{way_count} ways loaded.',
+    'Ölplattform (offshore_platform)':
+        'Oil platform (offshore_platform)',
+    'Ölquelle (man_made=petroleum_well)':
+        'Oil well (man_made=petroleum_well)',
+    'Biom 0 - helle Wiese':
+        'Biome 0 - light meadow',
+    'Biom 1 - Wiese mit Baumgruppen':
+        'Biome 1 - meadow with groups of trees',
+    'Biom 2 - dunkle Wiese':
+        'Biome 2 - dark meadow',
+    'Biom 3 - trockene Steppe':
+        'Biome 3 - dry steppe',
+    'Biom 4 - gruen-braun gemischt':
+        'Biome 4 - mixed green-brown',
+    'Im TPF3-Import eintragen (auf Wasserhöhe 0 bezogen): Mindesthöhe {low:.0f}, Maximalhöhe {high:.0f}, Wasserhöhe 0':
+        'Enter in the TPF3 import (relative to water level 0): minimum height {low:.0f}, maximum height {high:.0f}, water level 0',
+    'Kein Ordner mit DGM1-Kacheln angegeben.':
+        'No folder with DGM1 tiles specified.',
+    'hoehendaten.de antwortet mit HTTP {status} fuer Kachel {slot_prefix}.':
+        'hoehendaten.de responds with HTTP {status} for tile {slot_prefix}.',
+    'keine':
+        'none',
+    'swisstopo antwortet mit HTTP {status} ({url}).':
+        'swisstopo responds with HTTP {status} ({url}).',
+    '{count} Bahnhöfe/Haltepunkte ({parts}), {platforms} Bahnsteige, {buildings} Gebäude, {stops} Haltepositionen; {loose} Objekte ohne Bahnhof in {radius_m:.0f} m.':
+        '{count} stations/halts ({parts}), {platforms} platforms, {buildings} buildings, {stops} stop positions; {loose} objects without a station within {radius_m:.0f} m.',
 }

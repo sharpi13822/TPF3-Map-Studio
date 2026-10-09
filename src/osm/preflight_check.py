@@ -20,6 +20,7 @@ import math
 from dataclasses import dataclass
 
 from src.osm.overpass_query_builder import OverpassQueryConfig
+from src.i18n import tr
 
 
 @dataclass
@@ -92,8 +93,8 @@ def run_preflight_check(
 
         results.append(
             CheckResult(
-                "Kartenausschnitt", "error",
-                "Kein Kartenausschnitt gesetzt (Rechteck-Tool verwenden)."
+                tr("Kartenausschnitt"), "error",
+                tr("Kein Kartenausschnitt gesetzt (Rechteck-Tool verwenden).")
             )
         )
 
@@ -103,8 +104,8 @@ def run_preflight_check(
 
         results.append(
             CheckResult(
-                "OSM-Daten", "error",
-                "Keine OSM-Daten geladen. Zuerst 'OSM laden' ausführen."
+                tr("OSM-Daten"), "error",
+                tr("Keine OSM-Daten geladen. Zuerst 'OSM laden' ausführen.")
             )
         )
 
@@ -118,9 +119,9 @@ def run_preflight_check(
 
         results.append(
             CheckResult(
-                "Wege", "error",
-                "0 Wege geladen - die Overpass-Antwort war vermutlich leer "
-                "oder der Download ist fehlgeschlagen."
+                tr("Wege"), "error",
+                tr("0 Wege geladen - die Overpass-Antwort war vermutlich leer "
+                "oder der Download ist fehlgeschlagen.")
             )
         )
 
@@ -128,8 +129,8 @@ def run_preflight_check(
 
         results.append(
             CheckResult(
-                "Wege", "ok",
-                f"{osm.way_count} Wege geladen."
+                tr("Wege"), "ok",
+                tr("{way_count} Wege geladen.").format(way_count=osm.way_count)
             )
         )
 
@@ -139,11 +140,8 @@ def run_preflight_check(
 
             results.append(
                 CheckResult(
-                    "Knoten/Wege-Verhältnis", "error",
-                    f"Nur {ratio:.2f} Knoten pro Weg im Schnitt "
-                    f"({osm.node_count} Knoten, {osm.way_count} Wege). "
-                    f"Ein Weg braucht mindestens 2 Knoten - der Download "
-                    f"wirkt unvollständig."
+                    tr("Knoten/Wege-Verhältnis"), "error",
+                    tr("Nur {ratio:.2f} Knoten pro Weg im Schnitt ({node_count} Knoten, {way_count} Wege). Ein Weg braucht mindestens 2 Knoten - der Download wirkt unvollständig.").format(ratio=ratio, node_count=osm.node_count, way_count=osm.way_count)
                 )
             )
 
@@ -151,8 +149,8 @@ def run_preflight_check(
 
             results.append(
                 CheckResult(
-                    "Knoten/Wege-Verhältnis", "ok",
-                    f"{ratio:.2f} Knoten pro Weg im Schnitt - unauffällig."
+                    tr("Knoten/Wege-Verhältnis"), "ok",
+                    tr("{ratio:.2f} Knoten pro Weg im Schnitt - unauffällig.").format(ratio=ratio)
                 )
             )
 
@@ -162,9 +160,9 @@ def run_preflight_check(
     # -------------------------------------------------------------
 
     category_checks = (
-        ("highways", "Straßen", list(osm.highways())),
-        ("buildings", "Gebäude", list(osm.buildings())),
-        ("railways", "Gleise", list(osm.railways())),
+        ("highways", tr("Straßen"), list(osm.highways())),
+        ("buildings", tr("Gebäude"), list(osm.buildings())),
+        ("railways", tr("Gleise"), list(osm.railways())),
     )
 
     for toggle_name, label, items in category_checks:
@@ -179,8 +177,7 @@ def run_preflight_check(
             results.append(
                 CheckResult(
                     label, "warning",
-                    f"'{label}' war in der Overpass-Abfrage aktiviert, "
-                    f"aber es wurden 0 gefunden."
+                    tr("'{label}' war in der Overpass-Abfrage aktiviert, aber es wurden 0 gefunden.").format(label=label)
                 )
             )
 
@@ -189,7 +186,7 @@ def run_preflight_check(
             results.append(
                 CheckResult(
                     label, "ok",
-                    f"{len(items)}× {label} gefunden."
+                    tr("{count}× {label} gefunden.").format(count=len(items), label=label)
                 )
             )
 
@@ -207,10 +204,10 @@ def run_preflight_check(
 
             results.append(
                 CheckResult(
-                    "Orte", "error",
-                    "'Orte' war aktiviert, aber 0 Städte/Dörfer gefunden. "
+                    tr("Orte"), "error",
+                    tr("'Orte' war aktiviert, aber 0 Städte/Dörfer gefunden. "
                     "Für ein bewohntes Gebiet ungewöhnlich - Download prüfen, "
-                    "bevor der grosse Lauf gestartet wird."
+                    "bevor der grosse Lauf gestartet wird.")
                 )
             )
 
@@ -218,8 +215,8 @@ def run_preflight_check(
 
             results.append(
                 CheckResult(
-                    "Orte", "ok",
-                    f"{len(places)} Orte gefunden."
+                    tr("Orte"), "ok",
+                    tr("{count} Orte gefunden.").format(count=len(places))
                 )
             )
 
@@ -227,10 +224,10 @@ def run_preflight_check(
 
         results.append(
             CheckResult(
-                "Orte", "info",
-                "'Orte' war in der Overpass-Abfrage nicht aktiviert - "
+                tr("Orte"), "info",
+                tr("'Orte' war in der Overpass-Abfrage nicht aktiviert - "
                 "unter Werkzeuge > Overpass-Abfrage einschalten, falls "
-                "die Städteanzahl geprüft werden soll."
+                "die Städteanzahl geprüft werden soll.")
             )
         )
 
@@ -244,8 +241,8 @@ def run_preflight_check(
 
         results.append(
             CheckResult(
-                "Fläche", "info",
-                f"Ausgewähltes Gebiet: ca. {area_km2:.2f} km²."
+                tr("Fläche"), "info",
+                tr("Ausgewähltes Gebiet: ca. {area_km2:.2f} km².").format(area_km2=area_km2)
             )
         )
 
@@ -256,10 +253,8 @@ def run_preflight_check(
 
             results.append(
                 CheckResult(
-                    "Straßendichte", "info",
-                    f"{len(highways) / area_km2:.1f} Straßen-Segmente "
-                    f"pro km² (nur zur eigenen Einschätzung, kein "
-                    f"automatisches Urteil)."
+                    tr("Straßendichte"), "info",
+                    tr("{value:.1f} Straßen-Segmente pro km² (nur zur eigenen Einschätzung, kein automatisches Urteil).").format(value=len(highways) / area_km2)
                 )
             )
 
@@ -267,9 +262,8 @@ def run_preflight_check(
 
             results.append(
                 CheckResult(
-                    "Gebäudedichte", "info",
-                    f"{len(buildings) / area_km2:.1f} Gebäude pro km² "
-                    f"(nur zur eigenen Einschätzung)."
+                    tr("Gebäudedichte"), "info",
+                    tr("{value:.1f} Gebäude pro km² (nur zur eigenen Einschätzung).").format(value=len(buildings) / area_km2)
                 )
             )
 
@@ -277,9 +271,8 @@ def run_preflight_check(
 
             results.append(
                 CheckResult(
-                    "Ortsdichte", "info",
-                    f"{len(places) / area_km2 * 100:.2f} Orte pro 100 km² "
-                    f"(nur zur eigenen Einschätzung)."
+                    tr("Ortsdichte"), "info",
+                    tr("{value:.2f} Orte pro 100 km² (nur zur eigenen Einschätzung).").format(value=len(places) / area_km2 * 100)
                 )
             )
 

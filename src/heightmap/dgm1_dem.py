@@ -35,6 +35,7 @@ from src.heightmap.copernicus_dem import _bilinear
 from src.http_identity import USER_AGENT
 from src.heightmap.lv95 import LV95_ZONE, latlon_to_lv95
 from src.heightmap.utm import latlon_to_utm, zone_for_lon
+from src.i18n import tr
 
 API_URL = "https://api.hoehendaten.de:14444/v1/rawtif"
 
@@ -258,20 +259,20 @@ def fetch_slot(
 
         if resp.status_code != 200:
             raise Dgm1Error(
-                f"hoehendaten.de antwortet mit HTTP {resp.status_code} fuer Kachel "
-                f"{_slot_prefix(zone, ie, inn)}."
+                tr(
+                    "hoehendaten.de antwortet mit HTTP {status} fuer Kachel {slot_prefix}."
+                ).format(status=resp.status_code, slot_prefix=_slot_prefix(zone, ie, inn))
             )
 
         try:
             body = resp.json()
         except ValueError as exc:
-            raise Dgm1Error(f"Unlesbare Antwort von hoehendaten.de: {exc}") from exc
+            raise Dgm1Error(tr("Unlesbare Antwort von hoehendaten.de: {exc}").format(exc=exc)) from exc
 
         return _store_response(body, zone, ie, inn, cache_dir)
 
     raise Dgm1Error(
-        f"Kachel {_slot_prefix(zone, ie, inn)} konnte nicht geladen werden "
-        f"({last_error or 'unbekannter Fehler'})."
+        tr("Kachel {slot_prefix} konnte nicht geladen werden ({error}).").format(slot_prefix=_slot_prefix(zone, ie, inn), error=last_error or tr("unbekannter Fehler"))
     )
 
 
@@ -310,7 +311,7 @@ def _store_response(body: dict, zone: int, ie: int, inn: int, cache_dir: Path) -
         try:
             raw = base64.b64decode(part["Data"])
         except (KeyError, ValueError) as exc:
-            raise Dgm1Error(f"Kachel {_slot_prefix(zone, ie, inn)}: Daten nicht lesbar.") from exc
+            raise Dgm1Error(tr("Kachel {slot_prefix}: Daten nicht lesbar.").format(slot_prefix=_slot_prefix(zone, ie, inn))) from exc
 
         name = f"{_slot_prefix(zone, ie, inn)}__{origin}"
 
@@ -368,7 +369,7 @@ def fetch_tiles_for_selection(
             raise Dgm1Cancelled("Abgebrochen.")
 
         if progress is not None:
-            progress(done, len(slots), f"Kachel {done + 1} von {len(slots)}")
+            progress(done, len(slots), tr("Kachel {value} von {count}").format(value=done + 1, count=len(slots)))
 
         if slot_is_cached(cache_dir, zone, ie, inn):
             if (cache_dir / f"{_slot_prefix(zone, ie, inn)}.none").exists():
@@ -510,7 +511,7 @@ def read_raster_info(path: Path) -> RasterInfo:
             nodata_raw = tags.get(TAG_GDAL_NODATA)
             keys = _geokeys(tags)
     except Exception as exc:  # noqa: BLE001
-        raise Dgm1Error(f"{Path(path).name}: keine lesbare GeoTIFF-Datei ({exc}).") from exc
+        raise Dgm1Error(tr("{name}: keine lesbare GeoTIFF-Datei ({exc}).").format(name=Path(path).name, exc=exc)) from exc
 
     if scale and tie and len(tie) >= 6:
         px = float(scale[0])
@@ -520,7 +521,7 @@ def read_raster_info(path: Path) -> RasterInfo:
         px = abs(float(matrix[0]))
         e0, n0 = float(matrix[3]), float(matrix[7])
     else:
-        raise Dgm1Error(f"{Path(path).name}: keine Georeferenzierung im GeoTIFF gefunden.")
+        raise Dgm1Error(tr("{name}: keine Georeferenzierung im GeoTIFF gefunden.").format(name=Path(path).name))
 
     # PixelIsPoint: der Referenzpunkt ist die Pixelmitte, nicht die Ecke
     if keys.get(GEOKEY_RASTER_TYPE) == 2:
@@ -565,8 +566,7 @@ def read_raster_array(info: RasterInfo) -> np.ndarray:
             arr = np.array(im, dtype=np.float32)
     except Exception as exc:  # noqa: BLE001
         raise Dgm1Error(
-            f"{info.path.name}: Hoehenwerte nicht lesbar ({exc}). "
-            f"Die Datei bleibt zur Pruefung im Ordner liegen."
+            tr("{name}: Hoehenwerte nicht lesbar ({exc}). Die Datei bleibt zur Pruefung im Ordner liegen.").format(name=info.path.name, exc=exc)
         ) from exc
 
     if arr.ndim != 2:
@@ -632,7 +632,7 @@ def slots_from_raster(
 
     if px <= 0 or TILE_M % px > 1e-6:
         raise Dgm1Error(
-            f"{info.path.name}: Pixelgroesse {px} m passt nicht in eine 1-km-Kachel."
+            tr("{name}: Pixelgroesse {px} m passt nicht in eine 1-km-Kachel.").format(name=info.path.name, px=px)
         )
 
     e_km = round(info.e_ul / TILE_M) * TILE_M
@@ -640,8 +640,7 @@ def slots_from_raster(
 
     if abs(info.e_ul - e_km) > px * 1.01 or abs(info.n_ul - n_km) > px * 1.01:
         raise Dgm1Error(
-            f"{info.path.name}: Kachel liegt nicht auf dem 1-km-Raster "
-            f"(Ecke {info.e_ul:.1f} / {info.n_ul:.1f}). Solche Dateien werden nicht unterstuetzt."
+            tr("{name}: Kachel liegt nicht auf dem 1-km-Raster (Ecke {e_ul:.1f} / {n_ul:.1f}). Solche Dateien werden nicht unterstuetzt.").format(name=info.path.name, e_ul=info.e_ul, n_ul=info.n_ul)
         )
 
     per_slot = int(round(TILE_M / px))
@@ -831,7 +830,7 @@ class Dgm1Mosaic:
         )
 
         if not files:
-            raise Dgm1Error(f"Im Ordner {folder} liegen keine GeoTIFF-Dateien (.tif).")
+            raise Dgm1Error(tr("Im Ordner {folder} liegen keine GeoTIFF-Dateien (.tif).").format(folder=folder))
 
         wanted = set(required_dgm1_tiles(selection))
 

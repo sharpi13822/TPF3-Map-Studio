@@ -4,6 +4,7 @@ from src.map.objects.marker import Marker
 from src.map.objects.selection import Selection
 from src.geometry.polyline import Polyline
 from src.osm.objects.osm_data import OSMData
+from src.i18n import tr
 
 if TYPE_CHECKING:
     from src.core.project.project import Project
@@ -149,7 +150,7 @@ class ProjectSerializer:
         if version != ProjectSerializer.VERSION:
 
             raise ValueError(
-                f"Nicht unterstützte Projektversion: {version}"
+                tr("Nicht unterstützte Projektversion: {version}").format(version=version)
             )    
 
         # -----------------------------------------------------

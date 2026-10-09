@@ -40,6 +40,7 @@ from pathlib import Path
 
 from src.heightmap import network_cleanup
 from src.tpf2.tpf2_geometry import TPF2Geometry
+from src.i18n import tr
 
 NETWORK_EXPORT_VERSION = "v23"
 
@@ -1621,55 +1622,52 @@ def summary_text(network: Network) -> str:
     s = network.stats
 
     lines = [
-        f"Wege: {s.get('ways_used', 0)} von {s.get('ways_osm', 0)} OSM-Wegen",
-        f"Knoten: {len(network.nodes)} "
-        f"(vor der Vereinfachung {s.get('nodes_before', 0)} Punkte)",
-        f"Bruecken: {s.get('bridges', 0)}, Tunnel: {s.get('tunnels', 0)}",
+        tr("Wege: {ways_used} von {ways_osm} OSM-Wegen").format(ways_used=s.get('ways_used', 0), ways_osm=s.get('ways_osm', 0)),
+        tr("Knoten: {count} (vor der Vereinfachung {nodes_before} Punkte)").format(count=len(network.nodes), nodes_before=s.get('nodes_before', 0)),
+        tr("Bruecken: {bridges}, Tunnel: {tunnels}").format(bridges=s.get('bridges', 0), tunnels=s.get('tunnels', 0)),
     ]
 
     if s.get("junctions_merged", 0):
         lines.append(
-            f"  {s['junctions_merged']} Einmuendungen zusammengelegt, "
-            f"{s.get('ways_dropped_merge', 0)} Kurzstuecke entfallen"
+            tr("  {junctions_merged} Einmuendungen zusammengelegt, {ways_dropped_merge} Kurzstuecke entfallen").format(junctions_merged=s['junctions_merged'], ways_dropped_merge=s.get('ways_dropped_merge', 0))
         )
 
     if s.get("tracks_spaced", 0):
         lines.append(
-            f"  {s['tracks_spaced']} Gleisknoten auf gleichmäßigen Gleisabstand gerückt"
+            tr("  {tracks_spaced} Gleisknoten auf gleichmäßigen Gleisabstand gerückt").format(tracks_spaced=s['tracks_spaced'])
         )
 
     if s.get("tracks_unified", 0):
         lines.append(
-            f"  {s['tracks_unified']} Gleiswege auf die Vorlage ihres Gleisnetzes angeglichen"
+            tr("  {tracks_unified} Gleiswege auf die Vorlage ihres Gleisnetzes angeglichen").format(tracks_unified=s['tracks_unified'])
         )
 
     if s.get("roads_moved", 0):
         lines.append(
-            f"  {s['roads_moved']} Straßenknoten vom Gleis weggerückt (Mindestabstand)"
+            tr("  {roads_moved} Straßenknoten vom Gleis weggerückt (Mindestabstand)").format(roads_moved=s['roads_moved'])
         )
 
     if s.get("nodes_added", 0):
         lines.append(
-            f"  {s['nodes_added']} Knoten auf langen Kanten eingefügt"
+            tr("  {nodes_added} Knoten auf langen Kanten eingefügt").format(nodes_added=s['nodes_added'])
         )
 
     if s.get("merged_pairs", 0):
         lines.append(
-            f"  {s['merged_pairs']} Richtungsfahrbahnen zusammengefasst"
+            tr("  {merged_pairs} Richtungsfahrbahnen zusammengefasst").format(merged_pairs=s['merged_pairs'])
         )
 
     if s.get("tracks_removed", 0):
-        lines.append(f"  {s['tracks_removed']} Doppelgleise entfernt")
+        lines.append(tr("  {tracks_removed} Doppelgleise entfernt").format(tracks_removed=s['tracks_removed']))
 
     if s.get("oneway", 0):
         lines.append(
-            f"  {s['oneway']} Einbahnstrassen mit schmaler Einbahn-Vorlage"
+            tr("  {oneway} Einbahnstrassen mit schmaler Einbahn-Vorlage").format(oneway=s['oneway'])
         )
 
     if s.get("bridges_short", 0):
         lines.append(
-            f"  {s['bridges_short']} sehr kurze Bruecken werden als "
-            "gewoehnliche Kante gebaut"
+            tr("  {bridges_short} sehr kurze Bruecken werden als gewoehnliche Kante gebaut").format(bridges_short=s['bridges_short'])
         )
 
     for category, count in sorted(

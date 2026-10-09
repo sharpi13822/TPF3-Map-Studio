@@ -17,6 +17,7 @@ from pathlib import Path
 import numpy as np
 
 from src.heightmap.height_clipping import CHANGE_TOLERANCE_M, normalize_heights
+from src.i18n import tr
 
 EDGE_MARGIN_PX = 3
 SUGGESTION_PERCENTILE = 7.5
@@ -101,25 +102,13 @@ def suggest_water_level(heightmap: np.ndarray) -> WaterLevelSuggestion:
         robust_range_max = range_max
 
     note = (
-        f"Vorschlag basiert auf dem {SUGGESTION_PERCENTILE}. Perzentil der Fläche "
-        f"(ohne die äußersten {EDGE_MARGIN_PX} Pixel Rand), das erfahrungsgemäß dem "
-        "natürlichen Flussniveau entspricht. Bleiben nach dem Import Flüsse trocken, "
-        "einen höheren Wert probieren; steht zu viel Fläche unter Wasser, einen "
-        "niedrigeren."
+        tr("Vorschlag basiert auf dem {SUGGESTION_PERCENTILE}. Perzentil der Fläche (ohne die äußersten {EDGE_MARGIN_PX} Pixel Rand), das erfahrungsgemäß dem natürlichen Flussniveau entspricht. Bleiben nach dem Import Flüsse trocken, einen höheren Wert probieren; steht zu viel Fläche unter Wasser, einen niedrigeren.").format(SUGGESTION_PERCENTILE=SUGGESTION_PERCENTILE, EDGE_MARGIN_PX=EDGE_MARGIN_PX)
     )
 
     if outlier_count > 0:
 
         note += (
-            f"\n\nHinweis: {outlier_count} Pixel ({outlier_fraction * 100:.2f}% "
-            f"der Fläche) liegen deutlich außerhalb des üblichen Höhenbereichs "
-            f"der restlichen Fläche (z.B. einzelne Bergbau-Restlöcher oder "
-            f"Rand-Artefakte) - Höhenbereich {range_min:.0f}–{range_max:.0f} m. "
-            f"Ohne diese Ausreißer läge er bei "
-            f"{robust_range_min:.0f}–{robust_range_max:.0f} m, was mehr "
-            f"16-Bit-Präzision für das eigentliche Gelände übrig lässt. Der "
-            f"Export nutzt weiterhin den vollen Bereich (nichts geht verloren), "
-            f"außer du wählst im Dialog explizit die engere Spanne."
+            tr("\n\nHinweis: {outlier_count} Pixel ({value:.2f}% der Fläche) liegen deutlich außerhalb des üblichen Höhenbereichs der restlichen Fläche (z.B. einzelne Bergbau-Restlöcher oder Rand-Artefakte) - Höhenbereich {range_min:.0f}–{range_max:.0f} m. Ohne diese Ausreißer läge er bei {robust_range_min:.0f}–{robust_range_max:.0f} m, was mehr 16-Bit-Präzision für das eigentliche Gelände übrig lässt. Der Export nutzt weiterhin den vollen Bereich (nichts geht verloren), außer du wählst im Dialog explizit die engere Spanne.").format(outlier_count=outlier_count, value=outlier_fraction * 100, range_min=range_min, range_max=range_max, robust_range_min=robust_range_min, robust_range_max=robust_range_max)
         )
 
     return WaterLevelSuggestion(
@@ -225,8 +214,8 @@ def render_preview(
     img = Image.fromarray(rgb, mode="RGB")
 
     draw = ImageDraw.Draw(img)
-    line1 = f"Höhenbereich: {range_min_m:.0f} – {range_max_m:.0f} m"
-    line2 = f"Wasserhöhe: {water_level_m:.0f} m"
+    line1 = tr("Höhenbereich: {range_min_m:.0f} – {range_max_m:.0f} m").format(range_min_m=range_min_m, range_max_m=range_max_m)
+    line2 = tr("Wasserhöhe: {water_level_m:.0f} m").format(water_level_m=water_level_m)
     bar_h = 34
     draw.rectangle([0, 0, img.width, bar_h], fill=(20, 20, 20))
     draw.text((6, 3), line1, fill=(255, 255, 255))

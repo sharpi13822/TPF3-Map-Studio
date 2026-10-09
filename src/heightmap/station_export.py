@@ -20,6 +20,7 @@ import math
 from pathlib import Path
 
 from src.tpf2.tpf2_geometry import TPF2Geometry
+from src.i18n import tr
 
 STATION_VERSION = 1
 
@@ -547,9 +548,7 @@ def summary(data: dict) -> str:
     buildings = sum(len(s["buildings"]) for s in stations)
     loose = sum(len(v) for v in data["unassigned"].values())
     return (
-        f"{len(stations)} Bahnhöfe/Haltepunkte ({parts or 'keine'}), {platforms} Bahnsteige, "
-        f"{buildings} Gebäude, {sum(len(s['stop_positions']) for s in stations)} Haltepositionen; "
-        f"{loose} Objekte ohne Bahnhof in {data['radius_m']:.0f} m."
+        tr("{count} Bahnhöfe/Haltepunkte ({parts}), {platforms} Bahnsteige, {buildings} Gebäude, {stops} Haltepositionen; {loose} Objekte ohne Bahnhof in {radius_m:.0f} m.").format(count=len(stations), parts=parts or tr("keine"), platforms=platforms, buildings=buildings, stops=sum((len(s['stop_positions']) for s in stations)), loose=loose, radius_m=data['radius_m'])
     )
 
 
