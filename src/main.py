@@ -19,7 +19,8 @@ setup_logging()
 # Die Sprache muss feststehen, BEVOR src.window und die Dialoge importiert
 # werden: Texte auf Modulebene werden beim Import einmal uebersetzt. Ein
 # Sprachwechsel im Menue wirkt deshalb nach einem Neustart.
-from src.i18n import init_language
+from src.i18n import get_language, init_language
+from src.qt_translation import install_qt_translations
 
 init_language()
 
@@ -31,6 +32,9 @@ def main():
     install_qt_message_handler()
 
     app = QApplication(sys.argv)
+
+    # Standardknoepfe von Qt (OK, Abbrechen, Ja, Nein ...) in der Studio-Sprache
+    app._qt_translators = install_qt_translations(app, get_language())
 
     window = MainWindow()
     window.show()
