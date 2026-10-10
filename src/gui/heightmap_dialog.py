@@ -75,6 +75,8 @@ from src.heightmap.terrain_smoothing import (
     DEFAULT_SMOOTHING_SIGMA_M,
 )
 from src.heightmap.water_level import suggest_water_level, render_preview
+from src.gui.preview3d_widget import Preview3DWidget
+from src.heightmap.mesh3d import build_mesh_payload
 from src.heightmap.water_terrain_blend import (
     build_water_mask,
     blend_terrain_to_water,
@@ -166,8 +168,9 @@ class HeightmapDialog(QDialog):
     im TPF2-Importfenster, und exportiert die fertige 16-Bit-PNG.
     """
 
-    def __init__(self, parent, selection, project=None, osm=None):
+    def __init__(self, parent, selection, project=None, osm=None, base_url=None):
         super().__init__(parent)
+        self._base_url = base_url
 
         self.selection = selection
         self.project = project
@@ -192,6 +195,7 @@ class HeightmapDialog(QDialog):
 
         self.setWindowTitle(tr("Heightmap"))
         self.setMinimumWidth(420)
+        self._initial_size_done = False
 
         # Aeusserer Rahmen: oben die Scrollflaeche mit allen Einstellungen,
         # darunter fest die Knopfleiste (auch auf kleinen Bildschirmen sichtbar).
@@ -312,7 +316,18 @@ class HeightmapDialog(QDialog):
         self.preview_label = QLabel()
         self.preview_label.setAlignment(Qt.AlignCenter)
         self.preview_label.setMinimumHeight(300)
-        layout.addWidget(self.preview_label)
+        preview_row = QHBoxLayout()
+        preview_row.addWidget(self.preview_label, 1)
+        self.preview3d = None
+        if self._base_url:
+            self.preview3d = Preview3DWidget(self._base_url)
+            preview_row.addWidget(self.preview3d, 1)
+        layout.addLayout(preview_row)
+        self.preview3d_checkbox = QCheckBox(tr("3D-Vorschau anzeigen"))
+        self.preview3d_checkbox.setChecked(True)
+        self.preview3d_checkbox.setVisible(self.preview3d is not None)
+        self.preview3d_checkbox.toggled.connect(self._on_preview3d_toggled)
+        layout.addWidget(self.preview3d_checkbox)
 
         # -------------------------------------------------
         # Höhenbereich / Wasserhöhe
@@ -2621,6 +2636,41 @@ class HeightmapDialog(QDialog):
             return
         self._update_preview()
 
+    def showEvent(self, event):
+        super().showEvent(event)
+        if not self._initial_size_done:
+            self._initial_size_done = True
+            self._apply_initial_size(self.parent())
+
+    def _apply_initial_size(self, parent):
+        # Beim Oeffnen gleich gross genug, damit niemand das Fenster
+        # erst von Hand aufziehen muss.
+        from PySide6.QtGui import QGuiApplication
+
+        screen = None
+        try:
+            screen = parent.screen() if parent is not None else None
+        except Exception:
+            screen = None
+        if screen is None:
+            screen = QGuiApplication.primaryScreen()
+        if screen is None:
+            return
+        area = screen.availableGeometry()
+        width = int(area.width() * 0.98)
+        height = int(area.height() * 0.94)
+        width = max(width, min(1100, area.width()))
+        width = max(width, min(1100, area.width()))
+        self.resize(max(width, 420), max(height, 400))
+        self.move(
+            area.x() + (area.width() - self.width()) // 2,
+            area.y() + (area.height() - self.height()) // 2,
+        )
+        self.move(
+            area.x() + (area.width() - self.width()) // 2,
+            area.y() + (area.height() - self.height()) // 2,
+        )
+
     def _update_preview(self):
 
         # Waehrend eine Voreinstellung die Haken setzt, nicht nach jedem
@@ -2699,6 +2749,35 @@ class HeightmapDialog(QDialog):
                 Qt.SmoothTransformation
             )
         )
+
+        self._update_preview_3d(array)
+
+    def _on_preview3d_toggled(self, checked):
+        if self.preview3d is not None:
+            self.preview3d.setVisible(checked)
+        if checked:
+            self._update_preview()
+
+    def _update_preview_3d(self, array):
+        if self.preview3d is None or not self.preview3d_checkbox.isChecked():
+            return
+        try:
+            rock, snow = normalize_limits(
+                self.rock_input.value(), self.snow_input.value()
+            )
+            payload = build_mesh_payload(
+                array,
+                self.water_level_input.value(),
+                rock,
+                snow,
+                self._pixel_size_m(),
+                show_zones=self.zones_checkbox.isChecked(),
+            )
+            self.preview3d.set_mesh(payload)
+        except Exception as exc:
+            self.status_label.setText(
+                tr("3D-Vorschau fehlgeschlagen: {error}").format(error=exc)
+            )
 
     # ---------------------------------------------------------
     # Export

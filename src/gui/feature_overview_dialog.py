@@ -222,6 +222,16 @@ FEATURE_GROUPS = (
                 "zusätzlich an der Neigung.",
             ),
             (
+                "3D-Vorschau",
+                "Zeigt rechts neben der 2D-Vorschau das Gelände als 3D-Ansicht: "
+                "grün, Fels und Schnee nach denselben Grenzen wie die Zonen, das "
+                "Wasser als blaue Fläche. Mit der linken Maustaste drehen, mit "
+                "dem Mausrad zoomen, der Regler unten überhöht das Gelände (1× "
+                "bis 5×). Die Ansicht gilt nur für die Vorschau, nicht für den "
+                "Export, und lässt sich mit dem Haken '3D-Vorschau anzeigen' "
+                "ausschalten.",
+            ),
+            (
                 "Höhenfenster begrenzen",
                 "Der Karteneditor von TPF3 nimmt nur Höhen von -100 bis 3177 m "
                 "an. Mit dem Haken legst du das Gelände in ein Fenster (Felder "

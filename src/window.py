@@ -1604,6 +1604,7 @@ class MainWindow(QMainWindow):
             selection,
             self.map_widget.controller.project,
             osm=self.map_widget.controller.project.osm,
+            base_url=self.server.url,
         )
         dialog.exec()
 

@@ -97,6 +97,7 @@ class HeightmapDialogDocumentedTest(unittest.TestCase):
         "Wasserhöhe aus den OSM-Gewässern vorschlagen": "Wasserhöhe aus den OSM-Gewässern vorschlagen",
         "Gelände glätten": "Gelände glätten",
         "Höhenzonen": "Höhenzonen",
+        "3D-Vorschau": "3D-Vorschau",
         "Höhenfenster begrenzen": "Höhenfenster",
         "Trassen und Siedlungen einebnen": "Trassen und Siedlungen einebnen",
         "Gefälle ausgleichen": "Gefälle ausgleichen",
