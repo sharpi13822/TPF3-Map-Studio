@@ -1,4 +1,7 @@
+from pathlib import Path
+
 from PySide6.QtCore import QObject, Signal, QTimer
+from PySide6.QtWidgets import QFileDialog
 from PySide6.QtWebChannel import QWebChannel
 from PySide6.QtWebEngineWidgets import QWebEngineView
 
@@ -8,6 +11,19 @@ from src.map.bridge import Bridge
 
 
 class MapWidget(QWebEngineView):
+    def _on_download_requested(self, download):
+        suggested = download.downloadFileName() or "export.json"
+        path, _filter = QFileDialog.getSaveFileName(
+            self, "Speichern unter", suggested, "JSON (*.json);;Alle Dateien (*)"
+        )
+        if not path:
+            download.cancel()
+            return
+        target = Path(path)
+        download.setDownloadDirectory(str(target.parent))
+        download.setDownloadFileName(target.name)
+        download.accept()
+
     """
     Kartenwidget mit Leaflet, Bridge und Controller.
     """
@@ -86,6 +102,12 @@ class MapWidget(QWebEngineView):
 
         self.page().setWebChannel(
             self.channel
+        )
+
+        # Browser-Downloads (zum Beispiel JSON Export) brauchen in
+        # QtWebEngine einen Handler, sonst passiert nichts.
+        self.page().profile().downloadRequested.connect(
+            self._on_download_requested
         )
 
         # ---------------------------------------------------------
