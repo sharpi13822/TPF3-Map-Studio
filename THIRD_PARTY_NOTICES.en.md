@@ -50,12 +50,15 @@ The versions are listed in `requirements.txt`. Each package brings its own licen
 | Library | Licence | Use |
 | --- | --- | --- |
 | [Leaflet](https://leafletjs.com/) | BSD 2-Clause | Map display |
+| [Three.js](https://threejs.org/) (version 0.160.0, with OrbitControls) | MIT | 3D preview in the heightmap dialog |
 | [PySide6 / Qt for Python](https://doc.qt.io/qtforpython/) (with Shiboken) | LGPL-3.0 (Qt for Python is also available under GPL-3.0 and commercially) | User interface |
 | [requests](https://requests.readthedocs.io/) | Apache-2.0 | Downloads of OSM and elevation data |
 | [NumPy](https://numpy.org/) | BSD 3-Clause | Elevation data calculations |
 | [SciPy](https://scipy.org/) | BSD 3-Clause | Elevation data calculations, smoothing |
 | [Pillow](https://python-pillow.org/) | MIT-CMU (HPND) | Image processing |
 | [PyInstaller](https://pyinstaller.org/) | GPL-2.0 with an exception that does not bind built programs to the GPL | only for building the `.exe` |
+
+Three.js is included in the program under `src/map/web/vendor/`, with its licence text in `THREE_LICENSE.txt` in the same folder.
 
 `requests` brings further packages, including urllib3 (MIT), certifi (MPL-2.0), charset-normalizer (MIT) and idna (BSD 3-Clause). NumPy and SciPy also contain bundled libraries under their own licences, which are in the packages.
 
