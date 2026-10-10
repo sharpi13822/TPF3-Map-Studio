@@ -106,7 +106,7 @@ class ObligationsInEnglishTest(unittest.TestCase):
 class PrivacyTest(unittest.TestCase):
 
     def test_no_private_data_in_public_documents(self):
-        names = ("README.md", "README.en.md", "THIRD_PARTY_NOTICES.md", "THIRD_PARTY_NOTICES.en.md", "RELEASE_NOTES_v0.1.0.md", "RELEASE_NOTES_v0.1.1.md", "LICENSE")
+        names = ("README.md", "README.en.md", "THIRD_PARTY_NOTICES.md", "THIRD_PARTY_NOTICES.en.md", "RELEASE_NOTES_v0.1.0.md", "RELEASE_NOTES_v0.1.1.md", "RELEASE_NOTES_v0.3.0.md", "LICENSE")
         for name in names:
             text = _read(name).lower()
             self.assertNotIn("@gmail", text, name)

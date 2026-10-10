@@ -174,9 +174,9 @@ To pass it on, pack the **whole folder** `dist\TPF3-Map-Studio` into a ZIP file.
 
 The script `tools\make_release.ps1` builds the `.exe`, checks that the icons are in the package, puts `START-HIER.txt`, `LICENSE` and `THIRD_PARTY_NOTICES.md` next to the `.exe` and packs the whole folder into a ZIP file together with a checksum. With an existing `.venv` in the project folder:
 ```
-powershell -ExecutionPolicy Bypass -File tools\make_release.ps1 -Version 0.1.1
+powershell -ExecutionPolicy Bypass -File tools\make_release.ps1 -Version 0.3.0
 ```
-The ZIP is then called `TPF3-Map-Studio-v0.1.1-win64.zip`. It does not belong in the Git repository but is attached to a release on GitHub (see below).
+The ZIP is then called `TPF3-Map-Studio-v0.3.0-win64.zip`. It does not belong in the Git repository but is attached to a release on GitHub (see below).
 
 ### 9. Check
 
@@ -189,7 +189,7 @@ The ZIP is then called `TPF3-Map-Studio-v0.1.1-win64.zip`. It does not belong in
 ### 10. Publish as a release on GitHub (for maintainers)
 
 1. On GitHub: **Releases → Draft a new release**
-2. Create a new tag, for example `v0.1.1` (on `master`)
+2. Create a new tag, for example `v0.3.0` (on `master`)
 3. Attach the ZIP file under **Assets**, put the checksum from `…sha256.txt` into the description and publish
 
 The "Download for Windows" link above then automatically points to the latest version.
