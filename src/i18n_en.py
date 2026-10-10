@@ -1624,8 +1624,8 @@ guide of the heightmap dialog (F1).</p>
         '3D preview failed: {error}',
     '3D-Vorschau':
         '3D preview',
-    "Zeigt rechts neben der 2D-Vorschau das Gelände als 3D-Ansicht: grün, Fels und Schnee nach denselben Grenzen wie die Zonen, das Wasser als blaue Fläche. Mit der linken Maustaste drehen, mit dem Mausrad zoomen, der Regler unten überhöht das Gelände (1× bis 5×). Die Ansicht gilt nur für die Vorschau, nicht für den Export, und lässt sich mit dem Haken '3D-Vorschau anzeigen' ausschalten.":
-        "Shows the terrain as a 3D view next to the 2D preview: green, rock and snow using the same limits as the zones, the water as a blue surface. Drag with the left mouse button to rotate, use the mouse wheel to zoom, and the slider at the bottom exaggerates the relief (1x to 5x). The view is for the preview only, not for the export, and can be switched off with the 'Show 3D preview' checkbox.",
+    "Zeigt rechts neben der 2D-Vorschau das Gelände als 3D-Block mit Erdwänden und Boden. Das Wasser füllt den Block wie ein Aquarium bis zur Wasserhöhe. Ist der Haken für die Höhenzonen gesetzt, färbt die Ansicht grün, Fels und Schnee nach denselben Grenzen wie die Zonen, ohne Haken ist das Gelände grau. Mit der linken Maustaste drehen, mit dem Mausrad zoomen, der Regler unten überhöht das Gelände (1× bis 5×). Die Ansicht gilt nur für die Vorschau, nicht für den Export, und lässt sich mit dem Haken '3D-Vorschau anzeigen' ausschalten.":
+        "Shows the terrain as a 3D block with earth walls and a base next to the 2D preview. The water fills the block up to the water level, like an aquarium. If the height zones checkbox is ticked, the view colours green, rock and snow using the same limits as the zones; without it the terrain is grey. Drag with the left mouse button to rotate, use the mouse wheel to zoom, and the slider at the bottom exaggerates the relief (1x to 5x). The view is for the preview only, not for the export, and can be switched off with the 'Show 3D preview' checkbox.",
     'Speichern unter':
         'Save as',
     'JSON (*.json);;Alle Dateien (*)':

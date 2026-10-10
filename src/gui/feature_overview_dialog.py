@@ -223,13 +223,15 @@ FEATURE_GROUPS = (
             ),
             (
                 "3D-Vorschau",
-                "Zeigt rechts neben der 2D-Vorschau das Gelände als 3D-Ansicht: "
-                "grün, Fels und Schnee nach denselben Grenzen wie die Zonen, das "
-                "Wasser als blaue Fläche. Mit der linken Maustaste drehen, mit "
-                "dem Mausrad zoomen, der Regler unten überhöht das Gelände (1× "
-                "bis 5×). Die Ansicht gilt nur für die Vorschau, nicht für den "
-                "Export, und lässt sich mit dem Haken '3D-Vorschau anzeigen' "
-                "ausschalten.",
+                "Zeigt rechts neben der 2D-Vorschau das Gelände als 3D-Block "
+                "mit Erdwänden und Boden. Das Wasser füllt den Block wie ein "
+                "Aquarium bis zur Wasserhöhe. Ist der Haken für die Höhenzonen "
+                "gesetzt, färbt die Ansicht grün, Fels und Schnee nach "
+                "denselben Grenzen wie die Zonen, ohne Haken ist das Gelände "
+                "grau. Mit der linken Maustaste drehen, mit dem Mausrad zoomen, "
+                "der Regler unten überhöht das Gelände (1× bis 5×). Die Ansicht "
+                "gilt nur für die Vorschau, nicht für den Export, und lässt "
+                "sich mit dem Haken '3D-Vorschau anzeigen' ausschalten.",
             ),
             (
                 "Höhenfenster begrenzen",
