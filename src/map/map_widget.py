@@ -5,6 +5,7 @@ from PySide6.QtWidgets import QFileDialog
 from PySide6.QtWebChannel import QWebChannel
 from PySide6.QtWebEngineWidgets import QWebEngineView
 
+from src.i18n import tr
 from src.map.leaflet_api import LeafletAPI
 from src.map.map_controller import MapController
 from src.map.bridge import Bridge
@@ -14,7 +15,10 @@ class MapWidget(QWebEngineView):
     def _on_download_requested(self, download):
         suggested = download.downloadFileName() or "export.json"
         path, _filter = QFileDialog.getSaveFileName(
-            self, "Speichern unter", suggested, "JSON (*.json);;Alle Dateien (*)"
+            self,
+            tr("Speichern unter"),
+            suggested,
+            tr("JSON (*.json);;Alle Dateien (*)"),
         )
         if not path:
             download.cancel()
