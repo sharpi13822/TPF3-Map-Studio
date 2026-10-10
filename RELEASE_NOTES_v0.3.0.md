@@ -17,6 +17,8 @@
 
 **Note:** unofficial tool, not affiliated with Urban Games. The 3D preview uses Three.js (MIT licence, see THIRD_PARTY_NOTICES).
 
+SHA-256: `31d3d4f38b3a4f7fb9ac960e8e2ca49951b29f5d40e8affaa1cafcb433d4947d`
+
 ## Deutsch
 
 **Neu**
@@ -29,3 +31,5 @@
 - Der Heightmap-Dialog öffnet groß, das Fenster muss nicht mehr breit gezogen werden.
 
 **Download:** `TPF3-Map-Studio-v0.3.0-win64.zip`, **komplett** entpacken, `TPF3-Map-Studio.exe` starten. Beim ersten Start warnt Windows ("Weitere Informationen" -> "Trotzdem ausführen").
+
+Prüfsumme (SHA-256): `31d3d4f38b3a4f7fb9ac960e8e2ca49951b29f5d40e8affaa1cafcb433d4947d`
