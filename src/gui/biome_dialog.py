@@ -40,6 +40,7 @@ from src.heightmap.biome_mask import (
     save_biome_png,
     thin_forest_by_height,
 )
+from src.heightmap.nature_plan_export import save_plan_for_mask
 from src.heightmap.tpf3_paths import find_tpf3_heightmaps_folder
 from src.file_names import ascii_safe_path
 from src.i18n import tr
@@ -184,6 +185,16 @@ class BiomeMaskDialog(QDialog):
         self.status_label = QLabel("")
         self.status_label.setWordWrap(True)
         outer.addWidget(self.status_label)
+
+        self.nature_checkbox = QCheckBox(
+            tr("Natur-Details-Plan (Weinberge, Obstwiesen, Mauern, Hecken) mitspeichern")
+        )
+        self.nature_checkbox.setChecked(True)
+        self.nature_checkbox.setToolTip(
+            tr("Speichert zusätzlich die Liste für den Natur-Details-Mod als CSV und JSON. "
+               "Mauern und Hecken gibt es nur, wenn beim OSM-Laden 'Natur-Details' angehakt war.")
+        )
+        outer.addWidget(self.nature_checkbox)
 
         row = QHBoxLayout()
         outer.addLayout(row)
@@ -378,10 +389,31 @@ class BiomeMaskDialog(QDialog):
 
         self.exported_summary = self._index_summary
 
+        plan_text = ""
+
+        if self.nature_checkbox.isChecked():
+            try:
+                plan = save_plan_for_mask(
+                    self.osm,
+                    self.selection,
+                    path,
+                    game_folder=self._default_folder(),
+                )
+            except Exception as error:  # noqa: BLE001 - Maske ist schon gespeichert
+                plan_text = "\n\n" + tr("Der Natur-Details-Plan konnte nicht gespeichert werden: {error}").format(error=error)
+            else:
+                if plan is None:
+                    plan_text = "\n\n" + tr("Natur-Details-Plan: keine Weinberge, Obstwiesen, Mauern oder Hecken gefunden.")
+                else:
+                    plan_text = "\n\n" + tr("Natur-Details-Plan: {csv} und {json}\nOrdner: {folder}").format(
+                        csv=plan[0].name, json=plan[1].name, folder=plan[0].parent
+                    )
+
         QMessageBox.information(
             self,
             tr("Biome-Maske"),
             tr("Gespeichert:\n{path}\n\nIm Spiel: Karteneditor → Heightmap importieren → Reiter Biome → bei \"Biome\" diese Datei wählen, Berge und Flüsse leer lassen → Anwenden.").format(path=path)
+            + plan_text
             + (
                 tr("\n\nDer Dateiname wurde ohne Umlaute und Sonderzeichen "
                    "gespeichert, weil sie im Spiel Probleme machen k\u00f6nnen.")
