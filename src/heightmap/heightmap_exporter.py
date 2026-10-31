@@ -55,6 +55,8 @@ class HeightmapBuildInfo:
     attributions: list[str] = field(default_factory=list)
     # Datenstand der Kacheln (Ausgabe-/Befliegungsdatum laut Anbieter, als Text)
     actualities: list[str] = field(default_factory=list)
+    # Pixel ohne Hoehendaten im offenen Meer (Copernicus), sonst None
+    sea_mask: object = None
 
 
 class _FallbackMosaic:
@@ -103,6 +105,25 @@ class _FallbackMosaic:
             out[hole] = self._get_fallback().sample_grid(lat[hole], lon[hole])
 
         return out
+
+
+def open_sea_mask(heights: np.ndarray, min_pixels: int = 100000) -> np.ndarray:
+    """Grosse Flaechen mit exakt 0 m: offenes Meer (Copernicus setzt das Meer auf 0)."""
+
+    from scipy.ndimage import label
+
+    zero = heights == 0.0
+    if not zero.any():
+        return np.zeros(heights.shape, dtype=bool)
+
+    labels, count = label(zero)
+    if count == 0:
+        return np.zeros(heights.shape, dtype=bool)
+
+    sizes = np.bincount(labels.ravel())
+    big = sizes >= min_pixels
+    big[0] = False
+    return big[labels]
 
 
 def pixel_size_for_selection(selection: Selection) -> tuple[int, int]:
@@ -311,7 +332,16 @@ def build_heightmap_array_ex(
             control=control,
         )
 
-        info = HeightmapBuildInfo(source=source)
+        # Copernicus hat fuer offenes Meer keine Kacheln (404). Solche
+        # Luecken sind Wasser auf Meereshoehe, kein Fehler.
+        sea = np.isnan(out)
+        out = np.nan_to_num(out, nan=0.0)
+        sea |= open_sea_mask(out)
+
+        info = HeightmapBuildInfo(
+            source=source,
+            sea_mask=sea if sea.any() else None,
+        )
 
     elif source == SOURCE_TPF2_PNG:
 

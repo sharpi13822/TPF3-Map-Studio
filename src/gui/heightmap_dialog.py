@@ -159,7 +159,7 @@ DEFAULT_FLATTEN_SIGMA_M = 60.0
 
 # Der Knopf "Straßen und Gleise..." (Mod, der im Spiel Straßen und Gleise baut) ist vorerst ausgeblendet:
 # Der Mod wird nicht weiterverfolgt. Auf True setzen, um ihn wieder einzublenden.
-SHOW_ROADS_AND_TRACKS_BUTTON = False
+SHOW_ROADS_AND_TRACKS_BUTTON = True
 
 # Grenzen der beiden Weichzeichner-Felder (in m). Das Raster hat 4 m je Pixel: Unter etwa 4 m
 # bewirkt ein Gauss-Weichzeichner praktisch nichts mehr, "aus" geht ueber den Haken.
@@ -186,7 +186,7 @@ RIVER_WIDTH_RANGE_PX = (1, 12)
 # Als Bezug fuer den Gefaelle-Ausgleich zaehlen Seen/Wasserflaechen sowie
 # diese Wasserwege - Baeche und Graeben bewusst nicht: sie liegen oft weit
 # ueber dem Talfluss und wuerden ihre Umgebung sonst unnatuerlich absenken.
-REFERENCE_WATERWAY_TYPES = frozenset({"river", "canal"})
+REFERENCE_WATERWAY_TYPES = frozenset({"river", "canal", "stream"})
 
 
 class _WheelGuard(QObject):
@@ -2864,7 +2864,15 @@ class HeightmapDialog(QDialog):
         """
 
         if self._water_mask is None:
-            self._water_mask = self._get_reference_mask()
+            mask = self._get_reference_mask()
+
+            # Offenes Meer (Copernicus ohne Kacheln) zaehlt als Wasser,
+            # sonst hebt "Wasser nur dort, wo OSM Wasser hat" es an.
+            sea = getattr(self._build_info, "sea_mask", None)
+            if sea is not None and getattr(sea, "shape", None) == mask.shape:
+                mask = mask | sea
+
+            self._water_mask = mask
 
         return self._water_mask
 
