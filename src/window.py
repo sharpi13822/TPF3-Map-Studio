@@ -136,6 +136,7 @@ class _OsmWorker(QThread):
     lane_status = Signal(int, int, str, int, int)
     download_status = Signal(object)
     cache_status = Signal(object)
+    phase = Signal(str)
 
     def __init__(self, controller, selection, config, parent=None):
         super().__init__(parent)
@@ -162,6 +163,9 @@ class _OsmWorker(QThread):
             client.on_status = self.download_status.emit
         if client is not None and hasattr(client, "on_cache_status"):
             client.on_cache_status = self.cache_status.emit
+
+        if hasattr(controller, "on_phase"):
+            controller.on_phase = self.phase.emit
 
     def cancel(self):
         """Bricht den Download ab (vom GUI-Thread aufgerufen)."""
@@ -1813,6 +1817,7 @@ class MainWindow(QMainWindow):
         self._osm_worker.download_status.connect(self._on_osm_download_status)
         self._osm_worker.cache_status.connect(self._on_osm_cache_status)
         self._osm_worker.lane_status.connect(self._on_osm_lane)
+        self._osm_worker.phase.connect(self._on_osm_phase)
 
         self._osm_worker.progress.connect(
             self._on_osm_progress
@@ -1837,7 +1842,13 @@ class MainWindow(QMainWindow):
 
         controller = self.map_widget.controller
 
+        self._on_osm_phase(tr("Karte wird gezeichnet…"))
+        QApplication.processEvents()
+
         controller.apply_osm(osm)
+
+        if hasattr(self, "_osm_download_panel"):
+            self._osm_download_panel.finish(tr("Karte fertig."))
 
         selection = controller.project.selection
 
@@ -1893,6 +1904,11 @@ class MainWindow(QMainWindow):
         except Exception as error:  # noqa: BLE001
 
             print(f"Bahnhöfe konnten nicht gesammelt werden: {error}")
+
+    def _on_osm_phase(self, text: str):
+        if hasattr(self, "_osm_download_panel"):
+            self._osm_download_panel.set_phase(text)
+        self.statusBar().showMessage(text)
 
     def _on_osm_progress(self, number: int, total: int):
         self._osm_completed = number

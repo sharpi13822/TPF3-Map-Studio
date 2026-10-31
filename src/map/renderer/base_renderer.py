@@ -82,7 +82,7 @@ class BaseRenderer(ABC):
         items = self.pipeline.build(
             osm,
             limit=self.limit + 1,
-            rank=rank_for(self.layer),
+            rank=rank_for(self.layer, osm),
         )
 
         self.truncated = len(items) > self.limit

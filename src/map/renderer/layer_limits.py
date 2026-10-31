@@ -78,13 +78,65 @@ def _highway_rank(obj) -> int:
     return _HIGHWAY_RANK.get(_tag(obj, "highway"), 10)
 
 
-def rank_for(layer):
-    """Sortierschluessel (kleiner = wichtiger) oder None (OSM-Reihenfolge)."""
+def _bbox_area(geometry) -> float:
+    """Flaeche des Umschliessungsrechtecks einer (auch verschachtelten) Geometrie."""
+
+    xs_min = ys_min = float("inf")
+    xs_max = ys_max = float("-inf")
+    stack = [geometry]
+
+    while stack:
+        item = stack.pop()
+        if not isinstance(item, (list, tuple)) or not item:
+            continue
+        first = item[0]
+        if (
+            len(item) >= 2
+            and isinstance(first, (int, float))
+            and isinstance(item[1], (int, float))
+        ):
+            x, y = item[0], item[1]
+            xs_min = min(xs_min, x)
+            xs_max = max(xs_max, x)
+            ys_min = min(ys_min, y)
+            ys_max = max(ys_max, y)
+        else:
+            stack.extend(item)
+
+    if xs_min == float("inf"):
+        return 0.0
+
+    return (xs_max - xs_min) * (ys_max - ys_min)
+
+
+_AREA_LAYERS = (
+    Layer.BUILDINGS,
+    Layer.WATER,
+    Layer.PARKS,
+    Layer.LANDUSE,
+    Layer.VEGETATION,
+)
+
+
+def rank_for(layer, osm=None):
+    """Sortierschluessel (kleiner = wichtiger) oder None (OSM-Reihenfolge).
+
+    Flaechen-Ebenen (Vegetation, Wasser, Parks, Landnutzung, Gebaeude) werden
+    nach Groesse sortiert, wenn die OSM-Daten uebergeben werden: grosse
+    Flaechen bleiben, kleine fallen zuerst weg."""
 
     if layer == Layer.WATERWAYS:
         return _waterway_rank
 
     if layer == Layer.ROADS:
         return _highway_rank
+
+    if osm is not None and layer in _AREA_LAYERS:
+
+        def _area_rank(obj):
+            geometry = osm.get_geometry(obj.id)
+            return -_bbox_area(geometry) if geometry is not None else 0.0
+
+        return _area_rank
 
     return None

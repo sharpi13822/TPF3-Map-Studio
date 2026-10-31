@@ -105,6 +105,10 @@ class MapController(QObject):
 
         self.overpass = OverpassClient()
 
+        # Optional: on_phase(text) meldet Arbeitsschritte nach dem Download
+        # (laeuft im Hintergrund-Thread, nur Signale ausloesen).
+        self.on_phase = None
+
         # Overpass-Abfrage-Baukasten: welche Kategorien beim naechsten
         # OSM-Download abgefragt werden (siehe Werkzeuge > Overpass-Abfrage).
         self.overpass_config = OverpassQueryConfig()
@@ -1024,6 +1028,9 @@ class MapController(QObject):
             selection,
             overpass_config,
         )
+
+        if self.on_phase is not None:
+            self.on_phase(tr("Geometrien werden aufgebaut…"))
 
         GeometryBuilder(osm).build()
 

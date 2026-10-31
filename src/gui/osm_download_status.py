@@ -188,6 +188,10 @@ class OsmDownloadStatus(QDockWidget):
             )
             scroll.setValue(scroll.maximum() if at_bottom else previous)
 
+    def set_phase(self, text):
+        self.summary.setText(text)
+        self._append_history(text)
+
     def finish(self, message, color=COLOR_OK):
         self.summary.setText(message)
         self._append_history(message, color)
