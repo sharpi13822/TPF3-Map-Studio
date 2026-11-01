@@ -407,7 +407,21 @@ def build_heightmap_array_ex(
         else:
             if dgm1_folder is None:
                 raise Dgm1Error(tr("Kein Ordner mit DGM1-Kacheln angegeben."))
-            dgm1 = Dgm1Mosaic.from_folder(selection, dgm1_folder, METERS_PER_PIXEL)
+            from src.heightmap.local_raster_dem import LocalRasterError, LocalRasterMosaic, folder_needs_generic
+
+            if folder_needs_generic(dgm1_folder):
+                # Eigene Hoehendateien aus beliebigen Laendern (GeoTIFF/ASC, jedes unterstuetzte EPSG)
+                try:
+                    dgm1 = LocalRasterMosaic.from_folder(dgm1_folder, selection)
+                except LocalRasterError as exc:
+                    raise Dgm1Error(str(exc)) from exc
+                if dgm1.slot_count == 0:
+                    raise Dgm1Error(
+                        "Keine der Hoehendateien im Ordner liegt im Rechteck. "
+                        "Passen Ordner und Kartenausschnitt zusammen?"
+                    )
+            else:
+                dgm1 = Dgm1Mosaic.from_folder(selection, dgm1_folder, METERS_PER_PIXEL)
 
         if dgm1.slot_count == 0:
             if source == SOURCE_BEV_AT:

@@ -639,8 +639,8 @@ guide of the heightmap dialog (F1).</p>
         'Copernicus (worldwide, 30 m)',
     'DGM1 Deutschland (1 m, über hoehendaten.de)':
         'DGM1 Germany (1 m, via hoehendaten.de)',
-    'DGM1 aus eigenen GeoTIFF-Kacheln (Ordner)':
-        'DGM1 from own GeoTIFF tiles (folder)',
+    'Eigene H\u00f6hendateien (GeoTIFF/ASC, jedes Land, Ordner)':
+        'Own elevation files (GeoTIFF/ASC, any country, folder)',
     'swissALTI3D Schweiz (2 m, über data.geo.admin.ch)':
         'swissALTI3D Switzerland (2 m, via data.geo.admin.ch)',
     'Voreinstellung:':

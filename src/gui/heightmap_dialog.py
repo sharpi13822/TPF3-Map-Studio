@@ -278,7 +278,7 @@ class HeightmapDialog(QDialog):
         self.source_combo.addItems([
             tr("Copernicus (weltweit, 30 m)"),
             tr("DGM1 Deutschland (1 m, über hoehendaten.de)"),
-            tr("DGM1 aus eigenen GeoTIFF-Kacheln (Ordner)"),
+            tr("Eigene H\u00f6hendateien (GeoTIFF/ASC, jedes Land, Ordner)"),
             tr("swissALTI3D Schweiz (2 m, über data.geo.admin.ch)"),
             tr("AHN Niederlande (2 m, über PDOK)"),
             tr("Eigene TPF2-Heightmap (PNG)"),
@@ -1693,6 +1693,9 @@ class HeightmapDialog(QDialog):
 
         from src.heightmap import asc_import
 
+        from src.heightmap.local_raster_dem import folder_epsg_known
+        if folder_epsg_known(folder):
+            return True
         if not asc_import.needs_conversion(folder):
             return True
 
