@@ -1710,12 +1710,38 @@ end
 HUD_SCRIPT_LUA = """local builtin = ug_require "::/gui/main/builtin.lua"
 local react = ug_require "::/gui/main/react.lua"
 
+local function knopf(titel, ereignis)
+	return builtin.Button{
+		content = builtin.TextView{ text = titel },
+		onClick = function()
+			print("OSMBAU HUD Knopf: " .. ereignis)
+			api.cmd.sendCommand(api.cmd.makeScriptingSendEventCmd("", "mapstudio", ereignis, true))
+		end,
+	}
+end
+
+local sondiert = false
+local function sondiere()
+	if sondiert then return end
+	sondiert = true
+	for _, paar in ipairs({ { "builtin", builtin }, { "react", react } }) do
+		local namen = {}
+		pcall(function() for k in pairs(paar[2]) do namen[#namen + 1] = tostring(k) end end)
+		table.sort(namen)
+		print("OSMBAU HUD " .. paar[1] .. ": " .. table.concat(namen, ", "))
+	end
+end
+
 local MapStudioPlugin = react.RegisterRecipe("MapStudioPlugin", function()
 \tprint("OSMBAU HUD Plugin gezeichnet")
+	pcall(sondiere)
 \treturn builtin.BoxLayout{
 \t\tchildren = {
-\t\t\tbuiltin.Button{
-\t\t\t\tcontent = builtin.TextView{ text = "Map Studio: Aufgaben" },
+\t\t\tknopf("1 Strassen", "aufgabe_1"),
+knopf("2 Strassen aufweiten", "aufgabe_2"),
+knopf("3 Gleise", "aufgabe_3"),
+builtin.Button{
+\t\t\t\tcontent = builtin.TextView{ text = "Map Studio: Alle Aufgaben" },
 \t\t\t\tonClick = function()
 \t\t\t\t\tprint("OSMBAU HUD Knopf gedrueckt")
 \t\t\t\t\tapi.cmd.sendCommand(api.cmd.makeScriptingSendEventCmd("", "mapstudio", "aufgaben", true))

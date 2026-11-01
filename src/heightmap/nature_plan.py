@@ -16,21 +16,24 @@ import math
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from src.heightmap.nature_rows import row_paths
 from src.tpf2.tpf2_geometry import TPF2Geometry
 
 KIND_VINEYARD = "vineyard"
 KIND_ORCHARD = "orchard"
 KIND_WALL = "wall"
 KIND_HEDGE = "hedge"
+KIND_FIELD = "field"
 
 KIND_NAMES = {
     KIND_VINEYARD: "Weinberg",
     KIND_ORCHARD: "Obstwiese",
     KIND_WALL: "Mauer",
     KIND_HEDGE: "Hecke",
+    KIND_FIELD: "Feld",
 }
 
-AREA_KINDS = (KIND_VINEYARD, KIND_ORCHARD)
+AREA_KINDS = (KIND_VINEYARD, KIND_ORCHARD, KIND_FIELD)
 LINE_KINDS = (KIND_WALL, KIND_HEDGE)
 
 DEFAULT_ROW_SPACING_M = 2.0
@@ -48,6 +51,7 @@ class NatureFeature:
     rows: int = 0
     points: list[tuple[float, float]] = field(default_factory=list)
     note: str = ""
+    row_paths: list = field(default_factory=list)
 
 
 def classify(tags: dict) -> str | None:
@@ -58,6 +62,8 @@ def classify(tags: dict) -> str | None:
         return KIND_VINEYARD
     if landuse == "orchard":
         return KIND_ORCHARD
+    if landuse == "farmland":
+        return KIND_FIELD
 
     barrier = tags.get("barrier")
     if barrier in ("wall", "retaining_wall"):
@@ -171,7 +177,9 @@ def collect_features(
             if abs(cx) > half_w or abs(cy) > half_h:
                 continue
             direction = _longest_edge_direction(ring)
-            rows = estimate_rows(ring, direction, row_spacing_m) if kind == KIND_VINEYARD else 0
+            has_rows = kind in (KIND_VINEYARD, KIND_FIELD)
+            rows = estimate_rows(ring, direction, row_spacing_m) if has_rows else 0
+            paths = row_paths(ring, direction, row_spacing_m) if has_rows else []
             result.append(
                 NatureFeature(
                     kind=kind,
@@ -182,6 +190,7 @@ def collect_features(
                     row_direction_deg=direction,
                     rows=rows,
                     points=ring,
+                    row_paths=paths,
                     note=str(way.tags.get("crop") or way.tags.get("trees") or ""),
                 )
             )
@@ -259,6 +268,10 @@ def write_json(features, path) -> None:
                 "rows": f.rows,
                 "note": f.note,
                 "points": [[round(px, 1), round(py, 1)] for px, py in f.points],
+                "row_paths": [
+                    [[round(a, 1), round(b, 1)], [round(c, 1), round(d, 1)]]
+                    for (a, b), (c, d) in f.row_paths
+                ],
             }
             for f in features
         ],
