@@ -68,6 +68,11 @@ START_COMMAND = (
     '"", "mapstudio", "import", true))'
 )
 
+WIDEN_COMMAND = (
+    'api.cmd.sendCommand(api.cmd.makeScriptingSendEventCmd('
+    '"", "mapstudio", "aufweiten", true))'
+)
+
 
 class NetworkDialog(QDialog):
 
@@ -157,6 +162,17 @@ class NetworkDialog(QDialog):
         )
         self.oneway_box.stateChanged.connect(self._invalidate)
         layout.addWidget(self.oneway_box)
+
+        self.wide_box = QCheckBox(
+            tr("Schnell- und Bundesstraßen breit bauen (4 Spuren, im Spiel ungetestet)")
+        )
+        self.wide_box.setChecked(False)
+        self.wide_box.setToolTip(
+            tr("Der Mod baut diese Straßen zuerst schmal und weitet sie danach mit dem "
+            "Konsolenbefehl „aufweiten“ auf (sonst stürzt das Spiel an Kreuzungen ab).")
+        )
+        self.wide_box.stateChanged.connect(self._invalidate)
+        layout.addWidget(self.wide_box)
 
         self.dual_box = QCheckBox(tr("Richtungsfahrbahnen zusammenfassen (im Spiel ungetestet)"))
         self.dual_box.setChecked(False)
@@ -366,6 +382,7 @@ class NetworkDialog(QDialog):
             include_tunnels=self.tunnel_box.isChecked(),
             min_bridge_m=self.min_bridge_spin.value(),
             oneway_templates=self.oneway_box.isChecked(),
+            wide_roads=self.wide_box.isChecked(),
             merge_junctions_m=self.merge_spin.value(),
             max_edge_m=self.edge_spin.value(),
             min_road_track_m=self.road_gap_spin.value(),
@@ -503,8 +520,13 @@ class NetworkDialog(QDialog):
             )
             return
 
+        widen_hint = ""
+
+        if self.wide_box.isChecked():
+            widen_hint = tr("\n\nDanach (breite Straßen), wenn „Import fertig“ steht:\n{cmd}").format(cmd=WIDEN_COMMAND)
+
         QMessageBox.information(
             self,
             tr("Straßen und Gleise"),
-            tr("Mod geschrieben:\n{root}\n\nIm Spiel:\n1. Mod „Map Studio Import“ im Mod-Menü aktivieren und das Spiel neu starten.\n2. Karte mit der Heightmap laden, warten bis „Map is ready“ in der Konsole steht, Spielstand speichern, Pause ausschalten.\n3. In der Konsole eingeben:\n{START_COMMAND}\n4. Warten bis „Import fertig“ in der Konsole steht.").format(root=root, START_COMMAND=START_COMMAND),
+            tr("Mod geschrieben:\n{root}\n\nIm Spiel:\n1. Mod „Map Studio Import“ im Mod-Menü aktivieren und das Spiel neu starten.\n2. Karte mit der Heightmap laden, warten bis „Map is ready“ in der Konsole steht, Spielstand speichern, Pause ausschalten.\n3. In der Konsole eingeben:\n{START_COMMAND}\n4. Warten bis „Import fertig“ in der Konsole steht.").format(root=root, START_COMMAND=START_COMMAND) + widen_hint,
         )

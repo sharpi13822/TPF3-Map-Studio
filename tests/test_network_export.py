@@ -118,7 +118,7 @@ class NetworkExportTest(unittest.TestCase):
         rail = [w for w in net.ways if w.art == ne.ART_TRACK][0]
         street = [w for w in net.ways if w.art == ne.ART_STREET][0]
         self.assertEqual(rail.template, ne.RAIL_STANDARD_CAT)
-        self.assertEqual(street.template, "/country/country_new_small.street_template")
+        self.assertEqual(street.template, "/de/de_landstrasse.street_template")
         self.assertNotEqual(rail.nodes[0], street.nodes[0])
 
     def test_service_track_and_highspeed(self):
@@ -164,10 +164,10 @@ class NetworkExportTest(unittest.TestCase):
         net = ne.collect_network(osm, SELECTION, ne.NetworkOptions(max_edge_m=0, min_segment_m=0))
         by_id = {w.osm_id: w for w in net.ways}
         narrow = "/town/town_new_one_way_small.street_template"
-        self.assertEqual(by_id[1].template, narrow)
-        self.assertEqual(by_id[2].template, narrow)
-        # Landstrasse: 2 Fahrspuren (country_new_small)
-        self.assertEqual(by_id[3].template, "/country/country_new_small.street_template")
+        self.assertEqual(by_id[1].template, "/de/de_einbahn_land_1.street_template")
+        self.assertEqual(by_id[2].template, "/de/de_einbahn_land_1.street_template")
+        # Hauptstrasse: 2 Fahrspuren (town_new_small, Auswahl nach Mustertafel im Spiel)
+        self.assertEqual(by_id[3].template, "/de/de_landstrasse.street_template")
         # Autobahn bleibt unveraendert (keine Einbahn-Vorlage)
         self.assertEqual(by_id[4].template, "/highway/highway_new_large.street_template")
         # oneway=yes: Reihenfolge wie gezeichnet (x aufsteigend), -1: umgedreht
@@ -187,7 +187,8 @@ class NetworkExportTest(unittest.TestCase):
             [Way(1, [1, 2, 3], {"highway": "residential", "junction": "roundabout"})],
         )
         net = ne.collect_network(osm, SELECTION, ne.NetworkOptions(max_edge_m=0, min_segment_m=0))
-        self.assertIn("one_way_small", net.ways[0].template)
+        # residential = schlichte Nebenstrasse (ind_country_new_small) -> schmale Einbahn-Vorlage
+        self.assertIn("einbahn", net.ways[0].template)
 
     def test_junctions_close_together_are_merged(self):
         # Zwei Querstrassen (B und C) treffen die Hauptstrasse A 8 m voneinander entfernt.
@@ -435,7 +436,7 @@ class CleanupTests(unittest.TestCase):
         net = ne.collect_network(self._dual({"highway": "residential"}), SELECTION, opt)
         self.assertEqual(len(net.ways), 1)
         self.assertEqual(net.stats["merged_pairs"], 1)
-        self.assertEqual(net.ways[0].template, "/town/town_new_small.street_template")
+        self.assertEqual(net.ways[0].template, "/country/ind_country_new_small.street_template")
 
     def test_motorway_not_merged(self):
         opt = ne.NetworkOptions(merge_dual_carriageways=True)
@@ -692,7 +693,7 @@ class UnifyTrackTemplatesTests(unittest.TestCase):
         pts = [node(1, 0, 0), node(2, 300, 0), node(3, 0, 50), node(4, 300, 50)]
         ways = [Way(10, [1, 2], {"railway": "rail"}), Way(11, [3, 4], {"highway": "secondary"})]
         net = self._net(ways, pts)
-        self.assertEqual(self._templates(net)[11], "country_new_small.street_template")
+        self.assertEqual(self._templates(net)[11], "de_landstrasse.street_template")
 
 
 class BridgeNeedsCrossingTests(unittest.TestCase):

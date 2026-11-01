@@ -58,21 +58,47 @@ NETWORK_EXPORT_VERSION = "v23"
 HIGHWAY_TEMPLATES: dict[str, str] = {
     "motorway": "/highway/highway_new_large.street_template",
     "motorway_link": "/highway/highway_new_small.street_template",
-    "trunk": "/country/country_new_small.street_template",
-    "trunk_link": "/country/country_new_small.street_template",
-    "primary": "/country/country_new_small.street_template",
-    "primary_link": "/country/country_new_small.street_template",
-    "secondary": "/country/country_new_small.street_template",
-    "secondary_link": "/country/country_new_small.street_template",
-    "tertiary": "/country/country_new_small.street_template",
-    "tertiary_link": "/country/country_new_small.street_template",
-    "unclassified": "/country/country_new_small.street_template",
-    "residential": "/town/town_new_small.street_template",
-    "living_street": "/town/town_new_xsmall.street_template",
-    "service": "/town/town_new_xsmall.street_template",
+    # v26: Zuordnung nach Mustertafel im Spiel. Hauptstrassen (bis tertiary) = town_new_small, Nebenstrassen,
+    # Wohn- und Fuhrwege = ind_country_new_small (schlicht, W=14, ohne die Stadt-Gehwege).
+    "trunk": "/town/town_new_small.street_template",
+    "trunk_link": "/town/town_new_small.street_template",
+    "primary": "/town/town_new_small.street_template",
+    "primary_link": "/town/town_new_small.street_template",
+    "secondary": "/town/town_new_small.street_template",
+    "secondary_link": "/town/town_new_small.street_template",
+    "tertiary": "/town/town_new_small.street_template",
+    "tertiary_link": "/town/town_new_small.street_template",
+    "unclassified": "/country/ind_country_new_small.street_template",
+    "residential": "/country/ind_country_new_small.street_template",
+    "living_street": "/country/ind_country_new_small.street_template",
+    "service": "/country/ind_country_new_small.street_template",
+}
+
+# Breite Strassenklassen (nur mit NetworkOptions.wide_roads). Der Mod baut sie zuerst klein und
+# weitet sie danach mit dem Ereignis "aufweiten" per replaceSegment auf (v22). Direkt gebaut stuerzt
+# das Spiel an Kreuzungen ab. Die Vorlage hat 4 Autospuren, breiter als die meisten echten Strassen.
+WIDE_TEMPLATES: dict[str, str] = {
+    "trunk": "/country/country_new_medium.street_template",
+    "primary": "/country/country_new_medium.street_template",
 }
 
 # Standardmaessig NICHT exportiert (Parkplatzzufahrten gibt es tausende).
+# Deutsche Strassen (Mod tf3_strassen_de_1). findeVorlage im Spiel sucht nach dem Namensende.
+GERMAN_TEMPLATES: dict[str, str] = {
+    "trunk": "/de/de_landstrasse.street_template",
+    "trunk_link": "/de/de_landstrasse.street_template",
+    "primary": "/de/de_landstrasse.street_template",
+    "primary_link": "/de/de_landstrasse.street_template",
+    "secondary": "/de/de_landstrasse.street_template",
+    "secondary_link": "/de/de_landstrasse.street_template",
+    "tertiary": "/de/de_landstrasse.street_template",
+    "tertiary_link": "/de/de_landstrasse.street_template",
+    "unclassified": "/de/de_nebenstrasse.street_template",
+    "residential": "/de/de_nebenstrasse_1.street_template",
+    "living_street": "/de/de_nebenstrasse_1.street_template",
+    "service": "/de/de_nebenstrasse_1.street_template",
+}
+
 DEFAULT_HIGHWAYS = frozenset(HIGHWAY_TEMPLATES) - {"service"}
 
 SKIP_SERVICE = frozenset({
@@ -122,12 +148,17 @@ DEFAULT_BRIDGE_TYPES: tuple[tuple[float, str], ...] = (
 # Die Namen stammen aus der Vorlagenliste des Spiels; die Fahrtrichtung folgt der
 # Knotenreihenfolge (ungeprueft im Spiel).
 ONEWAY_TEMPLATES: dict[str, str] = {
+    "/de/de_landstrasse.street_template": "/de/de_einbahn_land_1.street_template",
+    "/de/de_nebenstrasse.street_template": "/de/de_einbahn_stadt_1.street_template",
+    "/de/de_nebenstrasse_1.street_template": "/de/de_einbahn_stadt_1.street_template",
     "/country/country_new_large.street_template":
         "/town/town_new_one_way_medium.street_template",
     "/country/country_new_medium.street_template":
         "/town/town_new_one_way_medium.street_template",
     "/country/country_new_small.street_template":
         "/town/town_new_one_way_small.street_template",
+    "/country/ind_country_new_small.street_template":
+        "/town/town_new_one_way_xsmall.street_template",
     "/town/town_new_small.street_template":
         "/town/town_new_one_way_small.street_template",
     "/town/town_new_xsmall.street_template":
@@ -184,6 +215,10 @@ class NetworkOptions:
     min_bridge_free_m: float = 25.0
     # Einbahnstrassen (oneway=yes/-1, Kreisverkehr) mit schmaler Einbahn-Vorlage bauen.
     oneway_templates: bool = True
+    # trunk/primary mit breiter Vorlage (WIDE_TEMPLATES) exportieren; im Spiel danach "aufweiten" ausloesen.
+    wide_roads: bool = False
+    # Strassen mit den Vorlagen der deutschen Strassen-Mod bauen (Mod muss im Spiel aktiv sein).
+    german_roads: bool = True
     # Linien vereinfachen: Formpunkte, die weniger als diese Abweichung
     # ausmachen, entfallen. Kreuzungen und Wegenden bleiben immer.
     simplify_tolerance_m: float = 3.0
@@ -226,6 +261,11 @@ class NetworkOptions:
     # gleicher Vorlage nur 1 von 60. Hochgeschwindigkeitsgleise bleiben unveraendert. False = aus.
     unify_track_templates: bool = True
     max_road_shift_m: float = 5.0
+    # Strassen parallel zu Fluessen/Gewaessern vom Wasser wegruecken (0 = aus). Abstand zur Flussmitte
+    # (halbe Flussbreite 6 m + Uferstreifen etwa 4 m + halbe Strassenbreite) und zum Rand von Seen.
+    min_road_river_m: float = 14.0
+    min_road_shore_m: float = 8.0
+    max_road_water_shift_m: float = 10.0
     bridge_types: tuple = DEFAULT_BRIDGE_TYPES
     # Rand der Karte: Punkte ausserhalb (minus Rand) werden abgeschnitten.
     edge_margin_m: float = 50.0
@@ -318,6 +358,8 @@ def _classify(tags: dict, opt: NetworkOptions):
 
         art = ART_STREET
         template = HIGHWAY_TEMPLATES[highway]
+        if opt.german_roads and highway in GERMAN_TEMPLATES:
+            template = GERMAN_TEMPLATES[highway]
         grade = HIGHWAY_GRADE.get(highway)
         category = f"highway={highway}"
 
@@ -326,6 +368,9 @@ def _classify(tags: dict, opt: NetworkOptions):
 
             if direction != 0:
                 template = ONEWAY_TEMPLATES[template]
+
+        if opt.wide_roads and direction == 0 and highway in WIDE_TEMPLATES:
+            template = WIDE_TEMPLATES[highway]
 
     elif railway and opt.include_rail and railway in opt.railways:
 
@@ -967,6 +1012,145 @@ def separate_roads_from_tracks(network: "Network", min_distance: float, max_shif
     return len(wanted)
 
 
+_RIVER_WATERWAYS = frozenset({"river", "canal"})
+
+
+def _water_segments(osm, geometry, river_m: float, shore_m: float) -> list:
+    """Wasserlinien als Segmente (x, y, dx, dy, laenge, abstand) in Metern ab der Kartenmitte."""
+
+    segments = []
+
+    for way in osm.ways.values():
+
+        tags = way.tags
+
+        if tags.get("waterway") in _RIVER_WATERWAYS:
+            radius = river_m
+        elif tags.get("natural") == "water" or tags.get("landuse") == "reservoir":
+            radius = shore_m
+        else:
+            continue
+
+        if radius <= 0:
+            continue
+
+        prev = None
+
+        for node_id in way.nodes:
+
+            node = osm.nodes.get(node_id)
+
+            if node is None:
+                prev = None
+                continue
+
+            x, y = geometry.convert(node.lat, node.lon)
+            cur = (float(x), float(y))
+
+            if prev is not None:
+                dx, dy = cur[0] - prev[0], cur[1] - prev[1]
+                length = math.hypot(dx, dy)
+                if length > 0:
+                    segments.append((prev[0], prev[1], dx, dy, length, radius))
+
+            prev = cur
+
+    return segments
+
+
+def separate_roads_from_water(network: "Network", segments: list, max_shift: float = 10.0,
+                              par_min: float = 0.9, decay: float = 0.7) -> int:
+    """
+    Rueckt Strassenknoten, die parallel dichter am Wasser liegen als der Abstand des Segments
+    (Flussmitte: halbe Flussbreite + Uferstreifen + halbe Strassenbreite), vom Wasser weg
+    (hoechstens max_shift). Kreuzende Strassen (Bruecken) bleiben. Gibt die Zahl der
+    verschobenen Knoten zurueck.
+    """
+
+    if not segments or max_shift <= 0:
+        return 0
+
+    nodes = network.nodes
+    cell = 32.0
+    grid: dict = {}
+
+    for index, (x, y, dx, dy, length, radius) in enumerate(segments):
+        x1, y1 = x + dx, y + dy
+        for cx in range(int(math.floor((min(x, x1) - radius) / cell)),
+                        int(math.floor((max(x, x1) + radius) / cell)) + 1):
+            for cy in range(int(math.floor((min(y, y1) - radius) / cell)),
+                            int(math.floor((max(y, y1) + radius) / cell)) + 1):
+                grid.setdefault((cx, cy), []).append(index)
+
+    wanted: dict[int, tuple[float, float, float]] = {}
+
+    for way in network.ways:
+
+        if way.art != ART_STREET or way.kind != KIND_NORMAL:
+            continue
+
+        ids = way.nodes
+        need = [0.0] * len(ids)
+        away = [None] * len(ids)
+
+        for k, node_id in enumerate(ids):
+
+            p = nodes[node_id - 1]
+            prev_p = nodes[ids[max(0, k - 1)] - 1]
+            next_p = nodes[ids[min(len(ids) - 1, k + 1)] - 1]
+            tx, ty = next_p[0] - prev_p[0], next_p[1] - prev_p[1]
+            tl = math.hypot(tx, ty)
+
+            if tl <= 0:
+                continue
+
+            tx, ty = tx / tl, ty / tl
+            best = None
+
+            for index in grid.get((int(math.floor(p[0] / cell)), int(math.floor(p[1] / cell))), []):
+                x, y, dx, dy, length, radius = segments[index]
+                t = ((p[0] - x) * dx + (p[1] - y) * dy) / (length * length)
+                t = min(1.0, max(0.0, t))
+                fx, fy = x + t * dx, y + t * dy
+                d = math.hypot(p[0] - fx, p[1] - fy)
+                if d >= radius:
+                    continue
+                if abs(tx * dx / length + ty * dy / length) < par_min:
+                    continue
+                gap = radius - d
+                if best is None or gap > best[0]:
+                    best = (gap, fx, fy, d)
+
+            if best is not None:
+                gap, fx, fy, d = best
+                if d < 1e-6:
+                    ex, ey = -ty, tx
+                else:
+                    ex, ey = (p[0] - fx) / d, (p[1] - fy) / d
+                need[k] = min(max_shift, gap)
+                away[k] = (ex, ey)
+
+        for _ in range(3):
+            for k in range(len(ids)):
+                for kk in (k - 1, k + 1):
+                    if 0 <= kk < len(ids) and need[kk] * decay > need[k]:
+                        need[k] = need[kk] * decay
+                        if away[k] is None:
+                            away[k] = away[kk]
+
+        for k, node_id in enumerate(ids):
+            if need[k] > 1e-6 and away[k] is not None:
+                old = wanted.get(node_id)
+                if old is None or need[k] > old[2]:
+                    wanted[node_id] = (away[k][0], away[k][1], need[k])
+
+    for node_id, (ex, ey, amount) in wanted.items():
+        x, y = nodes[node_id - 1]
+        nodes[node_id - 1] = (x + ex * amount, y + ey * amount)
+
+    return len(wanted)
+
+
 def _two_way_template_for(category: str):
     """Zweispurige Vorlage fuer network_cleanup, None wenn es keine Einbahn-Variante gibt."""
 
@@ -1227,6 +1411,14 @@ def collect_network(osm, selection, options: NetworkOptions | None = None) -> Ne
         if unified:
             stats["tracks_unified"] = unified
 
+    if opt.min_road_river_m > 0 or opt.min_road_shore_m > 0:
+        water_moved = separate_roads_from_water(
+            network,
+            _water_segments(osm, geometry, opt.min_road_river_m, opt.min_road_shore_m),
+            opt.max_road_water_shift_m,
+        )
+        if water_moved:
+            stats["roads_moved_water"] = water_moved
     moved = separate_roads_from_tracks(network, opt.min_road_track_m, opt.max_road_shift_m)
 
     if moved:
@@ -1493,6 +1685,49 @@ GAME_SCRIPT_LUA = """function data()
 \t\thandleEventScript = {
 \t\t\tfileName = "%(mod)s::/mapstudio.script@handleEvent",
 \t\t},
+\t\tguiUpdateScript = {
+\t\t\tfileName = "%(mod)s::/mapstudio.script@guiUpdate",
+\t\t},
+\t}
+end
+"""
+
+
+# v26: Mod-Knopf. Das Spiel bietet den Erweiterungspunkt "MainModButtonAreaExtension" (Leiste "Mods"). Der Mod
+# meldet dort ein Plugin an ("react-plugin"), das einen Knopf zeigt; der Knopf loest "aufgaben" aus.
+# Test: Steht im Log "OSMBAU HUD Plugin gezeichnet" und im Spiel der Knopf "Map Studio: Aufgaben"?
+HUD_RES_LUA = """function data()
+\treturn {
+\t\ttype = "react-plugin ::MainModButtonAreaExtension",
+\t\tdata = {
+\t\t\tfilePath = "__MOD_ID__::/mapstudio_hud.script@MapStudioPlugin",
+\t\t\torder = 10,
+\t\t}
+\t}
+end
+"""
+
+HUD_SCRIPT_LUA = """local builtin = ug_require "::/gui/main/builtin.lua"
+local react = ug_require "::/gui/main/react.lua"
+
+local MapStudioPlugin = react.RegisterRecipe("MapStudioPlugin", function()
+\tprint("OSMBAU HUD Plugin gezeichnet")
+\treturn builtin.BoxLayout{
+\t\tchildren = {
+\t\t\tbuiltin.Button{
+\t\t\t\tcontent = builtin.TextView{ text = "Map Studio: Aufgaben" },
+\t\t\t\tonClick = function()
+\t\t\t\t\tprint("OSMBAU HUD Knopf gedrueckt")
+\t\t\t\t\tapi.cmd.sendCommand(api.cmd.makeScriptingSendEventCmd("", "mapstudio", "aufgaben", true))
+\t\t\t\tend,
+\t\t\t},
+\t\t},
+\t}
+end)
+
+function data()
+\treturn {
+\t\tMapStudioPlugin = MapStudioPlugin
 \t}
 end
 """
@@ -1523,7 +1758,13 @@ def _content_json() -> str:
     return json.dumps(
         {
             "archives": None,
-            "files": ["mapstudio.gs.lua", "mapstudio.script.lua", "osmdata.lua"],
+            "files": [
+                "mapstudio.gs.lua",
+                "mapstudio.script.lua",
+                "osmdata.lua",
+                "mapstudio_hud.res.lua",
+                "mapstudio_hud.script.lua",
+            ],
         },
         indent=4,
     ) + "\n"
@@ -1610,6 +1851,8 @@ def write_mod(
         IMPORT_SCRIPT_TEMPLATE.replace("__MOD_ID__", mod_id),
     )
     write(root / "content" / "osmdata.lua", network_to_lua(network, name))
+    write(root / "content" / "mapstudio_hud.res.lua", HUD_RES_LUA.replace("__MOD_ID__", mod_id))
+    write(root / "content" / "mapstudio_hud.script.lua", HUD_SCRIPT_LUA)
 
     _preview_png(root / "_metadata" / "0.png")
 
