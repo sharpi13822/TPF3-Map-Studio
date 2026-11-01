@@ -26,8 +26,8 @@ def _flat(points) -> str:
     return ",".join(f"{_num(x)},{_num(y)}" for x, y in points)
 
 
-def plan_to_lua(plan: dict) -> tuple[str, dict]:
-    """Gibt den Lua-Text und eine Zaehlung je Art zurueck."""
+def plan_to_lua(plan: dict, row_every: int = 1) -> tuple[str, dict]:
+    """Gibt den Lua-Text und eine Zaehlung je Art zurueck. row_every: nur jede N-te Reihe bauen."""
 
     areas, lines = [], []
     counts = {kind: 0 for kind in AREA_KINDS + LINE_KINDS}
@@ -50,6 +50,7 @@ def plan_to_lua(plan: dict) -> tuple[str, dict]:
             "-- Natur-Daten fuer den Map-Studio-Import (erzeugt vom TPF3 Map Studio)",
             "return {",
             "\tformat = 1,",
+            f"\treihe_jede = {max(1, int(row_every))},",
             "\tflaechen = {",
             *areas,
             "\t},",
@@ -61,6 +62,38 @@ def plan_to_lua(plan: dict) -> tuple[str, dict]:
         ]
     )
     return text, counts
+
+
+EMPTY_NATURDATA_LUA = plan_to_lua({"features": []})[0]
+
+
+def features_to_lua(features, row_every: int = 1) -> tuple[str, dict]:
+    """NatureFeature-Objekte (aus nature_plan.collect_features) -> Lua-Text, Zaehlung."""
+
+    plan = {
+        "features": [
+            {
+                "kind": f.kind,
+                "osm_id": f.osm_id,
+                "row_direction_deg": f.row_direction_deg,
+                "points": list(f.points),
+            }
+            for f in features
+        ]
+    }
+    return plan_to_lua(plan, row_every)
+
+
+def add_to_content_json(text: str, filename: str = "naturdata.lua", after: str = "osmdata.lua") -> str:
+    """Traegt eine Datei in die Liste von _content.json ein (das Spiel laedt nur gelistete Dateien)."""
+
+    data = json.loads(text)
+    files = list(data.get("files") or [])
+    if filename not in files:
+        index = files.index(after) + 1 if after in files else len(files)
+        files.insert(index, filename)
+    data["files"] = files
+    return json.dumps(data, indent=4) + "\n"
 
 
 def write_naturdata(plan_path, out_path) -> dict:

@@ -266,6 +266,11 @@ class NetworkOptions:
     min_road_river_m: float = 14.0
     min_road_shore_m: float = 8.0
     max_road_water_shift_m: float = 10.0
+    # Natur-Import im Mod mitschreiben (Weinberge, Felder, Mauern aus OSM). Im Spiel wird nur jede
+    # N-te Reihe gebaut (natur_row_every), damit grosse Weinbaugebiete spielbar bleiben.
+    natur: bool = True
+    natur_row_every: int = 1
+    natur_min_area_m2: float = 500.0
     bridge_types: tuple = DEFAULT_BRIDGE_TYPES
     # Rand der Karte: Punkte ausserhalb (minus Rand) werden abgeschnitten.
     edge_margin_m: float = 50.0
@@ -1419,6 +1424,24 @@ def collect_network(osm, selection, options: NetworkOptions | None = None) -> Ne
         )
         if water_moved:
             stats["roads_moved_water"] = water_moved
+    if opt.natur:
+        try:
+            from src.heightmap.nature_plan import collect_features
+            from src.heightmap.nature_lua import features_to_lua
+
+            natur_features = collect_features(
+                osm, selection, kinds=("vineyard", "field", "wall"),
+                row_spacing_m=1.0e9, min_area_m2=opt.natur_min_area_m2,
+            )
+            natur_text, natur_counts = features_to_lua(natur_features, opt.natur_row_every)
+            try:
+                network.natur_lua = natur_text
+            except AttributeError:
+                stats["natur_lua"] = natur_text
+            stats["natur"] = natur_counts
+        except Exception as exc:  # Natur darf den Netz-Export nie verhindern
+            stats["natur_fehler"] = str(exc)
+
     moved = separate_roads_from_tracks(network, opt.min_road_track_m, opt.max_road_shift_m)
 
     if moved:
@@ -1710,51 +1733,119 @@ end
 HUD_SCRIPT_LUA = """local builtin = ug_require "::/gui/main/builtin.lua"
 local react = ug_require "::/gui/main/react.lua"
 
-local function knopf(titel, ereignis)
-	return builtin.Button{
-		content = builtin.TextView{ text = titel },
-		onClick = function()
-			print("OSMBAU HUD Knopf: " .. ereignis)
-			api.cmd.sendCommand(api.cmd.makeScriptingSendEventCmd("", "mapstudio", ereignis, true))
-		end,
-	}
+-- Aufgaben mit Haken: [X] = wird gebaut, [  ] = nicht. Ein Knopf baut alles Ausgewaehlte.
+local AUFGABEN = {
+	{ nr = 1, titel = "Strassen" },
+	{ nr = 2, titel = "Strassen aufweiten" },
+	{ nr = 3, titel = "Gleise" },
+	{ nr = 4, titel = "Natur (Weinberge, Felder, Mauern)" },
+}
+local auswahl = "" -- z. B. "1,3,4"; gilt auch, wenn das Neuzeichnen nicht klappt
+local gemeldet = false
+
+local function istAn(text, nr)
+	return ("," .. text .. ","):find("," .. nr .. ",", 1, true) ~= nil
 end
 
-local sondiert = false
-local function sondiere()
-	if sondiert then return end
-	sondiert = true
-	for _, paar in ipairs({ { "builtin", builtin }, { "react", react } }) do
-		local namen = {}
-		pcall(function() for k in pairs(paar[2]) do namen[#namen + 1] = tostring(k) end end)
-		table.sort(namen)
-		print("OSMBAU HUD " .. paar[1] .. ": " .. table.concat(namen, ", "))
+local function umschalten(text, nr)
+	local neu = {}
+	for _, a in ipairs(AUFGABEN) do
+		local an = istAn(text, a.nr)
+		if a.nr == nr then an = not an end
+		if an then neu[#neu + 1] = tostring(a.nr) end
 	end
+	return table.concat(neu, ",")
+end
+
+local function sende(ereignis)
+	print("OSMBAU HUD Knopf: " .. ereignis)
+	api.cmd.sendCommand(api.cmd.makeScriptingSendEventCmd("", "mapstudio", ereignis, true))
+end
+
+-- useState liefert im Spiel EIN Objekt (userdata). Lesen/Setzen werden ausprobiert und gemerkt.
+local LESER = {
+	{ "get()", function(z) return z:get() end },
+	{ "value", function(z) return z.value end },
+	{ "getValue()", function(z) return z:getValue() end },
+	{ "current", function(z) return z.current end },
+}
+local SETZER = {
+	{ "set()", function(z, v) z:set(v) end },
+	{ "setValue()", function(z, v) z:setValue(v) end },
+	{ "value=", function(z, v) z.value = v end },
+	{ "current=", function(z, v) z.current = v end },
+}
+local leser, setzer = nil, nil
+
+local function zustandLesen(z)
+	if type(z) == "string" then return z end
+	if leser then local ok, v = pcall(leser[2], z) if ok and type(v) == "string" then return v end end
+	for _, l in ipairs(LESER) do
+		local ok, v = pcall(l[2], z)
+		if ok and type(v) == "string" then leser = l return v end
+	end
+	return nil
+end
+
+local function zustandSetzen(z, v)
+	if type(z) ~= "userdata" and type(z) ~= "table" then return false end
+	if setzer then return (pcall(setzer[2], z, v)) end
+	for _, s in ipairs(SETZER) do
+		if pcall(s[2], z, v) then
+			local ok, zur = pcall(zustandLesen, z)
+			if not ok or zur == nil or zur == v then setzer = s return true end
+		end
+	end
+	return false
+end
+
+local function namenVon(z)
+	local t = {}
+	pcall(function() local mt = getmetatable(z) if type(mt) == "table" then for k in pairs(mt) do t[#t + 1] = tostring(k) end end end)
+	pcall(function() local mt = getmetatable(z) if type(mt) == "table" and type(mt.__index) == "table" then for k in pairs(mt.__index) do t[#t + 1] = "." .. tostring(k) end end end)
+	table.sort(t)
+	return table.concat(t, ", ")
 end
 
 local MapStudioPlugin = react.RegisterRecipe("MapStudioPlugin", function()
-\tprint("OSMBAU HUD Plugin gezeichnet")
-	pcall(sondiere)
-\treturn builtin.BoxLayout{
-\t\tchildren = {
-\t\t\tknopf("1 Strassen", "aufgabe_1"),
-knopf("2 Strassen aufweiten", "aufgabe_2"),
-knopf("3 Gleise", "aufgabe_3"),
-builtin.Button{
-\t\t\t\tcontent = builtin.TextView{ text = "Map Studio: Alle Aufgaben" },
-\t\t\t\tonClick = function()
-\t\t\t\t\tprint("OSMBAU HUD Knopf gedrueckt")
-\t\t\t\t\tapi.cmd.sendCommand(api.cmd.makeScriptingSendEventCmd("", "mapstudio", "aufgaben", true))
-\t\t\t\tend,
-\t\t\t},
-\t\t},
-\t}
+	local ok, zustand = pcall(react.useState, auswahl)
+	if not ok then zustand = nil end
+	local wert = zustandLesen(zustand) or auswahl
+	if not gemeldet then
+		gemeldet = true
+		print("OSMBAU HUD useState: ok=" .. tostring(ok) .. " typ=" .. type(zustand) .. " lesen=" .. tostring(leser and leser[1]) .. " Namen: " .. namenVon(zustand))
+	end
+	local kinder = {}
+	for _, aufgabe in ipairs(AUFGABEN) do
+		local an = istAn(wert, aufgabe.nr)
+		kinder[#kinder + 1] = builtin.Button{
+			content = builtin.TextView{ text = (an and "[X]  " or "[   ]  ") .. aufgabe.titel },
+			onClick = function()
+				auswahl = umschalten(auswahl, aufgabe.nr)
+				print("OSMBAU HUD Auswahl: " .. (auswahl == "" and "(nichts)" or auswahl))
+				local gesetzt = zustandSetzen(zustand, auswahl)
+				print("OSMBAU HUD neu zeichnen: " .. tostring(gesetzt) .. " mit " .. tostring(setzer and setzer[1]))
+			end,
+		}
+	end
+	kinder[#kinder + 1] = builtin.Button{
+		content = builtin.TextView{ text = ">> Ausgewaehltes bauen" },
+		onClick = function()
+			if auswahl == "" then print("OSMBAU HUD nichts ausgewaehlt") return end
+			sende("aufgabe_" .. auswahl)
+		end,
+	}
+	kinder[#kinder + 1] = builtin.Button{
+		content = builtin.TextView{ text = "Natur entfernen" },
+		onClick = function() sende("natur_weg") end,
+	}
+	return builtin.BoxLayout{ children = kinder }
 end)
 
 function data()
-\treturn {
-\t\tMapStudioPlugin = MapStudioPlugin
-\t}
+	return {
+		MapStudioPlugin = MapStudioPlugin
+	}
 end
 """
 
@@ -1859,6 +1950,7 @@ def write_mod(
     """
 
     from src.heightmap.network_mod_script import IMPORT_SCRIPT_TEMPLATE
+    from src.heightmap.nature_lua import EMPTY_NATURDATA_LUA, add_to_content_json
 
     root = Path(mods_dir) / mod_id
     (root / "content").mkdir(parents=True, exist_ok=True)
@@ -1869,7 +1961,7 @@ def write_mod(
         path.write_bytes(text.encode("utf-8"))
 
     write(root / "mod.json", _mod_json(mod_id))
-    write(root / "_content.json", _content_json())
+    write(root / "_content.json", add_to_content_json(_content_json()))
     write(root / "_metadata" / "modinfo.json", _modinfo_json(name))
     write(root / "content" / "mapstudio.gs.lua", GAME_SCRIPT_LUA % {"mod": mod_id})
     write(
@@ -1877,6 +1969,8 @@ def write_mod(
         IMPORT_SCRIPT_TEMPLATE.replace("__MOD_ID__", mod_id),
     )
     write(root / "content" / "osmdata.lua", network_to_lua(network, name))
+    natur_lua = getattr(network, "natur_lua", None) or network.stats.get("natur_lua") or EMPTY_NATURDATA_LUA
+    write(root / "content" / "naturdata.lua", natur_lua)
     write(root / "content" / "mapstudio_hud.res.lua", HUD_RES_LUA.replace("__MOD_ID__", mod_id))
     write(root / "content" / "mapstudio_hud.script.lua", HUD_SCRIPT_LUA)
 

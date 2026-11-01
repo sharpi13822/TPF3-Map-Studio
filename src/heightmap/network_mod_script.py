@@ -50,6 +50,7 @@ local DIAGNOSE_PAARE = true
 local STUMM = false
 local letzte = {}
 local IMPORT = nil -- v11: vorab angelegt, damit auch die Diagnose weiter oben darauf zugreift
+local NATUR_IMPORT = nil -- v40: wird im Natur-Block gesetzt (Mods duerfen keine globalen Variablen anlegen)
 local LETZTER = nil -- v23: Ergebnis des letzten Imports (fuer die Aufgabenliste)
 
 local function text(...)
@@ -2318,7 +2319,7 @@ local function aufgaben(wahl)
 	end
 	end
 	if gewaehlt(3) then aufgabeBauen(daten, "3 Gleise", 1) end
-	logw("AUFGABE - 4 Weinberge: noch nicht eingebaut")
+	if gewaehlt(4) then if NATUR_IMPORT then NATUR_IMPORT(false) else logw("AUFGABE 4 Natur: Importer fehlt") end end
 	logw("AUFGABE - 5 Felder: noch nicht eingebaut")
 	logw("AUFGABE - 6 Hecken: noch nicht eingebaut")
 	logw("AUFGABEN fertig")
@@ -2723,6 +2724,7 @@ local function naturImport(nurMuster)
 	local ok, daten = pcall(function() return ug_require("map_studio_osm_import_1::/naturdata.lua") end)
 	if not ok or type(daten) ~= "table" then logw("NATUR: naturdata.lua fehlt oder ist fehlerhaft:", tostring(daten)) return end
 	local auftraege, uebersprungen = {}, {}
+	local jede = math.max(1, math.floor(tonumber(daten.reihe_jede) or 1)) -- nur jede N-te Reihe bauen (Studio-Einstellung)
 	local fi = 0
 	for _, f in ipairs(daten.flaechen or {}) do
 		local ring = {}
@@ -2742,8 +2744,8 @@ local function naturImport(nurMuster)
 		else
 			local abstand = tonumber(muster.params.rowSpacing) or 2
 			if abstand < 1 then abstand = 1 end
-			for _, r in ipairs(naturReihen(ring, f.r or 0, abstand, NATUR_MIN_REIHE_M)) do
-				auftraege[#auftraege + 1] = { typ = "reihe", art = art, muster = muster, x1 = r[1], y1 = r[2], x2 = r[3], y2 = r[4] }
+			for ri, r in ipairs(naturReihen(ring, f.r or 0, abstand, NATUR_MIN_REIHE_M)) do
+				if (ri - 1) % jede == 0 then auftraege[#auftraege + 1] = { typ = "reihe", art = art, muster = muster, x1 = r[1], y1 = r[2], x2 = r[3], y2 = r[4] } end
 			end
 		end
 	end
@@ -2761,7 +2763,7 @@ local function naturImport(nurMuster)
 			end
 		end
 	end
-	logw("NATUR Import startet:", #auftraege, "Bauauftraege,", #uebersprungen, "Flaechen/Linien ausgelassen")
+	logw("NATUR Import startet:", #auftraege, "Bauauftraege,", #uebersprungen, "Flaechen/Linien ausgelassen, jede", jede, ". Reihe")
 	NATUR = { auftraege = auftraege, i = 0, gebaut = 0, fehler = 0, ueber = 0, pflanzen = 0,
 		je = {}, gruende = {}, uebersprungen = uebersprungen }
 	naturWeiter()
@@ -2794,6 +2796,7 @@ local function naturWeg()
 		if not okS then logw("NATUR entfernen gescheitert:", tostring(errS)) return end
 	end
 end
+NATUR_IMPORT = naturImport
 -- ===================== Ende Natur-Import =====================
 
 function data()
