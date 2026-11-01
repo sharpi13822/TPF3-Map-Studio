@@ -71,7 +71,7 @@ def filter_small_water_bodies(
     Liefert eine NEUE Maske, verändert water_mask nicht.
     """
 
-    labeled, num_features = label(water_mask)
+    labeled, num_features = label(water_mask, structure=np.ones((3, 3), dtype=int))
 
     if num_features == 0:
         return water_mask.copy()
@@ -404,6 +404,67 @@ def blend_terrain_to_water(
     return blended
 
 
+def level_terrain_to_rivers(
+    heights: np.ndarray,
+    active: np.ndarray,
+    water_level_m: float,
+    pixel_size_m: float,
+    reach_m: float = 400.0,
+    smooth_m: float = 150.0,
+) -> np.ndarray:
+    """
+    Hebt oder senkt das Gelaende rund um die Gewaesser so, dass der Fluss
+    ueberall auf Wasserhoehe liegt - das Relief um ihn herum bleibt.
+
+    Das Spiel kennt nur EINEN Wasserspiegel, ein echter Fluss faellt aber
+    ueber die Karte (die Werra z. B. um rund 40 m). Ohne diese Anpassung
+    wird der Fluss oberhalb tief in einen Graben mit steilen Waenden
+    gegraben und das Tal darunter zu einer Ebene aufgefuellt.
+
+    Je Pixel wird die (laengs des Flusses geglaettete) natuerliche Hoehe des
+    naechsten Gewaessers bestimmt; um die Differenz zur Wasserhoehe wird das
+    Gelaende verschoben. Der Versatz klingt ueber reach_m weich auf 0 ab,
+    weiter weg bleibt das Gelaende unveraendert.
+    """
+
+    h = heights.astype(np.float32)
+
+    if reach_m <= 0 or not active.any():
+        return h
+
+    sigma = max(1.0, smooth_m / pixel_size_m)
+
+    m = active.astype(np.float32)
+    num = gaussian_filter(h * m, sigma)
+    den = gaussian_filter(m, sigma)
+
+    river_h = np.where(active, num / np.maximum(den, np.float32(1e-6)), 0.0).astype(
+        np.float32
+    )
+
+    del num, den, m
+
+    dist_px, idx = distance_transform_edt(~active, return_indices=True)
+
+    nearest_h = river_h[idx[0], idx[1]]
+
+    del idx, river_h
+
+    reach_px = max(1.0, reach_m / pixel_size_m)
+
+    t = np.clip(1.0 - dist_px / reach_px, 0.0, 1.0)
+    weight = (t * t * (3 - 2 * t)).astype(np.float32)
+
+    del dist_px, t
+
+    offset = (np.float32(water_level_m) - nearest_h) * weight
+
+    # Nahtstellen zwischen verschiedenen Gewaessern glaetten
+    offset = gaussian_filter(offset, max(1.0, reach_px / 6.0))
+
+    return h + offset.astype(np.float32)
+
+
 def enforce_osm_water(
     heightmap: np.ndarray,
     water_mask: np.ndarray,
@@ -413,9 +474,10 @@ def enforce_osm_water(
     bed_depth_m: float = 8.0,
     bank_height_m: float = 2.0,
     max_height_above_water_m: float | None = 15.0,
-    min_area_px: float = 50.0,
+    min_area_px: float = 4.0,
     edge_depth_m: float = 2.0,
     core_ramp_m: float = 40.0,
+    level_reach_m: float = 400.0,
 ) -> np.ndarray:
     """
     Wasser nur dort, wo OpenStreetMap Wasser hat.
@@ -462,6 +524,11 @@ def enforce_osm_water(
 
     if not active.any():
         return heightmap.copy()
+
+    # Fluss auf Wasserhoehe legen, Relief drumherum behalten (0 = aus)
+    heights = level_terrain_to_rivers(
+        heights, active, water_level_m, pixel_size_m, reach_m=level_reach_m
+    )
 
     land = np.maximum(heights, np.float32(water_level_m + bank_height_m))
 
