@@ -71,4 +71,22 @@ def sanitize_export_settings(raw) -> dict:
     if raw.get("clip_mode") in CLIP_MODES:
         result["clip_mode"] = raw["clip_mode"]
 
+    # Weitere Hoehenquellen (kombinieren): Liste von Namen, hoechstens zwei
+    combine = raw.get("combine_sources")
+    if isinstance(combine, list):
+        names = []
+        for name in combine:
+            if isinstance(name, str) and name and name not in names:
+                names.append(name)
+        if names:
+            result["combine_sources"] = names[:2]
+
+    blend = raw.get("combine_blend")
+    if (
+        isinstance(blend, (int, float))
+        and not isinstance(blend, bool)
+        and math.isfinite(blend)
+    ):
+        result["combine_blend"] = float(min(1000.0, max(0.0, blend)))
+
     return result

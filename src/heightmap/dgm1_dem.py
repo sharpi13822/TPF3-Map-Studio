@@ -47,6 +47,9 @@ MIN_REQUEST_INTERVAL_S = 3.1
 # Sicherheitsrand um den Kartenausschnitt, damit am Rand echte Nachbarpixel da sind.
 MARGIN_M = 100.0
 
+# So viele abgelehnte Kacheln ohne einen Treffer, dann wird die andere UTM-Zone probiert
+ZONE_PROBE_TILES = 5
+
 # Werte ausserhalb dieses Bereichs gelten als "keine Daten".
 VALID_MIN_M = -500.0
 VALID_MAX_M = 5000.0
@@ -361,17 +364,21 @@ def fetch_tiles_for_selection(
     12 Grad Ost in Zone 32, Sachsen in Zone 33.
     """
 
+    args = (progress, cancelled, min_interval_s, session, sleep)
+
     try:
-        return _fetch_tiles_in_zone(
-            selection, cache_dir, None, True, progress, cancelled, min_interval_s, session, sleep
-        )
+        return _fetch_tiles_in_zone(selection, cache_dir, None, True, *args)
     except _ZoneRejected as rejected:
         other = _other_utm_zone(rejected.zone)
         if other is None:
-            raise rejected.cause
-        return _fetch_tiles_in_zone(
-            selection, cache_dir, other, False, progress, cancelled, min_interval_s, session, sleep
-        )
+            return _fetch_tiles_in_zone(selection, cache_dir, None, False, *args)
+        try:
+            return _fetch_tiles_in_zone(selection, cache_dir, other, True, *args)
+        except _ZoneRejected:
+            # Beide Zonen lehnen die ersten Kacheln ab: Das Rechteck reicht wohl
+            # ueber die Grenze (z. B. nach Luxemburg). In der Standardzone alles
+            # holen, abgelehnte Kacheln gelten als "keine Daten".
+            return _fetch_tiles_in_zone(selection, cache_dir, None, False, *args)
 
 
 def _fetch_tiles_in_zone(
@@ -397,6 +404,11 @@ def _fetch_tiles_in_zone(
     summary = FetchSummary(total=len(slots))
 
     last_request = None
+    # Kacheln, die der Dienst mit HTTP 400 ablehnt (z. B. jenseits der Grenze,
+    # wenn das Rechteck nach Luxemburg reicht). Erst am Ende entscheiden: Hat
+    # er alle abgelehnt, ist wohl die UTM-Zone falsch, sonst sind es Kacheln
+    # ohne Daten.
+    rejected = []
 
     for done, (zone, ie, inn) in enumerate(slots):
 
@@ -424,13 +436,35 @@ def _fetch_tiles_in_zone(
         try:
             stored = fetch_slot(zone, ie, inn, cache_dir, session=session)
         except Dgm1TileRejected as exc:
-            if allow_switch and exc.status == 400 and summary.fetched == 0:
+            if exc.status != 400:
+                raise
+            rejected.append((zone, ie, inn, exc))
+            if (
+                allow_switch
+                and len(rejected) >= ZONE_PROBE_TILES
+                and summary.fetched == 0
+                and summary.already_cached == 0
+            ):
                 raise _ZoneRejected(zone, exc) from exc
-            raise
+            continue
 
         if stored:
             summary.fetched += 1
         else:
+            summary.no_data += 1
+
+    if rejected:
+        if summary.fetched == 0 and summary.already_cached == 0:
+            first = rejected[0]
+            if allow_switch:
+                raise _ZoneRejected(first[0], first[3]) from first[3]
+            raise first[3]
+
+        for zone, ie, inn, exc in rejected:
+            _write_atomic(
+                cache_dir / f"{_slot_prefix(zone, ie, inn)}.none",
+                str(exc).encode("utf-8"),
+            )
             summary.no_data += 1
 
     if progress is not None:

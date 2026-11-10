@@ -12,6 +12,7 @@ from src.heightmap.heightmap_exporter import (
     SOURCE_DGM1_DE,
     SOURCE_DGM1_FOLDER,
     SOURCE_AHN_NL,
+    SOURCE_BEV_AT,
     SOURCE_LUX,
     SOURCE_SWISSALTI3D,
     pixel_size_for_selection,
@@ -19,6 +20,7 @@ from src.heightmap.heightmap_exporter import (
 from src.heightmap.swissalti3d_dem import ATTRIBUTION as SWISS_ATTRIBUTION
 from src.heightmap.ahn_nl_dem import ATTRIBUTION as AHN_ATTRIBUTION
 from src.heightmap.lux_dem import ATTRIBUTION as LUX_ATTRIBUTION
+from src.heightmap.bev_dem import ATTRIBUTION as BEV_ATTRIBUTION
 from src.gui.map_size_presets import find_by_pixels
 from src.i18n import get_language, translate_to
 
@@ -170,6 +172,8 @@ def collect_rows(
     source = info.source if info is not None else SOURCE_COPERNICUS
     fallback = info.fallback_fraction if info is not None else 0.0
     attributions = list(info.attributions) if info is not None else []
+    combined = list(getattr(info, "combined", None) or []) if info is not None else []
+    shares = list(getattr(info, "shares", None) or []) if info is not None else []
 
     rows: list[tuple[str, str, str | None]] = []
 
@@ -239,6 +243,8 @@ def collect_rows(
         source_name = tr("AHN Niederlande (2 m)")
     elif source == SOURCE_SWISSALTI3D:
         source_name = tr("swissALTI3D Schweiz (2 m)")
+    elif source == SOURCE_BEV_AT:
+        source_name = tr("BEV Österreich (1 m)")
     elif source in (SOURCE_DGM1_DE, SOURCE_DGM1_FOLDER):
         source_name = tr("DGM1 Deutschland (1 m)")
     else:
@@ -248,6 +254,18 @@ def collect_rows(
         source_name += ", " + tr(
             "{percent:.1f} % der Fläche aus Copernicus ergänzt"
         ).format(percent=_n(fallback * 100.0))
+
+    if len(combined) > 1:
+        from src.heightmap.source_combine import MIN_SHOWN_SHARE, source_name as _short_name
+
+        source_name = tr("Kombiniert") + ": " + ", ".join(
+            "{name} ({percent:.1f} %)".format(
+                name=_short_name(c) if c != SOURCE_DGM1_FOLDER else tr("Eigene Höhendateien"),
+                percent=_n(p * 100.0),
+            )
+            for c, p in zip(combined, shares)
+            if p >= MIN_SHOWN_SHARE
+        )
 
     rows.append((tr("Höhenquelle"), source_name, None))
 
@@ -261,47 +279,60 @@ def collect_rows(
         )
         rows.append((tr("Datenstand der Höhendaten"), stand, None))
 
-    # Quellenangaben und Lizenzen
-    uses_copernicus = source == SOURCE_COPERNICUS or fallback > FALLBACK_MIN_FRACTION
+    # Quellenangaben und Lizenzen (bei kombinierten Quellen fuer jede)
+    licence_sources = combined if len(combined) > 1 else [source]
+    uses_copernicus = SOURCE_COPERNICUS in licence_sources or fallback > FALLBACK_MIN_FRACTION
+    own_attributions = [
+        a for a in attributions
+        if a not in (LUX_ATTRIBUTION, AHN_ATTRIBUTION, SWISS_ATTRIBUTION, BEV_ATTRIBUTION)
+    ]
 
-    if source == SOURCE_LUX:
-        rows.append((tr("Quellenangabe"), LUX_ATTRIBUTION, None))
-        rows.append((
-            tr("Lizenz"),
-            tr("CC0 1.0 (frei nutzbar)"),
-            LICENSE_URLS.get("ahn"),
-        ))
-    elif source == SOURCE_AHN_NL:
-        rows.append((tr("Quellenangabe"), AHN_ATTRIBUTION, None))
-        rows.append((
-            tr("Lizenz"),
-            tr("CC0 1.0 (frei nutzbar)"),
-            LICENSE_URLS.get("ahn"),
-        ))
-    elif source == SOURCE_SWISSALTI3D:
-        rows.append((tr("Quellenangabe"), SWISS_ATTRIBUTION, None))
-        rows.append((
-            tr("Lizenz"),
-            tr("OGD swisstopo (Quellenangabe ist Pflicht)"),
-            LICENSE_URLS.get("swissalti3d"),
-        ))
-    elif source in (SOURCE_DGM1_DE, SOURCE_DGM1_FOLDER):
-        text = (
-            " | ".join(attributions)
-            if attributions
-            else tr("DGM1 der Landesvermessung (Quellenvermerk des Landes beachten)")
-        )
-        rows.append((tr("Quellenangabe"), text + " – " + tr("Daten verändert"), None))
-        rows.append((
-            tr("Lizenz (je nach Bundesland)"),
-            tr("Datenlizenz Deutschland – Namensnennung – Version 2.0 (dl-de/by-2-0)"),
-            LICENSE_URLS.get("dgm1"),
-        ))
-        rows.append((
-            tr("Lizenz (je nach Bundesland)"),
-            tr("Creative Commons Namensnennung 4.0 International (CC BY 4.0)"),
-            LICENSE_URLS.get("cc_by_4"),
-        ))
+    for lic_source in licence_sources:
+        if lic_source == SOURCE_LUX:
+            rows.append((tr("Quellenangabe"), LUX_ATTRIBUTION, None))
+            rows.append((
+                tr("Lizenz"),
+                tr("CC0 1.0 (frei nutzbar)"),
+                LICENSE_URLS.get("ahn"),
+            ))
+        elif lic_source == SOURCE_AHN_NL:
+            rows.append((tr("Quellenangabe"), AHN_ATTRIBUTION, None))
+            rows.append((
+                tr("Lizenz"),
+                tr("CC0 1.0 (frei nutzbar)"),
+                LICENSE_URLS.get("ahn"),
+            ))
+        elif lic_source == SOURCE_BEV_AT:
+            rows.append((tr("Quellenangabe"), BEV_ATTRIBUTION + " – " + tr("Daten verändert"), None))
+            rows.append((
+                tr("Lizenz"),
+                tr("Creative Commons Namensnennung 4.0 International (CC BY 4.0)"),
+                LICENSE_URLS.get("cc_by_4"),
+            ))
+        elif lic_source == SOURCE_SWISSALTI3D:
+            rows.append((tr("Quellenangabe"), SWISS_ATTRIBUTION, None))
+            rows.append((
+                tr("Lizenz"),
+                tr("OGD swisstopo (Quellenangabe ist Pflicht)"),
+                LICENSE_URLS.get("swissalti3d"),
+            ))
+        elif lic_source in (SOURCE_DGM1_DE, SOURCE_DGM1_FOLDER):
+            text = (
+                " | ".join(own_attributions)
+                if own_attributions
+                else tr("DGM1 der Landesvermessung (Quellenvermerk des Landes beachten)")
+            )
+            rows.append((tr("Quellenangabe"), text + " – " + tr("Daten verändert"), None))
+            rows.append((
+                tr("Lizenz (je nach Bundesland)"),
+                tr("Datenlizenz Deutschland – Namensnennung – Version 2.0 (dl-de/by-2-0)"),
+                LICENSE_URLS.get("dgm1"),
+            ))
+            rows.append((
+                tr("Lizenz (je nach Bundesland)"),
+                tr("Creative Commons Namensnennung 4.0 International (CC BY 4.0)"),
+                LICENSE_URLS.get("cc_by_4"),
+            ))
 
     if uses_copernicus:
         rows.append((tr("Quellenangabe"), COPERNICUS_NOTICE, LICENSE_URLS.get("copernicus")))

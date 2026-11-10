@@ -114,6 +114,7 @@ class HeightmapDialogDocumentedTest(unittest.TestCase):
         "Natur-Details-Plan": "Natur-Details-Plan",
         "Berg-, See- und Sumpf-Masken": "Berg-, See- und Sumpf-Masken",
         "Beschreibung zum Teilen": "Beschreibung zum Teilen",
+        "Quellen kombinieren": "Quellen kombinieren",
     }
     IGNORED = ("Anleitung (F1)", "Schließen", "Straßen und Gleise")
 

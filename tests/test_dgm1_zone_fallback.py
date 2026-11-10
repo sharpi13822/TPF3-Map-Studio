@@ -23,6 +23,28 @@ class Session:
         return Resp()
 
 
+class Ok:
+    status_code = 200
+    headers = {}
+
+    def json(self):
+        return {"Attributes": {"RawTIFs": [{"Origin": "RP", "Data": "AAAA"}]}}
+
+
+class MixedSession:
+    """Lehnt Kacheln westlich von ie_grenze ab (HTTP 400), liefert die anderen."""
+
+    def __init__(self, ie_grenze):
+        self.ie_grenze = ie_grenze
+        self.zones = []
+
+    def post(self, url, json=None, headers=None, timeout=None):
+        attrs = json["Attributes"]
+        self.zones.append(attrs["Zone"])
+        ie = int(attrs["Easting"]) // 1000
+        return Resp() if ie < self.ie_grenze else Ok()
+
+
 class ZoneFallbackTest(unittest.TestCase):
     def setUp(self):
         self.sel = Selection.from_center(48.0, 12.3, 2000.0, 2000.0)
@@ -40,8 +62,27 @@ class ZoneFallbackTest(unittest.TestCase):
                 d.fetch_tiles_for_selection(
                     self.sel, Path(tmp), min_interval_s=0, session=session, sleep=lambda s: None
                 )
-        self.assertEqual(session.zones, [33, 32])
+        # erst Zone 33 (Standard), dann 32, zuletzt nochmal 33 ohne Wechsel
+        self.assertEqual(session.zones[0], 33)
+        self.assertIn(32, session.zones)
+        self.assertEqual(session.zones[-1], 33)
         self.assertIn("kein Gebiet", str(ctx.exception))
+
+    def test_kacheln_jenseits_der_grenze_gelten_als_ohne_daten(self):
+        # Rechteck an der Mosel: westliche Kacheln (Luxemburg) lehnt der Dienst ab
+        sel = Selection.from_center(49.6, 6.45, 3000.0, 2000.0)
+        tiles = d.required_dgm1_tiles(sel)
+        grenze = sorted({t[1] for t in tiles})[1]
+        session = MixedSession(grenze)
+        with tempfile.TemporaryDirectory() as tmp:
+            summary = d.fetch_tiles_for_selection(
+                sel, Path(tmp), min_interval_s=0, session=session, sleep=lambda s: None
+            )
+            none_files = list(Path(tmp).glob("*.none"))
+        self.assertGreater(summary.fetched, 0)
+        self.assertGreater(summary.no_data, 0)
+        self.assertEqual(summary.no_data, len(none_files))
+        self.assertEqual(set(session.zones), {32})
 
     def test_cache_zone_is_found(self):
         alt = d.required_dgm1_tiles(self.sel, zone=32)

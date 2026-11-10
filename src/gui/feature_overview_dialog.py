@@ -179,6 +179,14 @@ FEATURE_GROUPS = (
                 "Studio aus Copernicus.",
             ),
             (
+                "Quellen kombinieren",
+                "Bis zu drei Höhenquellen in einer Karte, z. B. DGM1 und Luxemburg MNT an "
+                "der Mosel. Die gewählte Quelle hat Vorrang, die weiteren Quellen und ihre Reihenfolge "
+                "legst du im Fenster 'Quellen kombinieren' fest. An der Grenze gleicht das Studio einen "
+                "festen Höhenversatz aus und blendet auf einstellbarer Breite weich über. Der Dialog zeigt "
+                "danach, wie viel Fläche aus welcher Quelle stammt.",
+            ),
+            (
                 "Schnellvorschau",
                 "Zeigt vor dem echten Download eine Vorschau in niedriger "
                 "Auflösung. Sie nutzt immer Copernicus, auch wenn unten eine "

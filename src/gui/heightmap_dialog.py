@@ -49,6 +49,15 @@ from src.gui.stations_action import save_stations_dialog
 from src.gui.zoom_preview_label import ZoomPreviewLabel
 from src.gui.map_size_presets import find_by_pixels
 from src.gui.dgm1_fetch_dialog import Dgm1FetchDialog
+from src.gui.source_combine_dialog import SourceCombineDialog, offered_sources
+from src.heightmap.source_combine import (
+    DEFAULT_BLEND_M,
+    MIN_SHOWN_SHARE,
+    build_heightmap_array_multi,
+    combined_summary,
+    priority_order,
+    source_name,
+)
 from src.gui.share_description_dialog import ShareDescriptionDialog
 from src.gui.collapsible_section import CollapsibleSection
 from src.gui.message_label import MessageLabel
@@ -223,6 +232,8 @@ class HeightmapDialog(QDialog):
         self.heightmap_array = None
         self._build_info = None
         self._dgm1_folder = None
+        self._combine_sources = []
+        self._combine_blend_m = DEFAULT_BLEND_M
         self.suggestion = None
         self._water_mask = None
         self._reference_mask = None
@@ -316,9 +327,26 @@ class HeightmapDialog(QDialog):
         self.source_combo.currentIndexChanged.connect(
             self._on_source_changed
         )
+        self.source_combo.currentIndexChanged.connect(
+            lambda _i: self._update_combine_label() if hasattr(self, "combine_label") else None
+        )
         source_row.addWidget(self.source_combo, 1)
 
         layout.addLayout(source_row)
+
+        combine_row = QHBoxLayout()
+        self.combine_button = QPushButton(tr("Quellen kombinieren..."))
+        self.combine_button.setToolTip(
+            tr("Bis zu drei Höhenquellen in einer Karte, z. B. DGM1 und Luxemburg MNT an der Mosel. "
+               "Die Quellen werden an der Grenze in der Höhe angeglichen und weich überblendet.")
+        )
+        self.combine_button.clicked.connect(self._open_combine_dialog)
+        combine_row.addWidget(self.combine_button)
+        self.combine_label = QLabel("")
+        self.combine_label.setWordWrap(True)
+        combine_row.addWidget(self.combine_label, 1)
+        layout.addLayout(combine_row)
+        self._update_combine_label()
 
         self.source_label = QLabel("")
         self.source_label.setWordWrap(True)
@@ -1770,11 +1798,72 @@ class HeightmapDialog(QDialog):
 
         return True
 
-    def _build_heightmap_for_source(self):
-        """Baut das Hoehenraster aus der gewaehlten Quelle (bei DGM1 Deutschland
-        erst die fehlenden Kacheln laden)."""
+    def _selection_corners(self):
+        """Eckpunkte des Rechtecks (lat, lon); ohne Eckpunkte nur die Mitte."""
 
-        source = self._current_source()
+        corners = getattr(self.selection, "corners_latlon", None)
+
+        if callable(corners):
+            return corners()
+
+        return [tuple(getattr(self.selection, "center", (0.0, 0.0)))]
+
+    def _active_combine_sources(self) -> list[str]:
+        """Weitere Quellen, die beim Laden dazukommen (ohne die Hauptquelle)."""
+
+        main = self._current_source()
+
+        if main == SOURCE_TPF2_PNG:
+            return []
+
+        offered = offered_sources(
+            main, self._selection_corners(), self._dgm1_folder is not None
+        )
+
+        return [s for s in self._combine_sources if s in offered]
+
+    def _update_combine_label(self):
+        extra = self._active_combine_sources()
+
+        if not extra:
+            self.combine_label.setText(tr("Nur die gewählte Höhenquelle."))
+            return
+
+        names = [source_name(s) for s in priority_order([self._current_source(), *extra])]
+        self.combine_label.setText(
+            tr("Kombiniert (Vorrang von links): {names}").format(names=" → ".join(names))
+        )
+
+    def _open_combine_dialog(self):
+        from PySide6.QtWidgets import QMessageBox
+
+        main = self._current_source()
+
+        if main == SOURCE_TPF2_PNG:
+            QMessageBox.information(
+                self,
+                tr("Höhenquellen kombinieren"),
+                tr("Eine eigene TPF2-Heightmap lässt sich nicht mit anderen Quellen kombinieren."),
+            )
+            return
+
+        offered = offered_sources(
+            main, self._selection_corners(), self._dgm1_folder is not None
+        )
+
+        dialog = SourceCombineDialog(
+            self, main, offered, self._combine_sources, self._combine_blend_m
+        )
+
+        if not dialog.exec():
+            return
+
+        self._combine_sources = dialog.chosen_sources()
+        self._combine_blend_m = dialog.blend_m()
+        self._update_combine_label()
+
+    def _fetch_source_tiles(self, source: str):
+        """Laedt fehlende Kacheln einer Quelle (mit Fortschritt und Abbrechen)."""
 
         if source == SOURCE_DGM1_DE:
 
@@ -1913,6 +2002,16 @@ class HeightmapDialog(QDialog):
                 self.status_label.setText(tr("Berechne H\u00f6henraster..."))
                 self.repaint()
 
+    def _build_heightmap_for_source(self):
+        """Baut das Hoehenraster aus der gewaehlten Quelle (bei DGM1 Deutschland
+        erst die fehlenden Kacheln laden)."""
+
+        source = self._current_source()
+        sources = [source, *self._active_combine_sources()]
+
+        for one in sources:
+            self._fetch_source_tiles(one)
+
         # Alle Werte im GUI-Thread auslesen; die Rechnung selbst laeuft im
         # Hintergrund (Fortschritt, Restzeit, Abbrechen, mehrere Kerne).
         build_args = dict(
@@ -1928,8 +2027,18 @@ class HeightmapDialog(QDialog):
         )
 
         selection = self.selection
+        blend_m = self._combine_blend_m
 
         def work(control):
+            if len(sources) > 1:
+                return build_heightmap_array_multi(
+                    selection,
+                    DEFAULT_CACHE_DIR,
+                    sources,
+                    blend_m=blend_m,
+                    control=control,
+                    **build_args,
+                )
             return build_heightmap_array_ex(
                 selection,
                 DEFAULT_CACHE_DIR,
@@ -1952,6 +2061,9 @@ class HeightmapDialog(QDialog):
     def _source_status_suffix(self) -> str:
 
         info = self._build_info
+
+        if info is not None and len(getattr(info, "combined", []) or []) > 1:
+            return " (" + combined_summary(info) + ")"
 
         if info is None or info.source in (SOURCE_COPERNICUS, SOURCE_TPF2_PNG):
             return ""
@@ -1982,6 +2094,24 @@ class HeightmapDialog(QDialog):
         """Quellenvermerk und Hinweise zur Hoehenquelle unter dem Statustext."""
 
         info = self._build_info
+
+        if info is not None and len(getattr(info, "combined", []) or []) > 1:
+            lines = [tr("Kombiniert: {summary}").format(summary=combined_summary(info))]
+
+            shifts = [
+                f"{source_name(s)} {o:+.2f} m"
+                for s, o, share in zip(info.combined, info.offsets, info.shares)
+                if abs(o) >= 0.01 and share >= MIN_SHOWN_SHARE
+            ]
+            if shifts:
+                lines.append(tr("Höhenausgleich an der Grenze: {shifts}").format(shifts=", ".join(shifts)))
+
+            if info.attributions:
+                lines.append(tr("Quelle: {sources}").format(sources=" | ".join(info.attributions)))
+
+            self.source_label.setText("\n".join(lines))
+            self.source_label.setVisible(True)
+            return
 
         if info is None or info.source in (SOURCE_COPERNICUS, SOURCE_TPF2_PNG):
             self.source_label.setVisible(False)
@@ -3705,6 +3835,9 @@ class HeightmapDialog(QDialog):
         SOURCE_DGM1_FOLDER,
         SOURCE_SWISSALTI3D,
         SOURCE_AHN_NL,
+        SOURCE_TPF2_PNG,
+        SOURCE_BEV_AT,
+        SOURCE_LUX,
     )
     _CLIP_MODE_KEYS = ("top", "bottom", "compress")
 
@@ -3755,6 +3888,10 @@ class HeightmapDialog(QDialog):
         # Die eigene TPF2-PNG wird nicht im Projekt gespeichert (Datei und Min/Max fehlen dort)
         result = {"source": SOURCE_COPERNICUS if _src == SOURCE_TPF2_PNG else _src}
 
+        if self._combine_sources:
+            result["combine_sources"] = list(self._combine_sources)
+            result["combine_blend"] = float(self._combine_blend_m)
+
         for key, box in self._settings_checks():
             result[key] = bool(box.isChecked())
 
@@ -3781,6 +3918,10 @@ class HeightmapDialog(QDialog):
 
             if item is None or item.isEnabled():
                 self.source_combo.setCurrentIndex(index)
+
+        self._combine_sources = list(cleaned.get("combine_sources", []))
+        self._combine_blend_m = float(cleaned.get("combine_blend", DEFAULT_BLEND_M))
+        self._update_combine_label()
 
     def _apply_pending_settings(self):
         settings = getattr(self, "_pending_settings", None)

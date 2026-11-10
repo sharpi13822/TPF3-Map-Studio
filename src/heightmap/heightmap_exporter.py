@@ -57,6 +57,12 @@ class HeightmapBuildInfo:
     actualities: list[str] = field(default_factory=list)
     # Pixel ohne Hoehendaten im offenen Meer (Copernicus), sonst None
     sea_mask: object = None
+    # Kombinierte Quellen (Vorrang von oben nach unten), sonst leer
+    combined: list[str] = field(default_factory=list)
+    # Flaechenanteil je kombinierter Quelle (0..1), gleiche Reihenfolge
+    shares: list[float] = field(default_factory=list)
+    # Hoehenausgleich je kombinierter Quelle in Metern (oberste Quelle = 0)
+    offsets: list[float] = field(default_factory=list)
 
 
 class _FallbackMosaic:
@@ -306,6 +312,7 @@ def build_heightmap_array_ex(
     bev_cache_dir: Path | None = None,
     lux_cache_dir: Path | None = None,
     control: TaskControl | None = None,
+    raw: bool = False,
 ) -> tuple[np.ndarray, HeightmapBuildInfo]:
     """
     Wie build_heightmap_array(), waehlt aber die Hoehenquelle und liefert
@@ -317,6 +324,10 @@ def build_heightmap_array_ex(
     SOURCE_SWISSALTI3D liest die bereits geladenen swissALTI3D-Kacheln aus swiss_cache_dir
     (Abruf vorher ueber swissalti3d_dem.SwissFetchJob).
     Wo DGM1- oder swissALTI3D-Daten fehlen, wird aus Copernicus ergaenzt.
+
+    raw=True (fuer das Kombinieren mehrerer Quellen): keine Ergaenzung aus
+    Copernicus, Luecken bleiben NaN, kein Fehler ohne Kacheln im Rechteck und
+    keine Hoehenskalierung.
     """
 
     w_px, h_px = pixel_size_for_selection(selection)
@@ -423,6 +434,10 @@ def build_heightmap_array_ex(
             else:
                 dgm1 = Dgm1Mosaic.from_folder(selection, dgm1_folder, METERS_PER_PIXEL)
 
+        if dgm1.slot_count == 0 and raw:
+            empty = np.full((h_px, w_px), np.nan, dtype=np.float32)
+            return empty, HeightmapBuildInfo(source=source, fallback_fraction=1.0)
+
         if dgm1.slot_count == 0:
             if source == SOURCE_BEV_AT:
                 raise Dgm1Error(
@@ -450,7 +465,7 @@ def build_heightmap_array_ex(
             paths = download_tiles_for_selection(selection, cache_dir)
             return DemMosaic.from_paths(paths)
 
-        mosaic = _FallbackMosaic(dgm1, make_fallback)
+        mosaic = dgm1 if raw else _FallbackMosaic(dgm1, make_fallback)
 
         out = _sample_grid(
             selection, mosaic, w_px, h_px,
@@ -461,7 +476,8 @@ def build_heightmap_array_ex(
         info = HeightmapBuildInfo(
             source=source,
             fallback_fraction=(
-                mosaic.fallback_pixels / mosaic.total_pixels if mosaic.total_pixels else 0.0
+                float(np.isnan(out).mean()) if raw
+                else (mosaic.fallback_pixels / mosaic.total_pixels if mosaic.total_pixels else 0.0)
             ),
             missing_tiles=dgm1.missing_slots,
             attributions=list(dgm1.attributions),
@@ -470,6 +486,9 @@ def build_heightmap_array_ex(
 
     else:
         raise ValueError(f"Unbekannte Hoehenquelle: {source}")
+
+    if raw:
+        return out, info
 
     if np.isnan(out).any():
         raise RuntimeError(

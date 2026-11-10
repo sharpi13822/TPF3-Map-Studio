@@ -2272,4 +2272,44 @@ CATALOG.update({
         'The mod first builds these roads narrow and then widens them with the console command \u201caufweiten\u201d (otherwise the game crashes at junctions).',
     '\n\nDanach (breite Stra\xdfen), wenn \u201eImport fertig\u201c steht:\n{cmd}':
         '\n\nAfterwards (wide roads), once \u201cImport fertig\u201d appears:\n{cmd}',
+    'Quellen kombinieren...':
+        'Combine sources...',
+    'Bis zu drei Höhenquellen in einer Karte, z. B. DGM1 und Luxemburg MNT an der Mosel. Die Quellen werden an der Grenze in der Höhe angeglichen und weich überblendet.':
+        'Up to three height sources in one map, e.g. DGM1 and Luxembourg MNT along the Moselle. At the border the sources are levelled to each other and blended smoothly.',
+    'Nur die gewählte Höhenquelle.':
+        'Only the selected height source.',
+    'Höhenquellen kombinieren':
+        'Combine height sources',
+    'Eine eigene TPF2-Heightmap lässt sich nicht mit anderen Quellen kombinieren.':
+        'Your own TPF2 heightmap cannot be combined with other sources.',
+    'Kombiniert (Vorrang von links): {names}':
+        'Combined (priority from the left): {names}',
+    'Kombiniert: {summary}':
+        'Combined: {summary}',
+    'Höhenausgleich an der Grenze: {shifts}':
+        'Height adjustment at the border: {shifts}',
+    'Nach oben (mehr Vorrang)':
+        'Move up (higher priority)',
+    'Nach unten (weniger Vorrang)':
+        'Move down (lower priority)',
+    'Auf dieser Breite wird an der Grenze von einer Quelle in die nächste übergeblendet. 0 m = harte Kante. Ein fester Höhenversatz zwischen den Quellen wird immer ausgeglichen.':
+        'Across this width one source is blended into the next at the border. 0 m = hard edge. A constant height offset between the sources is always corrected.',
+    'Weiche Naht an der Grenze:':
+        'Smooth seam at the border:',
+    'Hauptquelle: {name}. Hake bis zu zwei weitere Quellen an. Für jeden Punkt gilt die oberste Quelle mit Daten, wo sie endet, übernimmt die nächste. Mit den Pfeilen änderst du die Reihenfolge. Copernicus steht immer an letzter Stelle und füllt nur Lücken.':
+        'Main source: {name}. Tick up to two further sources. At every point the topmost source with data is used; where it ends, the next one takes over. Use the arrows to change the order. Copernicus always comes last and only fills gaps.',
+    'Keine Höhenquelle gewählt.':
+        'No height source selected.',
+    'Eigene Höhendateien':
+        'Own height files',
+    'Höchstens {count} Höhenquellen lassen sich kombinieren.':
+        'At most {count} height sources can be combined.',
+    'Kombiniert':
+        'Combined',
+    "Bis zu drei Höhenquellen in einer Karte, z. B. DGM1 und Luxemburg MNT an der Mosel. Die gewählte Quelle hat Vorrang, die weiteren Quellen und ihre Reihenfolge legst du im Fenster 'Quellen kombinieren' fest. An der Grenze gleicht das Studio einen festen Höhenversatz aus und blendet auf einstellbarer Breite weich über. Der Dialog zeigt danach, wie viel Fläche aus welcher Quelle stammt.":
+        'Up to three height sources in one map, e.g. DGM1 and Luxembourg MNT along the Moselle. The selected source has priority; the further sources and their order are set in the window ‘Combine sources’. At the border the studio corrects a constant height offset and blends smoothly across an adjustable width. Afterwards the dialog shows how much of the area comes from which source.',
+    'Quellen kombinieren':
+        'Combine sources',
+    'BEV Österreich (1 m)':
+        'BEV Austria (1 m)',
 })
