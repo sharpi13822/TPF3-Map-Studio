@@ -7,6 +7,30 @@ uebereinstimmen. Schreibweise: britisches Englisch wie in README.en.md.
 """
 
 CATALOG = {
+    'Bauvorlage als Bild':
+        'Build template as image',
+    'Bauvorlage als Bild...':
+        'Build template as image...',
+    'TGA-Bild (*.tga)':
+        'TGA image (*.tga)',
+    'Die Bauvorlage konnte nicht gespeichert werden:\n{error}':
+        'The build template could not be saved:\n{error}',
+    'Bauvorlage gespeichert ({w} × {h} Pixel, gleiches Raster wie die Heightmap):\n{files}\n\nStraßen nach Klasse eingefärbt, Gleise schwarz-weiß geblockt, Bahnsteige grau. Im Spiel wird nichts gebaut.':
+        'Build template saved ({w} × {h} pixels, same grid as the heightmap):\n{files}\n\nRoads coloured by class, tracks in black and white blocks, platforms in grey. Nothing is built in the game.',
+    'Zeichnet alle Straßen (nach Klasse eingefärbt), die Gleise schwarz-weiß geblockt und die Bahnsteige grau aus den geladenen OSM-Daten in ein Bild in der Größe der Karte und speichert es als .tga und .png, als Vorlage zum 1:1-Nachbauen. Braucht geladene OSM-Daten.':
+        'Draws all roads (coloured by class), the tracks in black and white blocks and the platforms in grey from the loaded OSM data into an image the size of the map and saves it as .tga and .png, as a template for rebuilding 1:1. Needs loaded OSM data.',
+    'Zeichnet alle Straßen (nach Klasse eingefärbt, von der Autobahn bis zum Feldweg), die Gleise schwarz-weiß geblockt im Trackmap-Stil und die Bahnsteige grau aus den geladenen OSM-Daten in ein Bild in der Größe der Karte (gleiches Raster wie die Heightmap) und speichert es als .tga und .png. Vorlage zum 1:1-Nachbauen, im Spiel wird nichts gebaut.':
+        'Draws all roads (coloured by class, from motorway to farm track), the tracks in black and white blocks in trackmap style and the platforms in grey from the loaded OSM data into an image the size of the map (same grid as the heightmap) and saves it as .tga and .png. A template for rebuilding 1:1; nothing is built in the game.',
+    'Die Höhendaten enthalten keine Meerestiefen. Ohne den Haken liegt das Meer flach auf 0 m und fällt im Spiel als Strand trocken. Mit dem Haken liegt es an der Küste 2 m unter dem Wasserspiegel und wird nach außen sanft bis zur eingestellten Tiefe (Standard 10 m) abgesenkt. Wirkt nur bei offenem Meer im Rechteck.':
+        'The height data contain no sea depths. Without this box the sea lies flat at 0 m and falls dry as a beach in the game. With it, the sea lies 2 m below the water level at the coast and is lowered smoothly towards the set depth (default 10 m) further out. Only has an effect with open sea in the rectangle.',
+    'Meeresboden absenken':
+        'Lower the sea floor',
+    'Tiefe:':
+        'Depth:',
+    'Die Höhendaten enthalten keine Meerestiefen, das Meer liegt sonst flach auf 0 m und fällt im Spiel als Strand trocken. Mit dem Haken liegt das Meer an der Küste 2 m unter dem Wasserspiegel und wird nach außen sanft bis zur eingestellten Tiefe abgesenkt. Wirkt nur, wenn das Rechteck offenes Meer enthält.':
+        'The height data contain no sea depths, so the sea would otherwise lie flat at 0 m and fall dry as a beach in the game. With this box ticked, the sea lies 2 m below the water level at the coast and is lowered smoothly towards the set depth further out. Only has an effect if the rectangle contains open sea.',
+    'Tiefe des Meeresbodens unter dem Wasserspiegel, weiter draußen vor der Küste.':
+        'Depth of the sea floor below the water level, further out from the coast.',
     'Berechne Gelände...':
         'Calculating terrain...',
     'Berechnung abgebrochen.':

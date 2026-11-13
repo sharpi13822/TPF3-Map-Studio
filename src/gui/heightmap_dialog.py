@@ -46,6 +46,7 @@ from src.heightmap.industries_export import Terrain
 from src.gui.towns_dialog import TownsDialog
 from src.gui.network_dialog import NetworkDialog
 from src.gui.stations_action import save_stations_dialog
+from src.gui.build_template_action import save_build_template_dialog
 from src.gui.zoom_preview_label import ZoomPreviewLabel
 from src.gui.map_size_presets import find_by_pixels
 from src.gui.dgm1_fetch_dialog import Dgm1FetchDialog
@@ -121,6 +122,7 @@ from src.heightmap.water_slope_compensation import (
     DEFAULT_SMOOTHING_M,
 )
 
+from src.heightmap.sea_floor import DEFAULT_SEA_DEPTH_M, lower_sea_floor
 from src.heightmap.water_lake_lowering import (
     lower_terrain_around_lakes,
     DEFAULT_FALLOFF_M,
@@ -720,6 +722,40 @@ class HeightmapDialog(QDialog):
         lake_row.addStretch(1)
         layout.addLayout(lake_row)
 
+        # Meeresboden absenken (Wunsch MattiZockt1234): die Hoehenquellen
+        # haben keine Meerestiefen, das Meer laege sonst flach auf 0 m und
+        # faellt im Spiel als Strand trocken.
+        self.sea_checkbox = QCheckBox(tr("Meeresboden absenken"))
+        self.sea_checkbox.setChecked(True)
+        self.sea_checkbox.setToolTip(
+            tr("Die Höhendaten enthalten keine Meerestiefen, das Meer liegt "
+            "sonst flach auf 0 m und fällt im Spiel als Strand trocken. "
+            "Mit dem Haken liegt das Meer an der Küste 2 m unter dem "
+            "Wasserspiegel und wird nach außen sanft bis zur eingestellten "
+            "Tiefe abgesenkt. Wirkt nur, wenn das Rechteck offenes Meer "
+            "enthält.")
+        )
+        self.sea_checkbox.toggled.connect(self._on_sea_toggled)
+        layout.addWidget(self.sea_checkbox)
+
+        sea_row = QHBoxLayout()
+        sea_row.addWidget(QLabel(tr("Tiefe:")))
+        self.sea_depth_input = QDoubleSpinBox()
+        self.sea_depth_input.setMinimumWidth(110)
+        self.sea_depth_input.setRange(2.0, 100.0)
+        self.sea_depth_input.setDecimals(0)
+        self.sea_depth_input.setSuffix(" m")
+        self.sea_depth_input.setValue(DEFAULT_SEA_DEPTH_M)
+        self.sea_depth_input.setKeyboardTracking(False)
+        self.sea_depth_input.setToolTip(
+            tr("Tiefe des Meeresbodens unter dem Wasserspiegel, weiter "
+            "draußen vor der Küste.")
+        )
+        self.sea_depth_input.valueChanged.connect(self._update_preview)
+        sea_row.addWidget(self.sea_depth_input)
+        sea_row.addStretch(1)
+        layout.addLayout(sea_row)
+
         # -------------------------------------------------
         # Terrain ans Wasserniveau anpassen (Idee eines
         # Community-Mitglieds: TPF2/TPF3 kennen kein Wassergefaelle,
@@ -1073,6 +1109,19 @@ class HeightmapDialog(QDialog):
         self.stations_button.clicked.connect(self._open_stations_dialog)
         button_row.addWidget(self.stations_button)
 
+        # Bauvorlage als Bild (Wunsch Th3_d4rk_sh4d0w): Strassen, Gleise und
+        # Bahnsteige aus OSM als .tga/.png im Raster der Heightmap.
+        self.build_template_button = QPushButton(tr("Bauvorlage als Bild..."))
+        self.build_template_button.setToolTip(
+            tr("Zeichnet alle Straßen (nach Klasse eingefärbt), die Gleise "
+            "schwarz-weiß geblockt und die Bahnsteige grau aus den geladenen "
+            "OSM-Daten in ein Bild in der Größe der Karte und speichert es als "
+            ".tga und .png, als Vorlage zum 1:1-Nachbauen. Braucht geladene "
+            "OSM-Daten.")
+        )
+        self.build_template_button.clicked.connect(self._open_build_template_dialog)
+        button_row.addWidget(self.build_template_button)
+
         # Weinberge, Obstwiesen, Mauern, Hecken aus OSM als Platzierungshilfe
         # fuer den Natur-Details-Mod: schreibt .csv und .json.
         self.nature_plan_button = QPushButton(tr("Natur-Details-Plan..."))
@@ -1358,6 +1407,26 @@ class HeightmapDialog(QDialog):
             return
 
         save_stations_dialog(self, self.selection, self.osm)
+
+    def _open_build_template_dialog(self):
+
+        has_osm_data = (
+            self.osm is not None
+            and (self.osm.node_count > 0 or self.osm.way_count > 0)
+        )
+
+        if not has_osm_data:
+            QMessageBox.information(
+                self,
+                tr("Bauvorlage als Bild"),
+                tr("Keine OSM-Daten geladen. Zuerst Werkzeuge → OSM laden "
+                "ausführen und die Ebenen Straßen und Eisenbahn laden."),
+            )
+            return
+
+        save_build_template_dialog(
+            self, self.selection, self.osm, self.heightmap_array
+        )
 
     def _save_terrain_masks(self):
 
@@ -2987,6 +3056,21 @@ class HeightmapDialog(QDialog):
 
         self._update_preview()
 
+    def _on_sea_toggled(self, checked: bool):
+
+        self.sea_depth_input.setEnabled(checked)
+        self._update_preview()
+
+    def _sea_mask(self):
+        """Offenes Meer aus dem Download (oder None)."""
+
+        sea = getattr(self._build_info, "sea_mask", None)
+
+        if sea is None or getattr(sea, "shape", None) != self.heightmap_array.shape:
+            return None
+
+        return sea
+
     def _get_water_mask(self):
         """
         Wassermaske fuer die Terrain-Anpassung. Es zaehlen dieselben
@@ -3040,6 +3124,8 @@ class HeightmapDialog(QDialog):
             self.slope_max_ref_input.value(),
             self.lake_checkbox.isChecked(),
             self.lake_falloff_input.value(),
+            self.sea_checkbox.isChecked(),
+            self.sea_depth_input.value(),
             self.water_blend_checkbox.isChecked(),
             self.transition_input.value(),
             self.blend_max_rise_input.value(),
@@ -3105,6 +3191,8 @@ class HeightmapDialog(QDialog):
             names.append(tr("Wasser nach OSM einsetzen"))
         elif p["blend_on"]:
             names.append(tr("Terrain ans Wasser anpassen"))
+        if p["sea_on"]:
+            names.append(tr("Meeresboden absenken"))
         if p["compress_on"]:
             names.append(tr("Höhen stauchen"))
 
@@ -3212,6 +3300,20 @@ class HeightmapDialog(QDialog):
                 underwater_smoothing_m=p["transition"] / 2.0,
             )
 
+        # Meeresboden unter den Wasserspiegel (nach den Wasserschritten,
+        # damit "Wasser nur dort, wo OSM Wasser hat" das Meer nicht anhebt)
+        if p["sea_on"]:
+
+            begin(tr("Meeresboden absenken"))
+
+            array = lower_sea_floor(
+                array,
+                self._sea_mask(),
+                water_level_m=water_level,
+                pixel_size_m=pixel_size,
+                depth_m=p["sea_depth"],
+            )
+
         # Letzter Schritt: Hoehen ueber dem Wasserspiegel stauchen
         if p["compress_on"]:
 
@@ -3249,9 +3351,11 @@ class HeightmapDialog(QDialog):
         smooth_on = self.smooth_checkbox.isChecked()
         flatten_on = self.flatten_checkbox.isChecked()
         compress_on = self.compress_input.value() < 100.0
+        sea_on = self.sea_checkbox.isChecked() and self._sea_mask() is not None
 
         if (
             not slope_on
+            and not sea_on
             and not lake_on
             and not blend_on
             and not enforce_on
@@ -3279,6 +3383,8 @@ class HeightmapDialog(QDialog):
             slope_max_ref=self.slope_max_ref_input.value(),
             lake_on=lake_on,
             lake_falloff=self.lake_falloff_input.value(),
+            sea_on=sea_on,
+            sea_depth=self.sea_depth_input.value(),
             enforce_on=enforce_on,
             enforce_transition=self.enforce_transition_input.value(),
             enforce_depth=self.enforce_depth_input.value(),
@@ -3848,6 +3954,7 @@ class HeightmapDialog(QDialog):
             ("flatten", self.flatten_checkbox),
             ("slope", self.slope_checkbox),
             ("lake", self.lake_checkbox),
+            ("sea", self.sea_checkbox),
             ("enforce", self.enforce_checkbox),
             ("water_blend", self.water_blend_checkbox),
             ("clip", self.clip_checkbox),
@@ -3865,6 +3972,7 @@ class HeightmapDialog(QDialog):
             ("slope_smoothing", self.slope_smoothing_input),
             ("slope_max_ref", self.slope_max_ref_input),
             ("lake_falloff", self.lake_falloff_input),
+            ("sea_depth", self.sea_depth_input),
             ("enforce_transition", self.enforce_transition_input),
             ("enforce_edge", self.enforce_edge_input),
             ("enforce_depth", self.enforce_depth_input),

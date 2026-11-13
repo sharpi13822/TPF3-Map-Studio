@@ -36,6 +36,10 @@ Für lange Flüsse mit starkem Gefälle. Das Studio legt Flüsse und Seen auf ei
 
 Das Spiel kennt nur einen Wasserspiegel. Liegt ein See höher (zum Beispiel der Schliersee neben dem Tegernsee), entsteht um ihn sonst eine Steilküste. Mit diesem Haken wird jeder solche See auf den Wasserspiegel gesenkt und das Gelände drumherum sanft mitgenommen. Der *Auslauf* (Standard 1500 m) bestimmt, wie weit vom Ufer die Absenkung ausläuft: größer = sanfter, aber mehr Umgebung ändert sich. Berge weit weg vom See bleiben unverändert. Braucht OSM-Daten. *Im Spiel noch nicht geprüft.*
 
+## Meeresboden absenken
+
+Die Höhendaten (Copernicus, DGM1 usw.) enthalten keine Meerestiefen. Das offene Meer liegt deshalb flach auf 0 m und fällt im Spiel schnell als Strand trocken, die Küstenlinie ist dann kaum zu erkennen. Mit diesem Haken (Standard: an) liegt das Meer an der Küste 2 m unter dem Wasserspiegel und wird nach außen über etwa 300 m sanft bis zur eingestellten *Tiefe* (Standard 10 m) abgesenkt. Land bleibt unverändert. Die Import-Werte unten im Dialog rechnen die neue Tiefe automatisch ein. Wirkt nur, wenn das Rechteck offenes Meer enthält.
+
 ## Höhen stauchen
 
 Gegen weiße und graue Flächen auf den Höhen: Das Spiel färbt nach der Höhe der importierten Werte (Fels ab etwa 325 bis 350 m, Schnee ab etwa 375 bis 425 m). Stauchen drückt alle Höhen über dem Wasserspiegel auf einen Anteil. Standard 100 % (unverändert). Am Rhein hat 45 % funktioniert, bei Bern etwa 75 % (mit dem Haken *Werte auf Wasserhöhe 0 beziehen*). Der Dialog zeigt unten einen Hinweis, wenn das Gelände zu hoch liegt.

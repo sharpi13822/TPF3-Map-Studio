@@ -289,6 +289,14 @@ FEATURE_GROUPS = (
                 "keine Steilküste um den See. Braucht geladene OSM-Daten.",
             ),
             (
+                "Meeresboden absenken",
+                "Die Höhendaten enthalten keine Meerestiefen. Ohne den Haken liegt "
+                "das Meer flach auf 0 m und fällt im Spiel als Strand trocken. Mit "
+                "dem Haken liegt es an der Küste 2 m unter dem Wasserspiegel und "
+                "wird nach außen sanft bis zur eingestellten Tiefe (Standard 10 m) "
+                "abgesenkt. Wirkt nur bei offenem Meer im Rechteck.",
+            ),
+            (
                 "Wasser nur dort, wo OpenStreetMap Wasser hat",
                 "Gewässer bekommen ein festes Bett mit Böschung und Tiefe, "
                 "alles andere Land liegt knapp über dem Wasserspiegel: keine "
@@ -372,6 +380,14 @@ FEATURE_GROUPS = (
                 "Dateien dienen als Nachschlagewerk. Aneinanderstoßende "
                 "Bahnsteig-Wege gelten als ein Bahnsteig, bei "
                 "Bahnsteigflächen zählt die Länge statt des Umfangs.",
+            ),
+            (
+                "Bauvorlage als Bild...",
+                "Zeichnet alle Straßen (nach Klasse eingefärbt, von der Autobahn bis zum "
+                "Feldweg), die Gleise schwarz-weiß geblockt im Trackmap-Stil und die "
+                "Bahnsteige grau aus den geladenen OSM-Daten in ein Bild in der Größe der "
+                "Karte (gleiches Raster wie die Heightmap) und speichert es als .tga und "
+                ".png. Vorlage zum 1:1-Nachbauen, im Spiel wird nichts gebaut.",
             ),
             (
                 "Beschreibung zum Teilen...",
