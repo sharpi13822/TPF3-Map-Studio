@@ -9,9 +9,9 @@
 
 ### Download
 
-`TPF3-Map-Studio-v0.7.5.zip` entpacken und `TPF3-Map-Studio.exe` starten.
+`TPF3-Map-Studio-v0.7.5-win64.zip` entpacken und `TPF3-Map-Studio.exe` starten.
 
-SHA-256: `PRUEFSUMME`
+SHA-256: `95f3d129050f8b4b5af69649528b5883274c15528c9fc60ea640bfede964f80b`
 
 Das Studio ist kostenlos. Wer mag, kann mir einen Kaffee spendieren: https://paypal.me/PEttelt
 
@@ -24,8 +24,8 @@ Das Studio ist kostenlos. Wer mag, kann mir einen Kaffee spendieren: https://pay
 
 ### Download
 
-Unzip `TPF3-Map-Studio-v0.7.5.zip` and start `TPF3-Map-Studio.exe`.
+Unzip `TPF3-Map-Studio-v0.7.5-win64.zip` and start `TPF3-Map-Studio.exe`.
 
-SHA-256: `CHECKSUM`
+SHA-256: `95f3d129050f8b4b5af69649528b5883274c15528c9fc60ea640bfede964f80b`
 
 The Studio is free. If you like, you can buy me a coffee: https://paypal.me/PEttelt
